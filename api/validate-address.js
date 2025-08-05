@@ -49,17 +49,22 @@ export default async function handler(req, res) {
     // Check delivery verification
     const deliveryVerification = address.verifications?.delivery
     
-    // EasyPost considers an address deliverable if:
-    // 1. delivery.success is true, OR
-    // 2. EasyPost was able to correct/standardize the address (even if delivery.success is false)
+    // More practical approach: If EasyPost can process the address without errors,
+    // and returns structured address data, consider it valid
     const hasValidAddress = address.street1 && address.city && address.state && address.zip
+    const hasNoErrors = !deliveryVerification?.errors || deliveryVerification.errors.length === 0
+    
+    // Check if EasyPost made any standardizations
     const wasStandardized = address.street1 !== addressData.street1 ||
                            address.city !== addressData.city ||
                            address.state !== addressData.state ||
                            address.zip !== addressData.zip
     
-    // If EasyPost standardized the address, it's likely valid even if delivery.success is false
-    const isDeliverable = deliveryVerification?.success === true || (hasValidAddress && wasStandardized)
+    // Consider address deliverable if:
+    // 1. EasyPost delivery verification passed, OR
+    // 2. EasyPost returned a valid structured address without errors
+    const isDeliverable = deliveryVerification?.success === true || 
+                         (hasValidAddress && hasNoErrors)
     
     const response = {
       deliverable: isDeliverable,
@@ -85,9 +90,6 @@ export default async function handler(req, res) {
         zip: address.zip,
         country: address.country
       })
-      
-      // If the address was standardized, it's likely deliverable
-      response.deliverable = true
     }
 
     res.status(200).json(response)
