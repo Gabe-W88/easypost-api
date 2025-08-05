@@ -44,8 +44,14 @@ export default async function handler(req, res) {
     // Verify address with EasyPost
     const address = await easypost.Address.create(addressData)
     
+    console.log('EasyPost Address Response:', JSON.stringify(address, null, 2))
+    
+    // Check delivery verification
+    const deliveryVerification = address.verifications?.delivery
+    const isDeliverable = deliveryVerification?.success === true
+    
     const response = {
-      deliverable: address.verifications?.delivery?.success || false,
+      deliverable: isDeliverable,
       verifiedAddress: {
         street1: address.street1,
         street2: address.street2,
@@ -55,23 +61,31 @@ export default async function handler(req, res) {
         country: address.country
       },
       suggestions: [],
-      errors: address.verifications?.delivery?.errors || []
+      errors: deliveryVerification?.errors || []
     }
 
-    // If address has issues, provide suggestions
-    if (!response.deliverable && address.verifications?.delivery?.details) {
-      const details = address.verifications.delivery.details
+    // If address is not deliverable or has corrections, provide suggestions
+    if (!isDeliverable || deliveryVerification?.details) {
+      // Check if EasyPost provided corrected address components
+      const hasCorrections = address.street1 !== addressData.street1 ||
+                            address.city !== addressData.city ||
+                            address.state !== addressData.state ||
+                            address.zip !== addressData.zip
       
-      // Create suggestions based on EasyPost corrections
-      if (details.latitude && details.longitude) {
+      if (hasCorrections) {
         response.suggestions.push({
           street1: address.street1,
-          street2: address.street2,
+          street2: address.street2 || '',
           city: address.city,
           state: address.state,
           zip: address.zip,
           country: address.country
         })
+      }
+      
+      // If it's actually deliverable but EasyPost made corrections, mark as deliverable
+      if (deliveryVerification?.success === true) {
+        response.deliverable = true
       }
     }
 
