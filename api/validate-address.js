@@ -2,6 +2,25 @@ import EasyPost from '@easypost/api'
 
 const easypost = new EasyPost(process.env.EASYPOST_API_KEY)
 
+// Helper function to detect obvious ZIP code mismatches
+function checkZipCodeMismatch(state, zip) {
+  // Basic validation for common state/ZIP mismatches
+  const stateZipRanges = {
+    'TX': [73301, 88595], // Texas ZIP range
+    'OK': [73001, 74966], // Oklahoma ZIP range  
+    'CA': [90001, 96162], // California ZIP range
+    'NY': [10001, 14925], // New York ZIP range
+    'FL': [32003, 34997]  // Florida ZIP range
+  }
+  
+  if (!stateZipRanges[state]) return false // Don't validate unknown states
+  
+  const zipNum = parseInt(zip.substring(0, 5))
+  const [min, max] = stateZipRanges[state]
+  
+  return zipNum < min || zipNum > max
+}
+
 export default async function handler(req, res) {
   // Enable CORS for all origins (you can restrict this later)
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -60,11 +79,14 @@ export default async function handler(req, res) {
                            address.state !== addressData.state ||
                            address.zip !== addressData.zip
     
+    // Additional validation: Check for obvious ZIP code mismatches
+    const zipMismatch = checkZipCodeMismatch(address.state, address.zip)
+    
     // Consider address deliverable if:
     // 1. EasyPost delivery verification passed, OR
-    // 2. EasyPost returned a valid structured address without errors
+    // 2. EasyPost returned a valid structured address without errors AND no obvious ZIP mismatch
     const isDeliverable = deliveryVerification?.success === true || 
-                         (hasValidAddress && hasNoErrors)
+                         (hasValidAddress && hasNoErrors && !zipMismatch)
     
     const response = {
       deliverable: isDeliverable,
@@ -77,7 +99,8 @@ export default async function handler(req, res) {
         country: address.country
       },
       suggestions: [],
-      errors: deliveryVerification?.errors || []
+      errors: deliveryVerification?.errors || [],
+      zipMismatch: zipMismatch
     }
 
     // If EasyPost made corrections, provide the standardized address as a suggestion
