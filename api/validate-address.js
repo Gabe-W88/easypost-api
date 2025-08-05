@@ -48,7 +48,18 @@ export default async function handler(req, res) {
     
     // Check delivery verification
     const deliveryVerification = address.verifications?.delivery
-    const isDeliverable = deliveryVerification?.success === true
+    
+    // EasyPost considers an address deliverable if:
+    // 1. delivery.success is true, OR
+    // 2. EasyPost was able to correct/standardize the address (even if delivery.success is false)
+    const hasValidAddress = address.street1 && address.city && address.state && address.zip
+    const wasStandardized = address.street1 !== addressData.street1 ||
+                           address.city !== addressData.city ||
+                           address.state !== addressData.state ||
+                           address.zip !== addressData.zip
+    
+    // If EasyPost standardized the address, it's likely valid even if delivery.success is false
+    const isDeliverable = deliveryVerification?.success === true || (hasValidAddress && wasStandardized)
     
     const response = {
       deliverable: isDeliverable,
@@ -64,29 +75,19 @@ export default async function handler(req, res) {
       errors: deliveryVerification?.errors || []
     }
 
-    // If address is not deliverable or has corrections, provide suggestions
-    if (!isDeliverable || deliveryVerification?.details) {
-      // Check if EasyPost provided corrected address components
-      const hasCorrections = address.street1 !== addressData.street1 ||
-                            address.city !== addressData.city ||
-                            address.state !== addressData.state ||
-                            address.zip !== addressData.zip
+    // If EasyPost made corrections, provide the standardized address as a suggestion
+    if (wasStandardized) {
+      response.suggestions.push({
+        street1: address.street1,
+        street2: address.street2 || '',
+        city: address.city,
+        state: address.state,
+        zip: address.zip,
+        country: address.country
+      })
       
-      if (hasCorrections) {
-        response.suggestions.push({
-          street1: address.street1,
-          street2: address.street2 || '',
-          city: address.city,
-          state: address.state,
-          zip: address.zip,
-          country: address.country
-        })
-      }
-      
-      // If it's actually deliverable but EasyPost made corrections, mark as deliverable
-      if (deliveryVerification?.success === true) {
-        response.deliverable = true
-      }
+      // If the address was standardized, it's likely deliverable
+      response.deliverable = true
     }
 
     res.status(200).json(response)
