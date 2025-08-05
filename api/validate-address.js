@@ -3,8 +3,22 @@ import EasyPost from '@easypost/api'
 const easypost = new EasyPost(process.env.EASYPOST_API_KEY)
 
 // Helper function to detect obvious ZIP code mismatches
-function checkZipCodeMismatch(state, zip) {
-  // Basic validation for common state/ZIP mismatches
+function checkZipCodeMismatch(state, zip, city) {
+  // More specific city/ZIP validation for major cities
+  const cityZipRanges = {
+    'Dallas': {
+      'TX': ['75201', '75212', '75214', '75215', '75216', '75217', '75218', '75219', '75220', '75221', '75223', '75224', '75225', '75226', '75227', '75228', '75229', '75230', '75231', '75232', '75233', '75234', '75235', '75236', '75237', '75238', '75240', '75241', '75243', '75244', '75246', '75247', '75248', '75249', '75250', '75251', '75252', '75253', '75254', '75270', '75275', '75277', '75283', '75284', '75285', '75286', '75287', '75295']
+    }
+  }
+  
+  const zipNum = zip.substring(0, 5)
+  
+  // Check specific city ZIP codes if available
+  if (cityZipRanges[city] && cityZipRanges[city][state]) {
+    return !cityZipRanges[city][state].includes(zipNum)
+  }
+  
+  // Fallback to broader state validation for other areas
   const stateZipRanges = {
     'TX': [73301, 88595], // Texas ZIP range
     'OK': [73001, 74966], // Oklahoma ZIP range  
@@ -15,10 +29,10 @@ function checkZipCodeMismatch(state, zip) {
   
   if (!stateZipRanges[state]) return false // Don't validate unknown states
   
-  const zipNum = parseInt(zip.substring(0, 5))
+  const zipNumInt = parseInt(zipNum)
   const [min, max] = stateZipRanges[state]
   
-  return zipNum < min || zipNum > max
+  return zipNumInt < min || zipNumInt > max
 }
 
 export default async function handler(req, res) {
@@ -50,14 +64,15 @@ export default async function handler(req, res) {
       return
     }
 
-    // Create address object for EasyPost
+    // Create address object for EasyPost with verification
     const addressData = {
       street1,
       street2: street2 || '',
       city,
       state,
       zip,
-      country: country || 'US'
+      country: country || 'US',
+      verify: true // Enable EasyPost's verification
     }
 
     // Verify address with EasyPost
@@ -65,28 +80,21 @@ export default async function handler(req, res) {
     
     console.log('EasyPost Address Response:', JSON.stringify(address, null, 2))
     
-    // Check delivery verification
+    // Check delivery verification results
     const deliveryVerification = address.verifications?.delivery
+    const zip4Verification = address.verifications?.zip4
     
-    // More practical approach: If EasyPost can process the address without errors,
-    // and returns structured address data, consider it valid
-    const hasValidAddress = address.street1 && address.city && address.state && address.zip
-    const hasNoErrors = !deliveryVerification?.errors || deliveryVerification.errors.length === 0
+    // EasyPost's delivery verification is the authoritative source
+    const isDeliverable = deliveryVerification?.success === true
     
-    // Check if EasyPost made any standardizations
+    // Check if EasyPost made any standardizations/corrections
     const wasStandardized = address.street1 !== addressData.street1 ||
                            address.city !== addressData.city ||
                            address.state !== addressData.state ||
                            address.zip !== addressData.zip
     
-    // Additional validation: Check for obvious ZIP code mismatches
-    const zipMismatch = checkZipCodeMismatch(address.state, address.zip)
-    
-    // Consider address deliverable if:
-    // 1. EasyPost delivery verification passed, OR
-    // 2. EasyPost returned a valid structured address without errors AND no obvious ZIP mismatch
-    const isDeliverable = deliveryVerification?.success === true || 
-                         (hasValidAddress && hasNoErrors && !zipMismatch)
+    // Additional validation: Check for obvious ZIP code mismatches as backup
+    const zipMismatch = !isDeliverable && checkZipCodeMismatch(address.state, address.zip, address.city)
     
     const response = {
       deliverable: isDeliverable,
@@ -100,11 +108,16 @@ export default async function handler(req, res) {
       },
       suggestions: [],
       errors: deliveryVerification?.errors || [],
-      zipMismatch: zipMismatch
+      zipMismatch: zipMismatch,
+      verificationDetails: {
+        deliverySuccess: deliveryVerification?.success || false,
+        zip4Success: zip4Verification?.success || false,
+        mode: address.mode
+      }
     }
 
-    // If EasyPost made corrections, provide the standardized address as a suggestion
-    if (wasStandardized) {
+    // If EasyPost made corrections/standardizations, provide them as suggestions
+    if (wasStandardized && isDeliverable) {
       response.suggestions.push({
         street1: address.street1,
         street2: address.street2 || '',
