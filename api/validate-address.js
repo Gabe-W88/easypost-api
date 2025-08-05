@@ -93,6 +93,25 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('EasyPost validation error:', error)
+    
+    // Handle rate limiting specifically
+    if (error.message && error.message.includes('rate-limited')) {
+      res.status(429).json({ 
+        error: 'Rate limit exceeded',
+        details: 'Your EasyPost account has been rate-limited. Please try again later or contact EasyPost support.'
+      })
+      return
+    }
+    
+    // Handle other API errors
+    if (error.message && error.message.includes('INVALID_PARAMETER')) {
+      res.status(400).json({ 
+        error: 'Invalid address format',
+        details: 'Please check your address and try again.'
+      })
+      return
+    }
+    
     res.status(500).json({ 
       error: 'Address validation failed',
       details: error.message 
