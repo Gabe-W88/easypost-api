@@ -35,6 +35,74 @@ function checkZipCodeMismatch(state, zip, city) {
   return zipNumInt < min || zipNumInt > max
 }
 
+// Enhanced apartment validation function - only validate what EasyPost actually tells us
+function validateApartment(originalAddress, verifiedAddress, deliveryVerification) {
+  const originalApt = originalAddress.street2?.trim()
+  const verifiedApt = verifiedAddress.street2?.trim()
+  
+  // If no apartment was provided, no validation needed
+  if (!originalApt) {
+    return { hasIssue: false, warning: null }
+  }
+  
+  // Extract apartment number from various formats
+  const extractAptNumber = (aptString) => {
+    if (!aptString) return null
+    
+    // Match patterns like "517", "Apt 517", "Unit 517", "#517", etc.
+    const match = aptString.match(/(?:apt|apartment|unit|ste|suite|#)?\s*([a-zA-Z0-9]+)$/i)
+    return match ? match[1].toUpperCase() : aptString.toUpperCase()
+  }
+  
+  const originalAptNum = extractAptNumber(originalApt)
+  const verifiedAptNum = extractAptNumber(verifiedApt)
+  
+  // Case 1: EasyPost completely removed the apartment from the verified address
+  // This may indicate the apartment number doesn't exist, but could also be API limitation
+  if (originalAptNum && !verifiedAptNum) {
+    return {
+      hasIssue: true,
+      warning: `EasyPost couldn't verify apartment/unit ${originalAptNum}. This may mean the unit doesn't exist, or the apartment data isn't available in their database.`
+    }
+  }
+  
+  // Case 2: EasyPost changed the apartment number significantly
+  // This could indicate a correction or that the original doesn't exist
+  if (originalAptNum && verifiedAptNum && originalAptNum !== verifiedAptNum) {
+    // Allow for minor formatting changes (e.g., "517" vs "517")
+    const normalizedOriginal = originalAptNum.replace(/[^A-Z0-9]/g, '')
+    const normalizedVerified = verifiedAptNum.replace(/[^A-Z0-9]/g, '')
+    
+    if (normalizedOriginal !== normalizedVerified) {
+      return {
+        hasIssue: true,
+        warning: `EasyPost changed apartment/unit number from ${originalAptNum} to ${verifiedAptNum}. Please verify which is correct.`
+      }
+    }
+  }
+  
+  // Case 3: Check delivery verification errors for apartment-related issues
+  if (deliveryVerification?.errors?.length > 0) {
+    const aptRelatedErrors = deliveryVerification.errors.filter(error => 
+      error.message?.toLowerCase().includes('apartment') ||
+      error.message?.toLowerCase().includes('unit') ||
+      error.message?.toLowerCase().includes('suite') ||
+      error.code?.includes('APARTMENT') ||
+      error.code?.includes('UNIT')
+    )
+    
+    if (aptRelatedErrors.length > 0) {
+      return {
+        hasIssue: true,
+        warning: `EasyPost apartment validation issue: ${aptRelatedErrors[0].message}`
+      }
+    }
+  }
+  
+  // Note: We don't validate apartment numbers ourselves - only rely on what EasyPost tells us
+  return { hasIssue: false, warning: null }
+}
+
 export default async function handler(req, res) {
   // Enable CORS for all origins (you can restrict this later)
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -96,8 +164,13 @@ export default async function handler(req, res) {
     // Additional validation: Check for obvious ZIP code mismatches as backup
     const zipMismatch = !isDeliverable && checkZipCodeMismatch(address.state, address.zip, address.city)
     
+    // Enhanced apartment validation
+    const apartmentValidation = validateApartment(addressData, address, deliveryVerification)
+    const hasApartmentIssue = apartmentValidation.hasIssue
+    const apartmentWarning = apartmentValidation.warning
+    
     const response = {
-      deliverable: isDeliverable,
+      deliverable: isDeliverable && !hasApartmentIssue, // Mark as non-deliverable if apartment issues
       verifiedAddress: {
         street1: address.street1,
         street2: address.street2,
@@ -109,9 +182,11 @@ export default async function handler(req, res) {
       suggestions: [],
       errors: deliveryVerification?.errors || [],
       zipMismatch: zipMismatch,
+      apartmentWarning: apartmentWarning,
       verificationDetails: {
         deliverySuccess: deliveryVerification?.success || false,
         zip4Success: zip4Verification?.success || false,
+        apartmentValidation: hasApartmentIssue ? 'failed' : 'passed',
         mode: address.mode
       }
     }
@@ -121,6 +196,18 @@ export default async function handler(req, res) {
       response.suggestions.push({
         street1: address.street1,
         street2: address.street2 || '',
+        city: address.city,
+        state: address.state,
+        zip: address.zip,
+        country: address.country
+      })
+    }
+    
+    // If there's an apartment issue, suggest address without apartment
+    if (hasApartmentIssue && isDeliverable) {
+      response.suggestions.push({
+        street1: address.street1,
+        street2: '', // Remove problematic apartment
         city: address.city,
         state: address.state,
         zip: address.zip,
