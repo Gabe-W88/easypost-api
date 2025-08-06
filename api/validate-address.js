@@ -65,9 +65,13 @@ export default async function handler(req, res) {
     }
 
     // Create address object for EasyPost with verification
+    // NOTE: We don't send street2 (apartment) to EasyPost because:
+    // 1. EasyPost can't reliably validate apartment numbers
+    // 2. It may incorrectly suggest apartments that don't exist
+    // 3. We only want to validate the base address (street, city, state, ZIP)
     const addressData = {
       street1,
-      street2: street2 || '',
+      // street2: intentionally omitted - don't validate apartments
       city,
       state,
       zip,
@@ -100,7 +104,7 @@ export default async function handler(req, res) {
       deliverable: isDeliverable,
       verifiedAddress: {
         street1: address.street1,
-        street2: address.street2,
+        street2: street2 || '', // Use original apartment input, not EasyPost's response
         city: address.city,
         state: address.state,
         zip: address.zip,
@@ -116,11 +120,11 @@ export default async function handler(req, res) {
       }
     }
 
-    // Only suggest if EasyPost made actual corrections (not just apartment changes)
+    // Only suggest if EasyPost made actual corrections to the base address
     if (wasStandardized && isDeliverable) {
       response.suggestions.push({
         street1: address.street1,
-        street2: '', // Always clear apartment in suggestions since we can't validate them
+        street2: street2 || '', // Preserve original apartment input, don't let EasyPost change it
         city: address.city,
         state: address.state,
         zip: address.zip,
