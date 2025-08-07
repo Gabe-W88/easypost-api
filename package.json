@@ -10,6 +10,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@easypost/api": "^8.2.0"
+    "@easypost/api": "^8.2.0",
+    "stripe": "^14.14.0",
+    "pg": "^8.11.3"
   }
 }
