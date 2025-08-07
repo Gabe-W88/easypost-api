@@ -56,9 +56,9 @@ async function handleCheckoutCompleted(session) {
   
   const client = new Client({
     connectionString: process.env.POSTGRES_URL,
-    ssl: {
+    ssl: process.env.NODE_ENV === 'production' ? {
       rejectUnauthorized: false
-    }
+    } : false
   })
 
   await client.connect()
@@ -106,9 +106,9 @@ async function handleCheckoutExpired(session) {
   
   const client = new Client({
     connectionString: process.env.POSTGRES_URL,
-    ssl: {
+    ssl: process.env.NODE_ENV === 'production' ? {
       rejectUnauthorized: false
-    }
+    } : false
   })
 
   await client.connect()

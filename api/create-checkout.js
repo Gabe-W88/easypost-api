@@ -74,9 +74,9 @@ export default async function handler(req, res) {
     // Update database with Stripe session ID
     const client = new Client({
       connectionString: process.env.POSTGRES_URL,
-      ssl: {
+      ssl: process.env.NODE_ENV === 'production' ? {
         rejectUnauthorized: false
-      }
+      } : false
     })
 
     await client.connect()

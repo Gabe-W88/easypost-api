@@ -1,4 +1,10 @@
-import { Client } from 'pg'
+import { createClient } from '@supabase/supabase-js'
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
 
 // Stripe product mapping for form selections
 const STRIPE_PRODUCTS = {
@@ -53,47 +59,32 @@ export default async function handler(req, res) {
     // Generate unique application ID
     const applicationId = `IDP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-    // Connect to database
-    const client = new Client({
-      connectionString: process.env.POSTGRES_URL,
-      ssl: {
-        rejectUnauthorized: false
-      }
-    })
-
-    await client.connect()
-
-    try {
-      // Save application to database
-      const query = `
-        INSERT INTO applications (application_id, form_data, payment_status, created_at, updated_at)
-        VALUES ($1, $2, $3, NOW(), NOW())
-        RETURNING id, application_id, created_at
-      `
-      
-      const values = [
-        applicationId,
-        JSON.stringify(formData),
-        'pending'
-      ]
-
-      const result = await client.query(query, values)
-      const application = result.rows[0]
-
-      // Calculate pricing based on selections
-      const pricing = calculatePricing(formData)
-
-      // Return success with application ID and pricing
-      res.status(200).json({
-        success: true,
-        applicationId: application.application_id,
-        pricing,
-        message: 'Application saved successfully'
+    // Save application to database using Supabase client
+    const { data, error } = await supabase
+      .from('applications')
+      .insert({
+        application_id: applicationId,
+        form_data: formData,
+        payment_status: 'pending'
       })
+      .select()
+      .single()
 
-    } finally {
-      await client.end()
+    if (error) {
+      console.error('Database error:', error)
+      throw new Error(`Database error: ${error.message}`)
     }
+
+    // Calculate pricing based on selections
+    const pricing = calculatePricing(formData)
+
+    // Return success with application ID and pricing
+    res.status(200).json({
+      success: true,
+      applicationId: applicationId,
+      pricing,
+      message: 'Application saved successfully'
+    })
 
   } catch (error) {
     console.error('Save application error:', error)
