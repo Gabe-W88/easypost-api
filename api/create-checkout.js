@@ -1,7 +1,13 @@
 import Stripe from 'stripe'
-import { Client } from 'pg'
+import { createClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
 
 // Stripe product mapping for form selections
 const STRIPE_PRODUCTS = {
@@ -71,26 +77,18 @@ export default async function handler(req, res) {
       }
     })
 
-    // Update database with Stripe session ID
-    const client = new Client({
-      connectionString: process.env.POSTGRES_URL,
-      ssl: process.env.NODE_ENV === 'production' ? {
-        rejectUnauthorized: false
-      } : false
-    })
+    // Update database with Stripe session ID using Supabase
+    const { error: updateError } = await supabase
+      .from('applications')
+      .update({ 
+        stripe_session_id: session.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('application_id', applicationId)
 
-    await client.connect()
-
-    try {
-      const query = `
-        UPDATE applications 
-        SET stripe_session_id = $1, updated_at = NOW()
-        WHERE application_id = $2
-      `
-      await client.query(query, [session.id, applicationId])
-
-    } finally {
-      await client.end()
+    if (updateError) {
+      console.error('Failed to update application with session ID:', updateError)
+      // Don't fail the checkout, just log the error
     }
 
     // Return checkout URL

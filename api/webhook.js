@@ -1,7 +1,13 @@
 import Stripe from 'stripe'
-import { Client } from 'pg'
+import { createClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -54,42 +60,30 @@ export default async function handler(req, res) {
 async function handleCheckoutCompleted(session) {
   console.log('Checkout completed:', session.id)
   
-  const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: process.env.NODE_ENV === 'production' ? {
-      rejectUnauthorized: false
-    } : false
-  })
+  // Update application with payment success using Supabase
+  const { data, error } = await supabase
+    .from('applications')
+    .update({
+      payment_status: 'completed',
+      stripe_payment_intent_id: session.payment_intent,
+      updated_at: new Date().toISOString()
+    })
+    .eq('stripe_session_id', session.id)
+    .select('application_id, form_data')
+    .single()
 
-  await client.connect()
+  if (error) {
+    console.error('Database update failed:', error)
+    return
+  }
 
-  try {
-    // Update application with payment success
-    const query = `
-      UPDATE applications 
-      SET 
-        payment_status = 'completed',
-        stripe_payment_intent_id = $1,
-        updated_at = NOW()
-      WHERE stripe_session_id = $2
-      RETURNING application_id, form_data
-    `
+  if (data) {
+    // Trigger Make.com automation
+    await triggerMakeAutomation(data.application_id, data.form_data, session)
     
-    const result = await client.query(query, [session.payment_intent, session.id])
-    
-    if (result.rows.length > 0) {
-      const application = result.rows[0]
-      
-      // Trigger Make.com automation
-      await triggerMakeAutomation(application.application_id, application.form_data, session)
-      
-      console.log(`Application ${application.application_id} payment completed successfully`)
-    } else {
-      console.error('No application found for session:', session.id)
-    }
-
-  } finally {
-    await client.end()
+    console.log(`Application ${data.application_id} payment completed successfully`)
+  } else {
+    console.error('No application found for session:', session.id)
   }
 }
 
@@ -104,30 +98,19 @@ async function handlePaymentSucceeded(paymentIntent) {
 async function handleCheckoutExpired(session) {
   console.log('Checkout expired:', session.id)
   
-  const client = new Client({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: process.env.NODE_ENV === 'production' ? {
-      rejectUnauthorized: false
-    } : false
-  })
+  // Update application status to expired using Supabase
+  const { error } = await supabase
+    .from('applications')
+    .update({
+      payment_status: 'expired',
+      updated_at: new Date().toISOString()
+    })
+    .eq('stripe_session_id', session.id)
 
-  await client.connect()
-
-  try {
-    // Update application status to expired
-    const query = `
-      UPDATE applications 
-      SET 
-        payment_status = 'expired',
-        updated_at = NOW()
-      WHERE stripe_session_id = $1
-    `
-    
-    await client.query(query, [session.id])
+  if (error) {
+    console.error('Failed to mark session as expired:', error)
+  } else {
     console.log(`Checkout session ${session.id} marked as expired`)
-
-  } finally {
-    await client.end()
   }
 }
 
