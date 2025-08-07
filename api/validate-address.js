@@ -36,8 +36,8 @@ function checkZipCodeMismatch(state, zip, city) {
 }
 
 export default async function handler(req, res) {
-  // Enable CORS for all origins (you can restrict this later)
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  // Enable CORS for Framer domain
+  res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.setHeader('Access-Control-Max-Age', '86400')
