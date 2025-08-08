@@ -41,7 +41,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { formData } = req.body
+    const { formData, fileData } = req.body
 
     // Validate required form data
     if (!formData) {
@@ -56,6 +56,15 @@ export default async function handler(req, res) {
       }
     }
 
+    // Validate file uploads
+    if (!fileData || !fileData.driversLicense || !fileData.passportPhoto) {
+      return res.status(400).json({ error: 'Both driver\'s license and passport photo uploads are required' })
+    }
+
+    if (fileData.driversLicense.length === 0 || fileData.passportPhoto.length === 0) {
+      return res.status(400).json({ error: 'At least one file must be uploaded for each document type' })
+    }
+
     // Generate unique application ID
     const applicationId = `IDP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -65,6 +74,7 @@ export default async function handler(req, res) {
       .insert({
         application_id: applicationId,
         form_data: formData,
+        file_data: fileData,  // Store file data as JSON
         payment_status: 'pending'
       })
       .select()
