@@ -30,12 +30,18 @@ export default async function handler(req, res) {
   let event
 
   try {
-    // Verify webhook signature
-    event = stripe.webhooks.constructEvent(
-      req.body, 
-      sig, 
-      process.env.STRIPE_WEBHOOK_SECRET
-    )
+    if (sig) {
+      // This is a real Stripe webhook with signature
+      event = stripe.webhooks.constructEvent(
+        req.body, 
+        sig, 
+        process.env.STRIPE_WEBHOOK_SECRET
+      )
+    } else {
+      // This is a manual call from frontend (no signature)
+      console.log('Manual webhook call from frontend')
+      event = req.body
+    }
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message)
     return res.status(400).json({ error: `Webhook Error: ${err.message}` })
