@@ -87,11 +87,42 @@ async function handleCheckoutCompleted(session) {
   }
 }
 
-// Handle payment intent success (additional confirmation)
+// Handle payment intent success (for embedded payments)
 async function handlePaymentSucceeded(paymentIntent) {
   console.log('Payment succeeded:', paymentIntent.id)
   
-  // Additional logic if needed - payment is already handled in checkout.session.completed
+  const applicationId = paymentIntent.metadata?.applicationId
+  
+  if (!applicationId) {
+    console.error('No application ID in payment intent metadata')
+    return
+  }
+
+  // Update application with payment success using Supabase
+  const { data, error } = await supabase
+    .from('applications')
+    .update({
+      payment_status: 'completed',
+      stripe_payment_intent_id: paymentIntent.id,
+      updated_at: new Date().toISOString()
+    })
+    .eq('application_id', applicationId)
+    .select('application_id, form_data')
+    .single()
+
+  if (error) {
+    console.error('Database update failed:', error)
+    return
+  }
+
+  if (data) {
+    // Trigger Make.com automation with payment intent data
+    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent)
+    
+    console.log(`Application ${data.application_id} payment completed successfully via PaymentIntent`)
+  } else {
+    console.error('No application found for payment intent:', paymentIntent.id)
+  }
 }
 
 // Handle expired checkout sessions
