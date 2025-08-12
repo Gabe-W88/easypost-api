@@ -111,10 +111,25 @@ async function handleCheckoutCompleted(session) {
 }
 
 // Handle payment intent success (for embedded payments)
-async function handlePaymentSucceeded(paymentIntent) {
-  console.log('Payment succeeded:', paymentIntent.id)
+async function handlePaymentSucceeded(paymentIntentData) {
+  console.log('Payment succeeded:', paymentIntentData.id)
   
-  const applicationId = paymentIntent.metadata?.applicationId
+  // If this is a simplified object from frontend, fetch the full PaymentIntent
+  let paymentIntent = paymentIntentData
+  if (!paymentIntent.amount || !paymentIntent.payment_method) {
+    console.log('Fetching full PaymentIntent details from Stripe...')
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentData.id, {
+        expand: ['payment_method']
+      })
+      console.log('Full PaymentIntent retrieved:', JSON.stringify(paymentIntent, null, 2))
+    } catch (error) {
+      console.error('Failed to retrieve PaymentIntent:', error)
+      return
+    }
+  }
+  
+  const applicationId = paymentIntent.metadata?.applicationId || paymentIntent.metadata?.application_id
   
   if (!applicationId) {
     console.error('No application ID in payment intent metadata')
@@ -127,7 +142,11 @@ async function handlePaymentSucceeded(paymentIntent) {
   
   try {
     if (paymentIntent.payment_method) {
-      paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method)
+      if (typeof paymentIntent.payment_method === 'string') {
+        paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method)
+      } else {
+        paymentMethod = paymentIntent.payment_method
+      }
       console.log('Payment method details:', JSON.stringify(paymentMethod, null, 2))
     }
     
@@ -157,6 +176,7 @@ async function handlePaymentSucceeded(paymentIntent) {
       payment_status: 'completed',
       stripe_payment_intent_id: paymentIntent.id,
       stripe_payment_method_id: paymentIntent.payment_method,
+      payment_completed_at: new Date().toISOString(),
       billing_address: JSON.stringify(addressData.billing_address),
       billing_name: addressData.billing_name,
       billing_email: addressData.billing_email,
