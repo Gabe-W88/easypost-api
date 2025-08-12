@@ -78,8 +78,14 @@ async function handleCheckoutCompleted(session) {
   }
 
   if (data) {
-    // Trigger Make.com automation
-    await triggerMakeAutomation(data.application_id, data.form_data, session)
+    // For checkout sessions, we don't have detailed address data like PaymentIntents
+    // But we can still trigger the automation
+    await triggerMakeAutomation(data.application_id, data.form_data, { 
+      id: session.payment_intent,
+      payment_method: session.payment_method,
+      amount: session.amount_total,
+      currency: session.currency 
+    })
     
     console.log(`Application ${data.application_id} payment completed successfully`)
   } else {
@@ -98,12 +104,49 @@ async function handlePaymentSucceeded(paymentIntent) {
     return
   }
 
-  // Update application with payment success using Supabase
+  // Get the payment method to extract address details
+  let paymentMethod = null
+  let shippingAddress = null
+  
+  try {
+    if (paymentIntent.payment_method) {
+      paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method)
+      console.log('Payment method details:', JSON.stringify(paymentMethod, null, 2))
+    }
+    
+    // Check if there's shipping information in the payment intent
+    if (paymentIntent.shipping) {
+      shippingAddress = paymentIntent.shipping.address
+      console.log('Shipping address from PaymentIntent:', shippingAddress)
+    }
+  } catch (error) {
+    console.error('Failed to retrieve payment method details:', error)
+  }
+
+  // Update application with payment success and address data
+  const addressData = {
+    billing_address: paymentMethod?.billing_details?.address || null,
+    billing_name: paymentMethod?.billing_details?.name || null,
+    billing_email: paymentMethod?.billing_details?.email || null,
+    billing_phone: paymentMethod?.billing_details?.phone || null,
+    shipping_address: shippingAddress || null,
+    shipping_name: paymentIntent.shipping?.name || null,
+    shipping_phone: paymentIntent.shipping?.phone || null,
+  }
+
   const { data, error } = await supabase
     .from('applications')
     .update({
       payment_status: 'completed',
       stripe_payment_intent_id: paymentIntent.id,
+      stripe_payment_method_id: paymentIntent.payment_method,
+      billing_address: JSON.stringify(addressData.billing_address),
+      billing_name: addressData.billing_name,
+      billing_email: addressData.billing_email,
+      billing_phone: addressData.billing_phone,
+      shipping_address: JSON.stringify(addressData.shipping_address),
+      shipping_name: addressData.shipping_name,
+      shipping_phone: addressData.shipping_phone,
       updated_at: new Date().toISOString()
     })
     .eq('application_id', applicationId)
@@ -116,8 +159,8 @@ async function handlePaymentSucceeded(paymentIntent) {
   }
 
   if (data) {
-    // Trigger Make.com automation with payment intent data
-    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent)
+    // Trigger Make.com automation with payment intent and address data
+    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData)
     
     console.log(`Application ${data.application_id} payment completed successfully via PaymentIntent`)
   } else {
@@ -145,41 +188,80 @@ async function handleCheckoutExpired(session) {
   }
 }
 
-// Trigger Make.com automation with application data
-async function triggerMakeAutomation(applicationId, formDataString, session) {
+// Trigger Make.com automation with application data for business workflow
+async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null) {
   try {
     // Parse form data
     const formData = typeof formDataString === 'string' 
       ? JSON.parse(formDataString) 
       : formDataString
 
-    // Prepare data for Make.com
+    // Calculate processing time based on selection
+    const getProcessingTime = (option) => {
+      switch (option) {
+        case 'standard':
+          return '3-5 business days'
+        case 'express':
+          return '2 business days'
+        case 'same_day':
+          return 'Same/Next business day'
+        default:
+          return '3-5 business days'
+      }
+    }
+
+    // Calculate shipping speed requirement for EasyPost (in days)
+    const getShippingSpeedDays = (option) => {
+      switch (option) {
+        case 'standard':
+          return 5 // 3-5 days max
+        case 'express':
+          return 2 // 2 days max
+        case 'next_day':
+          return 1 // next business day
+        default:
+          return 5
+      }
+    }
+
+    // Prepare comprehensive data for Make.com business workflow
     const automationData = {
+      // Application identification
       application_id: applicationId,
       payment_status: 'completed',
-      stripe_session_id: session.id,
-      stripe_payment_intent_id: session.payment_intent,
-      customer_email: session.customer_email || formData.email,
-      amount_total: session.amount_total / 100, // Convert from cents
-      currency: session.currency,
+      stripe_payment_intent_id: paymentIntent.id,
+      amount_total: paymentIntent.amount / 100, // Convert from cents
+      currency: paymentIntent.currency,
       
-      // Application details
-      personal_info: {
+      // Customer personal information (for work order)
+      customer: {
         first_name: formData.firstName,
-        middle_name: formData.middleName,
+        middle_name: formData.middleName || '',
         last_name: formData.lastName,
+        full_name: `${formData.firstName} ${formData.middleName || ''} ${formData.lastName}`.trim(),
         email: formData.email,
         phone: formData.phone,
         date_of_birth: formData.dateOfBirth
       },
       
+      // License information
       license_info: {
         license_number: formData.licenseNumber,
         license_state: formData.licenseState,
-        license_expiration: formData.licenseExpiration
+        license_expiration: formData.licenseExpiration,
+        birthplace_city: formData.birthplaceCity,
+        birthplace_state: formData.birthplaceState
       },
       
-      address_info: {
+      // Travel information
+      travel_info: {
+        drive_abroad: formData.driveAbroad,
+        departure_date: formData.departureDate,
+        permit_effective_date: formData.permitEffectiveDate
+      },
+      
+      // Form address (step 1)
+      form_address: {
         street_address: formData.streetAddress,
         street_address_2: formData.streetAddress2,
         city: formData.city,
@@ -187,52 +269,132 @@ async function triggerMakeAutomation(applicationId, formDataString, session) {
         zip_code: formData.zipCode
       },
       
+      // Shipping address from Stripe (step 4)
+      shipping_address: addressData?.shipping_address ? {
+        name: addressData.shipping_name || `${formData.firstName} ${formData.lastName}`,
+        phone: addressData.shipping_phone || formData.phone,
+        line1: addressData.shipping_address.line1,
+        line2: addressData.shipping_address.line2 || '',
+        city: addressData.shipping_address.city,
+        state: addressData.shipping_address.state,
+        postal_code: addressData.shipping_address.postal_code,
+        country: addressData.shipping_address.country || 'US'
+      } : {
+        // Fallback to form data if no Stripe shipping address
+        name: `${formData.firstName} ${formData.lastName}`,
+        phone: formData.phone,
+        line1: formData.streetAddress,
+        line2: formData.streetAddress2 || '',
+        city: formData.city,
+        state: formData.state,
+        postal_code: formData.zipCode,
+        country: 'US'
+      },
+      
+      // Application selections
       selections: {
-        license_types: formData.licenseTypes,
-        selected_permits: formData.selectedPermits,
+        license_types: formData.licenseTypes || [],
+        selected_permits: formData.selectedPermits || [],
         processing_option: formData.processingOption,
+        processing_time_estimate: getProcessingTime(formData.processingOption),
         shipping_option: formData.shippingOption
       },
       
-      additional_info: {
-        birthplace_city: formData.birthplaceCity,
-        birthplace_state: formData.birthplaceState,
-        drive_abroad: formData.driveAbroad,
-        departure_date: formData.departureDate,
-        permit_effective_date: formData.permitEffectiveDate
+      // Customer uploaded files (base64 in Supabase)
+      customer_files: {
+        id_document: formData.idDocument || null,
+        passport_photo: formData.passportPhoto || null,
+        // File naming convention for Make.com to use
+        id_document_filename: `${formData.firstName}${formData.lastName}_ID_Document.jpg`,
+        passport_photo_filename: `${formData.firstName}${formData.lastName}_Passport_Photo.jpg`
       },
       
+      // EasyPost shipping data (for fastest rate selection)
+      easypost_shipment: {
+        to_address: {
+          name: addressData?.shipping_name || `${formData.firstName} ${formData.lastName}`,
+          street1: addressData?.shipping_address?.line1 || formData.streetAddress,
+          street2: addressData?.shipping_address?.line2 || formData.streetAddress2 || '',
+          city: addressData?.shipping_address?.city || formData.city,
+          state: addressData?.shipping_address?.state || formData.state,
+          zip: addressData?.shipping_address?.postal_code || formData.zipCode,
+          country: addressData?.shipping_address?.country || 'US',
+          phone: addressData?.shipping_phone || formData.phone,
+          email: formData.email
+        },
+        parcel: {
+          length: 9,    // Standard envelope size
+          width: 6,
+          height: 0.5,
+          weight: 2     // 2 oz for IDP document
+        },
+        // Speed requirement for EasyPost to filter rates
+        max_delivery_days: getShippingSpeedDays(formData.shippingOption),
+        options: {
+          label_format: 'PDF',
+          label_size: '4x6'
+        }
+      },
+      
+      // Business workflow settings
+      business_settings: {
+        work_order_recipient: 'wilke.gabe1@gmail.com',
+        customer_thank_you_email: true,
+        store_pdfs_in_supabase: true,
+        processing_time_message: getProcessingTime(formData.processingOption)
+      },
+      
+      // Timestamps
       timestamps: {
         created_at: new Date().toISOString(),
         payment_completed_at: new Date().toISOString()
       }
     }
 
-    // TODO: Replace with your actual Make.com webhook URL
-    // const makeWebhookUrl = 'https://hook.make.com/your-webhook-url-here'
+    // Send to Make.com webhook
+    const makeWebhookUrl = process.env.MAKE_WEBHOOK_URL
     
-    // For now, just log the data that would be sent
-    console.log('Would trigger Make.com automation with data:', JSON.stringify(automationData, null, 2))
-    
-    // Uncomment when you have your Make.com webhook URL:
-    /*
-    const response = await fetch(makeWebhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(automationData)
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Make.com webhook failed: ${response.status}`)
+    if (makeWebhookUrl) {
+      console.log('Triggering Make.com business workflow automation...')
+      
+      const response = await fetch(makeWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(automationData)
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Make.com webhook failed: ${response.status} ${await response.text()}`)
+      }
+      
+      console.log('Make.com business workflow triggered successfully for application:', applicationId)
+      
+      // Update database to track automation trigger
+      await supabase
+        .from('applications')
+        .update({
+          make_automation_triggered_at: new Date().toISOString(),
+          make_automation_status: 'processing'
+        })
+        .eq('application_id', applicationId)
+        
+    } else {
+      console.log('MAKE_WEBHOOK_URL not configured. Business workflow data prepared:', JSON.stringify(automationData, null, 2))
     }
-    
-    console.log('Make.com automation triggered successfully for application:', applicationId)
-    */
 
   } catch (error) {
-    console.error('Failed to trigger Make.com automation:', error)
-    // Don't throw - we don't want to fail the webhook if automation fails
+    console.error('Failed to trigger Make.com business workflow:', error)
+    
+    // Update database with error status
+    await supabase
+      .from('applications')
+      .update({
+        make_automation_status: 'failed',
+        make_automation_error: error.message
+      })
+      .eq('application_id', applicationId)
+      .catch(dbError => console.error('Failed to update automation status:', dbError))
   }
 }
