@@ -1,7 +1,10 @@
 import Stripe from 'stripe'
 
-// Use environment variable for the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY)
+// Use environment variable for the secret key with debugging
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
+console.log('Using Stripe key ending with:', stripeSecretKey ? stripeSecretKey.slice(-6) : 'MISSING')
+
+const stripe = new Stripe(stripeSecretKey)
 
 // Product mapping (same as create-checkout.js)
 const STRIPE_PRODUCTS = {
