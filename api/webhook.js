@@ -1,7 +1,10 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+// Use the same Stripe key as other files
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
+console.log('Webhook using Stripe key ending with:', stripeSecretKey ? stripeSecretKey.slice(-6) : 'MISSING')
+const stripe = new Stripe(stripeSecretKey)
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -25,6 +28,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  console.log('=== WEBHOOK CALLED ===')
+  console.log('Request method:', req.method)
+  console.log('Headers:', JSON.stringify(req.headers, null, 2))
+  console.log('Body type:', typeof req.body)
+  console.log('Body:', JSON.stringify(req.body, null, 2))
 
   const sig = req.headers['stripe-signature']
   let event
@@ -151,6 +160,16 @@ async function handlePaymentSucceeded(paymentIntentData) {
   }
 
   console.log('Looking for application with ID:', applicationId)
+
+  // First, let's check if the application exists at all
+  console.log('Checking if application exists...')
+  const { data: checkData, error: checkError } = await supabase
+    .from('applications')
+    .select('application_id, payment_status')
+    .eq('application_id', applicationId)
+    .single()
+  
+  console.log('Application check result:', { data: checkData, error: checkError })
 
   // Get the payment method to extract address details
   let paymentMethod = null
