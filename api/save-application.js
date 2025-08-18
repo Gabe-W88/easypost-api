@@ -48,11 +48,30 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Form data is required' })
     }
 
-    // Validate required fields
-    const requiredFields = ['email', 'firstName', 'lastName', 'selectedPermits', 'processingOption', 'shippingOption']
+    // Debug: Check what shippingOption value we're receiving
+    console.log('=== FORM VALIDATION DEBUG ===')
+    console.log('Full formData:', JSON.stringify(formData, null, 2))
+    console.log('shippingOption:', formData.shippingOption, 'type:', typeof formData.shippingOption)
+    console.log('processingOption:', formData.processingOption, 'type:', typeof formData.processingOption)
+
+    // Temporarily skip shipping validation to debug
+    const requiredFields = ['email', 'firstName', 'lastName', 'selectedPermits', 'processingOption'] // removed shippingOption temporarily
     for (const field of requiredFields) {
-      if (!formData[field]) {
-        return res.status(400).json({ error: `${field} is required` })
+      const value = formData[field]
+      
+      // Check for different types of "empty" values
+      if (!value || value === '' || (Array.isArray(value) && value.length === 0)) {
+        console.log(`Field validation failed: ${field}`, {
+          value: value,
+          type: typeof value,
+          isArray: Array.isArray(value),
+          length: value?.length
+        })
+        return res.status(400).json({ 
+          error: `${field} is required`,
+          received: value,
+          type: typeof value
+        })
       }
     }
 
@@ -130,7 +149,7 @@ function calculatePricing(formData) {
         })
         total += 20
       }
-    })
+    }
   }
 
   // Add processing cost
