@@ -13,6 +13,10 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
+  console.log('🚀 WEBHOOK HANDLER STARTED 🚀')
+  console.log('Method:', req.method)
+  console.log('URL:', req.url)
+  
   // Enable CORS for Framer domain
   res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -21,11 +25,13 @@ export default async function handler(req, res) {
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('OPTIONS request handled')
     return res.status(200).end()
   }
 
   // Only allow POST requests
   if (req.method !== 'POST') {
+    console.log('Invalid method:', req.method)
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
