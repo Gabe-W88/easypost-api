@@ -269,6 +269,10 @@ async function handleCheckoutExpired(session) {
 
 // Trigger Make.com automation with application data for business workflow
 async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null) {
+  console.log('🚀 TRIGGERING MAKE AUTOMATION - START')
+  console.log('Application ID:', applicationId)
+  console.log('Payment Intent ID:', paymentIntent?.id)
+  
   try {
     // Parse form data
     const formData = typeof formDataString === 'string' 
@@ -437,6 +441,8 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     if (makeWebhookUrl) {
       console.log('Triggering Make.com business workflow automation...')
       console.log('Sending to:', makeWebhookUrl)
+      console.log('API Key:', makeApiKey ? 'SET' : 'NOT SET')
+      console.log('Payload:', JSON.stringify(automationData, null, 2))
       
       const response = await fetch(makeWebhookUrl, {
         method: 'POST',
@@ -447,11 +453,17 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         body: JSON.stringify(automationData)
       })
       
+      console.log('Make.com response status:', response.status)
+      console.log('Make.com response headers:', Object.fromEntries(response.headers.entries()))
+      
       if (!response.ok) {
         const errorText = await response.text()
         console.error('Make.com webhook failed:', response.status, errorText)
         throw new Error(`Make.com webhook failed: ${response.status} ${errorText}`)
       }
+      
+      const responseText = await response.text()
+      console.log('Make.com response body:', responseText)
       
       console.log('✅ Make.com business workflow triggered successfully for application:', applicationId)
       
