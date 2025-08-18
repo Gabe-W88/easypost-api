@@ -431,24 +431,29 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     }
 
     // Send to Make.com webhook
-    const makeWebhookUrl = process.env.MAKE_WEBHOOK_URL
+    const makeWebhookUrl = process.env.MAKE_WEBHOOK_URL || 'https://hook.us2.make.com/ycaa7o76udppdd7m4hn22xe1toj623ts'
+    const makeApiKey = process.env.MAKE_API_KEY || 'FIDP_webhook_key_2025_secure123'
     
     if (makeWebhookUrl) {
       console.log('Triggering Make.com business workflow automation...')
+      console.log('Sending to:', makeWebhookUrl)
       
       const response = await fetch(makeWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-make-apikey': makeApiKey
         },
         body: JSON.stringify(automationData)
       })
       
       if (!response.ok) {
-        throw new Error(`Make.com webhook failed: ${response.status} ${await response.text()}`)
+        const errorText = await response.text()
+        console.error('Make.com webhook failed:', response.status, errorText)
+        throw new Error(`Make.com webhook failed: ${response.status} ${errorText}`)
       }
       
-      console.log('Make.com business workflow triggered successfully for application:', applicationId)
+      console.log('✅ Make.com business workflow triggered successfully for application:', applicationId)
       
       // Update database to track automation trigger
       await supabase
