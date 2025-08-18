@@ -48,25 +48,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Form data is required' })
     }
 
-    // Debug: Check what shippingOption value we're receiving
+    // Debug: Check what we're receiving
     console.log('=== FORM VALIDATION DEBUG ===')
     console.log('Full formData:', JSON.stringify(formData, null, 2))
     console.log('shippingOption:', formData.shippingOption, 'type:', typeof formData.shippingOption)
     console.log('processingOption:', formData.processingOption, 'type:', typeof formData.processingOption)
 
-    // Temporarily skip shipping validation to debug
-    const requiredFields = ['email', 'firstName', 'lastName', 'selectedPermits', 'processingOption'] // removed shippingOption temporarily
+    // Validate required fields (temporarily skip shipping for debugging)
+    const requiredFields = ['email', 'firstName', 'lastName', 'selectedPermits', 'processingOption']
     for (const field of requiredFields) {
       const value = formData[field]
       
-      // Check for different types of "empty" values
       if (!value || value === '' || (Array.isArray(value) && value.length === 0)) {
-        console.log(`Field validation failed: ${field}`, {
-          value: value,
-          type: typeof value,
-          isArray: Array.isArray(value),
-          length: value?.length
-        })
+        console.log(`Field validation failed: ${field}`, value)
         return res.status(400).json({ 
           error: `${field} is required`,
           received: value,
@@ -87,32 +81,33 @@ export default async function handler(req, res) {
     // Generate unique application ID
     const applicationId = `IDP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-    // Save application to database using Supabase client
+    // Save application to database
     const { data, error } = await supabase
       .from('applications')
       .insert({
         application_id: applicationId,
         form_data: formData,
-        file_data: fileData,  // Store file data as JSON
+        file_data: fileData,
         payment_status: 'pending'
       })
       .select()
-      .single()
 
     if (error) {
       console.error('Database error:', error)
-      throw new Error(`Database error: ${error.message}`)
+      return res.status(500).json({ 
+        error: 'Failed to save to database',
+        details: error.message
+      })
     }
 
-    // Calculate pricing based on selections
+    // Calculate pricing
     const pricing = calculatePricing(formData)
 
-    // Return success with application ID and pricing
     res.status(200).json({
       success: true,
       applicationId: applicationId,
-      pricing,
-      message: 'Application saved successfully'
+      data: data[0],
+      pricing: pricing
     })
 
   } catch (error) {
@@ -124,7 +119,7 @@ export default async function handler(req, res) {
   }
 }
 
-// Helper function to calculate pricing based on form selections
+// Helper function to calculate pricing
 function calculatePricing(formData) {
   let total = 0
   const lineItems = []
@@ -149,7 +144,7 @@ function calculatePricing(formData) {
         })
         total += 20
       }
-    }
+    })
   }
 
   // Add processing cost
