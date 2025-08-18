@@ -49,16 +49,23 @@ export default async function handler(req, res) {
 
   // Handle the event
   try {
+    console.log('=== WEBHOOK EVENT RECEIVED ===')
+    console.log('Event type:', event.type)
+    console.log('Event data:', JSON.stringify(event.data?.object, null, 2))
+    
     switch (event.type) {
       case 'checkout.session.completed':
+        console.log('Handling checkout session completed')
         await handleCheckoutCompleted(event.data.object)
         break
       
       case 'payment_intent.succeeded':
+        console.log('Handling payment intent succeeded')
         await handlePaymentSucceeded(event.data.object)
         break
       
       case 'checkout.session.expired':
+        console.log('Handling checkout session expired')
         await handleCheckoutExpired(event.data.object)
         break
       
@@ -66,10 +73,13 @@ export default async function handler(req, res) {
         console.log(`Unhandled event type: ${event.type}`)
     }
 
-    res.status(200).json({ received: true })
+    console.log('=== WEBHOOK PROCESSING COMPLETE ===')
+    res.status(200).json({ received: true, eventType: event.type })
   } catch (error) {
-    console.error('Webhook handler error:', error)
-    res.status(500).json({ error: 'Webhook handler failed' })
+    console.error('=== WEBHOOK HANDLER ERROR ===')
+    console.error('Error details:', error)
+    console.error('Stack trace:', error.stack)
+    res.status(500).json({ error: 'Webhook handler failed', details: error.message })
   }
 }
 
@@ -112,7 +122,8 @@ async function handleCheckoutCompleted(session) {
 
 // Handle payment intent success (for embedded payments)
 async function handlePaymentSucceeded(paymentIntentData) {
-  console.log('Payment succeeded:', paymentIntentData.id)
+  console.log('=== PAYMENT SUCCEEDED HANDLER START ===')
+  console.log('Payment succeeded - Raw data:', JSON.stringify(paymentIntentData, null, 2))
   
   // If this is a simplified object from frontend, fetch the full PaymentIntent
   let paymentIntent = paymentIntentData
@@ -130,11 +141,16 @@ async function handlePaymentSucceeded(paymentIntentData) {
   }
   
   const applicationId = paymentIntent.metadata?.applicationId || paymentIntent.metadata?.application_id
+  console.log('Extracted application ID:', applicationId)
+  console.log('All metadata:', JSON.stringify(paymentIntent.metadata, null, 2))
   
   if (!applicationId) {
     console.error('No application ID in payment intent metadata')
+    console.error('Available metadata keys:', Object.keys(paymentIntent.metadata || {}))
     return
   }
+
+  console.log('Looking for application with ID:', applicationId)
 
   // Get the payment method to extract address details
   let paymentMethod = null
@@ -170,6 +186,9 @@ async function handlePaymentSucceeded(paymentIntentData) {
     shipping_phone: paymentIntent.shipping?.phone || null,
   }
 
+  console.log('Updating application with payment data...')
+  console.log('Address data:', JSON.stringify(addressData, null, 2))
+
   const { data, error } = await supabase
     .from('applications')
     .update({
@@ -190,12 +209,16 @@ async function handlePaymentSucceeded(paymentIntentData) {
     .select('application_id, form_data')
     .single()
 
+  console.log('Database update result:', { data, error })
+
   if (error) {
     console.error('Database update failed:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     return
   }
 
   if (data) {
+    console.log('Database updated successfully for application:', data.application_id)
     // Trigger Make.com automation with payment intent and address data
     await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData)
     
