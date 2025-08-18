@@ -1,7 +1,10 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+// Use the same Stripe key as other files
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
+console.log('Checkout using Stripe key ending with:', stripeSecretKey ? stripeSecretKey.slice(-6) : 'MISSING')
+const stripe = new Stripe(stripeSecretKey)
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -9,21 +12,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-// Stripe product mapping for form selections
+// Stripe product mapping for form selections (updated with test product IDs)
 const STRIPE_PRODUCTS = {
   // Permits ($20 each)
-  idp_international: 'prod_RNgiYrwBJb5dbE',
-  idp_brazil_uruguay: 'prod_SMY4pMBqlgyuuA',
+  idp_international: 'prod_StLB80b39cwGwe',
+  idp_brazil_uruguay: 'prod_StL0mfYEghMQd7',
   
   // Processing Options
-  processing_standard: 'prod_SIYd11YsNI0rdq',    // $69
-  processing_express: 'prod_SozBmuiOv9jgfX',     // $99
-  processing_same_day: 'prod_SozE7GytJcYcZi',    // $129
+  processing_standard: 'prod_StLCI6MmfjwY8u',    // $69
+  processing_express: 'prod_StLCgdjyMxHEkX',     // $99
+  processing_same_day: 'prod_StLCyJMauosNpo',    // $129
   
   // Shipping Options
-  shipping_standard: 'prod_SozG66tNrCWnKF',      // $9
-  shipping_express: 'prod_SozGhf2ITA2sZK',       // $19
-  shipping_next_day: 'prod_SozHGobwdxOfYw'       // $49
+  shipping_standard: 'prod_StLCXINozg6poK',      // $9
+  shipping_express: 'prod_StLDaMbeIjAQ5K',       // $19
+  shipping_next_day: 'prod_StLD5UEXiEVuKH',      // $49
 }
 
 export default async function handler(req, res) {
