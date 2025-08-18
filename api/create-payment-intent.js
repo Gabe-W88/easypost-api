@@ -281,7 +281,44 @@ export default async function handler(req, res) {
 
     console.log('Total amount calculated:', totalAmount, 'cents')
 
-    // Create PaymentIntent
+    // Build product summary for metadata
+    const productSummary = []
+    const productDetails = {}
+
+    // Add permits to summary
+    if (formData.selectedPermits && formData.selectedPermits.length > 0) {
+      formData.selectedPermits.forEach((permit, index) => {
+        productSummary.push(`${permit} ($20)`)
+        productDetails[`permit_${index + 1}`] = permit
+        productDetails[`permit_${index + 1}_price`] = '$20.00'
+      })
+    }
+
+    // Add processing option
+    if (formData.processingOption) {
+      const processingLabels = {
+        standard: 'Standard Processing ($69)',
+        express: 'Express Processing ($99)', 
+        same_day: 'Same Day Processing ($129)'
+      }
+      const label = processingLabels[formData.processingOption] || formData.processingOption
+      productSummary.push(label)
+      productDetails.processing_option = label
+    }
+
+    // Add shipping option
+    if (formData.shippingOption) {
+      const shippingLabels = {
+        standard: 'US Standard Shipping ($9)',
+        express: 'US Express Shipping ($19)',
+        next_day: 'US Next Day Shipping ($49)'
+      }
+      const label = shippingLabels[formData.shippingOption] || formData.shippingOption
+      productSummary.push(label)
+      productDetails.shipping_option = label
+    }
+
+    // Create PaymentIntent with detailed metadata
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAmount,
       currency: 'usd',
@@ -290,9 +327,16 @@ export default async function handler(req, res) {
         applicationId: applicationId,
         customer_email: formData.email,
         customer_name: `${formData.firstName} ${formData.lastName}`,
+        total_amount: `$${(totalAmount / 100).toFixed(2)}`,
+        product_summary: productSummary.join(', '),
+        permit_count: formData.selectedPermits?.length || 0,
+        processing_type: formData.processingOption || 'not_selected',
+        shipping_type: formData.shippingOption || 'not_selected',
+        line_items: JSON.stringify(lineItems),
+        ...productDetails
       },
       receipt_email: formData.email,
-      description: `International Driving Permit Application - ${formData.firstName} ${formData.lastName}`,
+      description: `IDP Application: ${productSummary.join(', ')} - ${formData.firstName} ${formData.lastName}`,
     })
 
     console.log('PaymentIntent created:', paymentIntent.id)
