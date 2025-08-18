@@ -71,17 +71,17 @@ export default async function handler(req, res) {
     
     switch (event.type) {
       case 'checkout.session.completed':
-        console.log('Handling checkout session completed')
+        console.log('>>> CALLING handleCheckoutCompleted')
         await handleCheckoutCompleted(event.data.object)
         break
       
       case 'payment_intent.succeeded':
-        console.log('Handling payment intent succeeded')
+        console.log('>>> CALLING handlePaymentSucceeded')
         await handlePaymentSucceeded(event.data.object)
         break
       
       case 'checkout.session.expired':
-        console.log('Handling checkout session expired')
+        console.log('>>> CALLING handleCheckoutExpired')
         await handleCheckoutExpired(event.data.object)
         break
       
