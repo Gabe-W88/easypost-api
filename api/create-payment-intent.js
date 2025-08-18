@@ -123,14 +123,14 @@ export default async function handler(req, res) {
       let productId = null
       let fallbackAmount = 0
       
-      // Map processing options (same as create-checkout.js)
-      if (processing.includes('Standard')) {
+      // Map processing options to new simplified values
+      if (processing === 'standard') {
         productId = STRIPE_PRODUCTS.processing_standard
         fallbackAmount = 6900 // $69.00
-      } else if (processing.includes('Express')) {
+      } else if (processing === 'express') {
         productId = STRIPE_PRODUCTS.processing_express
         fallbackAmount = 9900 // $99.00
-      } else if (processing.includes('Same Day')) {
+      } else if (processing === 'same_day') {
         productId = STRIPE_PRODUCTS.processing_same_day
         fallbackAmount = 12900 // $129.00
       }
@@ -201,14 +201,14 @@ export default async function handler(req, res) {
       let productId = null
       let fallbackAmount = 0
       
-      // Map shipping options (same as create-checkout.js)
-      if (shipping.includes('Standard')) {
+      // Map shipping options to new simplified values
+      if (shipping === 'standard') {
         productId = STRIPE_PRODUCTS.shipping_standard
         fallbackAmount = 900 // $9.00
-      } else if (shipping.includes('Express')) {
+      } else if (shipping === 'express') {
         productId = STRIPE_PRODUCTS.shipping_express
         fallbackAmount = 1900 // $19.00
-      } else if (shipping.includes('Next Day')) {
+      } else if (shipping === 'next_day') {
         productId = STRIPE_PRODUCTS.shipping_next_day
         fallbackAmount = 4900 // $49.00
       }

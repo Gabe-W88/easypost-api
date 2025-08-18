@@ -136,7 +136,7 @@ function calculatePricing(formData) {
   // Add processing cost
   if (formData.processingOption) {
     const processing = formData.processingOption
-    if (processing.includes('Standard')) {
+    if (processing === 'standard') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.processing_standard,
         name: 'Standard Processing',
@@ -144,7 +144,7 @@ function calculatePricing(formData) {
         quantity: 1
       })
       total += 69
-    } else if (processing.includes('Express')) {
+    } else if (processing === 'express') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.processing_express,
         name: 'Express Processing',
@@ -152,7 +152,7 @@ function calculatePricing(formData) {
         quantity: 1
       })
       total += 99
-    } else if (processing.includes('Same Day')) {
+    } else if (processing === 'same_day') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.processing_same_day,
         name: 'Same Day Processing',
@@ -166,7 +166,7 @@ function calculatePricing(formData) {
   // Add shipping cost
   if (formData.shippingOption) {
     const shipping = formData.shippingOption
-    if (shipping.includes('Standard')) {
+    if (shipping === 'standard') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.shipping_standard,
         name: 'US Standard Shipping',
@@ -174,7 +174,7 @@ function calculatePricing(formData) {
         quantity: 1
       })
       total += 9
-    } else if (shipping.includes('Express')) {
+    } else if (shipping === 'express') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.shipping_express,
         name: 'US Express Shipping',
@@ -182,7 +182,7 @@ function calculatePricing(formData) {
         quantity: 1
       })
       total += 19
-    } else if (shipping.includes('Next Day')) {
+    } else if (shipping === 'next_day') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.shipping_next_day,
         name: 'US Next Day Shipping',

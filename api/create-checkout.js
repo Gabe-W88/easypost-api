@@ -139,7 +139,7 @@ function buildStripeLineItems(formData) {
   // Add processing option
   if (formData.processingOption) {
     const processing = formData.processingOption
-    if (processing.includes('Standard')) {
+    if (processing === 'standard') {
       lineItems.push({
         price_data: {
           currency: 'usd',
@@ -148,7 +148,7 @@ function buildStripeLineItems(formData) {
         },
         quantity: 1
       })
-    } else if (processing.includes('Express')) {
+    } else if (processing === 'express') {
       lineItems.push({
         price_data: {
           currency: 'usd',
@@ -157,7 +157,7 @@ function buildStripeLineItems(formData) {
         },
         quantity: 1
       })
-    } else if (processing.includes('Same Day')) {
+    } else if (processing === 'same_day') {
       lineItems.push({
         price_data: {
           currency: 'usd',
@@ -172,7 +172,7 @@ function buildStripeLineItems(formData) {
   // Add shipping option
   if (formData.shippingOption) {
     const shipping = formData.shippingOption
-    if (shipping.includes('Standard')) {
+    if (shipping === 'standard') {
       lineItems.push({
         price_data: {
           currency: 'usd',
@@ -181,7 +181,7 @@ function buildStripeLineItems(formData) {
         },
         quantity: 1
       })
-    } else if (shipping.includes('Express')) {
+    } else if (shipping === 'express') {
       lineItems.push({
         price_data: {
           currency: 'usd',
@@ -190,7 +190,7 @@ function buildStripeLineItems(formData) {
         },
         quantity: 1
       })
-    } else if (shipping.includes('Next Day')) {
+    } else if (shipping === 'next_day') {
       lineItems.push({
         price_data: {
           currency: 'usd',
