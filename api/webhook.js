@@ -454,7 +454,9 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       const response = await fetch(makeWebhookUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${makeApiKey}`,
+          'X-API-Key': makeApiKey
         },
         body: JSON.stringify(automationData)
       })
