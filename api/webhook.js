@@ -60,7 +60,8 @@ export default async function handler(req, res) {
   try {
     console.log('=== WEBHOOK EVENT RECEIVED ===')
     console.log('Event type:', event.type)
-    console.log('Event data:', JSON.stringify(event.data?.object, null, 2))
+    console.log('Event object:', JSON.stringify(event, null, 2))
+    console.log('Event data object:', JSON.stringify(event.data?.object, null, 2))
     
     switch (event.type) {
       case 'checkout.session.completed':
