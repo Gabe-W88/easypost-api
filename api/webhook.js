@@ -485,13 +485,20 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     console.error('Failed to trigger Make.com business workflow:', error)
     
     // Update database with error status
-    await supabase
-      .from('applications')
-      .update({
-        make_automation_status: 'failed',
-        make_automation_error: error.message
-      })
-      .eq('application_id', applicationId)
-      .catch(dbError => console.error('Failed to update automation status:', dbError))
+    try {
+      const { error: dbError } = await supabase
+        .from('applications')
+        .update({
+          make_automation_status: 'failed',
+          make_automation_error: error.message
+        })
+        .eq('application_id', applicationId)
+      
+      if (dbError) {
+        console.error('Failed to update automation status:', dbError)
+      }
+    } catch (dbUpdateError) {
+      console.error('Failed to update automation status:', dbUpdateError)
+    }
   }
 }
