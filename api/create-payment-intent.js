@@ -272,7 +272,28 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log('Final total amount:', totalAmount, 'cents')
+    console.log('Final total amount (before tax):', totalAmount, 'cents')
+
+    // Add tax (7.75% for Bellefontaine, OH)
+    const subtotalAmount = totalAmount
+    const taxRate = 0.0775
+    const taxAmount = Math.round(subtotalAmount * taxRate)
+    totalAmount += taxAmount
+
+    // Add tax as separate line item
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: 'Tax (7.75% - Bellefontaine, OH)',
+        },
+        unit_amount: taxAmount,
+      },
+      quantity: 1,
+    })
+
+    console.log('Tax amount:', taxAmount, 'cents')
+    console.log('Final total amount (with tax):', totalAmount, 'cents')
 
     // Minimum amount check
     if (totalAmount < 50) { // $0.50 minimum for Stripe

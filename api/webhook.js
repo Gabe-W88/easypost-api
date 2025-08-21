@@ -112,7 +112,7 @@ async function handleCheckoutCompleted(session) {
       updated_at: new Date().toISOString()
     })
     .eq('stripe_session_id', session.id)
-    .select('application_id, form_data')
+    .select('application_id, form_data, file_data')
     .single()
 
   if (error) {
@@ -128,7 +128,7 @@ async function handleCheckoutCompleted(session) {
       payment_method: session.payment_method,
       amount: session.amount_total,
       currency: session.currency 
-    })
+    }, null, data.file_data)
     
     console.log(`Application ${data.application_id} payment completed successfully`)
   } else {
@@ -232,7 +232,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
       updated_at: new Date().toISOString()
     })
     .eq('application_id', applicationId)
-    .select('application_id, form_data')
+    .select('application_id, form_data, file_data')
     .single()
 
   console.log('Database update result:', { data, error })
@@ -246,7 +246,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
   if (data) {
     console.log('Database updated successfully for application:', data.application_id)
     // Trigger Make.com automation with payment intent and address data
-    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData)
+    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData, data.file_data)
     
     console.log(`Application ${data.application_id} payment completed successfully via PaymentIntent`)
   } else {
@@ -275,7 +275,7 @@ async function handleCheckoutExpired(session) {
 }
 
 // Trigger Make.com automation with application data for business workflow
-async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null) {
+async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null, fileData = null) {
   console.log('🚀 TRIGGERING MAKE AUTOMATION - START')
   console.log('Application ID:', applicationId)
   console.log('Payment Intent ID:', paymentIntent?.id)
@@ -285,6 +285,14 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     const formData = typeof formDataString === 'string' 
       ? JSON.parse(formDataString) 
       : formDataString
+
+    // Parse file data
+    const parsedFileData = fileData ? (typeof fileData === 'string' ? JSON.parse(fileData) : fileData) : null
+    console.log('File data available:', !!parsedFileData)
+    if (parsedFileData) {
+      console.log('Drivers License images count:', parsedFileData.driversLicense?.length || 0)
+      console.log('Passport Photo images count:', parsedFileData.passportPhoto?.length || 0)
+    }
 
     // Calculate processing time based on selection
     const getProcessingTime = (option) => {
@@ -323,6 +331,14 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       amount_total: paymentIntent.amount / 100, // Convert from cents
       currency: paymentIntent.currency,
       
+      // Tax information
+      tax_details: {
+        tax_rate: 0.0775,
+        tax_jurisdiction: 'Bellefontaine, OH',
+        subtotal: (paymentIntent.amount / 100) / 1.0775, // Calculate pre-tax amount
+        tax_amount: (paymentIntent.amount / 100) - ((paymentIntent.amount / 100) / 1.0775)
+      },
+      
       // Customer personal information (for work order)
       customer: {
         first_name: formData.firstName,
@@ -331,7 +347,8 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         full_name: `${formData.firstName} ${formData.middleName || ''} ${formData.lastName}`.trim(),
         email: formData.email,
         phone: formData.phone,
-        date_of_birth: formData.dateOfBirth
+        date_of_birth: formData.dateOfBirth,
+        signature: formData.signature || null // Base64 signature data
       },
       
       // License information
@@ -390,10 +407,10 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         shipping_option: formData.shippingOption
       },
       
-      // Customer uploaded files (base64 in Supabase)
+      // Customer uploaded files (base64 from Supabase)
       customer_files: {
-        id_document: formData.idDocument || null,
-        passport_photo: formData.passportPhoto || null,
+        id_document: parsedFileData?.driversLicense || null,
+        passport_photo: parsedFileData?.passportPhoto || null,
         // File naming convention for Make.com to use
         id_document_filename: `${formData.firstName}${formData.lastName}_ID_Document.jpg`,
         passport_photo_filename: `${formData.firstName}${formData.lastName}_Passport_Photo.jpg`
