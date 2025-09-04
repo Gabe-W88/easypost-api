@@ -50,6 +50,8 @@ export default async function handler(req, res) {
 
     console.log('Creating payment intent for application:', applicationId)
     console.log('Form data received:', JSON.stringify(formData, null, 2))
+    console.log('Shipping category received:', formData.shippingCategory)
+    console.log('Shipping option received:', formData.shippingOption)
     
     // Calculate total amount based on selections
     let totalAmount = 0
@@ -331,15 +333,139 @@ export default async function handler(req, res) {
     }
 
     // Add shipping option
-    if (formData.shippingOption) {
-      const shippingLabels = {
-        standard: 'US Standard Shipping ($9)',
-        express: 'US Express Shipping ($19)',
-        next_day: 'US Next Day Shipping ($49)'
+    console.log('=== SHIPPING DEBUG ===')
+    console.log('formData.shippingOption:', formData.shippingOption)
+    console.log('formData.shippingCategory:', formData.shippingCategory)
+    console.log('Both present?', !!(formData.shippingOption && formData.shippingCategory))
+    
+    if (formData.shippingOption && formData.shippingCategory) {
+      const category = formData.shippingCategory
+      const speed = formData.shippingOption
+      let shippingLabel = ''
+      
+      console.log('Building shipping label for category:', category, 'speed:', speed)
+      
+      // Build shipping label based on category and speed with actual prices
+      if (category === 'international') {
+        switch (speed) {
+          case 'standard':
+            shippingLabel = 'International Standard Shipping ($181.02)'
+            break
+          case 'express':
+            shippingLabel = 'International Express Shipping ($213.35)'
+            break
+          case 'next_day':
+            shippingLabel = 'International Next Day Shipping ($245.67)'
+            break
+          default:
+            shippingLabel = 'International Standard Shipping ($181.02)'
+        }
+      } else if (category === 'domestic') {
+        switch (speed) {
+          case 'standard':
+            shippingLabel = 'Domestic Standard Shipping ($105.60)'
+            break
+          case 'express':
+            shippingLabel = 'Domestic Express Shipping ($148.35)'
+            break
+          case 'next_day':
+            shippingLabel = 'Domestic Next Day Shipping ($213.35)'
+            break
+          default:
+            shippingLabel = 'Domestic Standard Shipping ($105.60)'
+        }
+      } else if (category === 'military') {
+        switch (speed) {
+          case 'standard':
+            shippingLabel = 'Military Standard Shipping ($95.90)'
+            break
+          case 'express':
+            shippingLabel = 'Military Express Shipping ($128.22)'
+            break
+          case 'next_day':
+            shippingLabel = 'Military Next Day Shipping ($160.55)'
+            break
+          default:
+            shippingLabel = 'Military Standard Shipping ($95.90)'
+        }
+      } else {
+        // Fallback for unknown category
+        console.log('Unknown shipping category, using fallback')
+        shippingLabel = `${category} ${speed} Shipping`
       }
-      const label = shippingLabels[formData.shippingOption] || formData.shippingOption
-      productSummary.push(label)
-      productDetails.shipping_option = label
+      
+      console.log('Final shipping label:', shippingLabel)
+      productSummary.push(shippingLabel)
+      productDetails.shipping_option = shippingLabel
+    } else if (formData.shippingOption) {
+      // Try to infer the category from the amount charged or make a smarter fallback
+      console.log('=== ATTEMPTING SMART FALLBACK ===')
+      
+      // Look at the line items to see what shipping amount was charged
+      const shippingLineItem = lineItems.find(item => 
+        item.price_data && item.price_data.product_data && 
+        item.price_data.product_data.name && 
+        item.price_data.product_data.name.toLowerCase().includes('shipping')
+      )
+      
+      if (shippingLineItem) {
+        const shippingAmount = shippingLineItem.price_data.unit_amount
+        const speed = formData.shippingOption
+        let shippingLabel = ''
+        
+        console.log('Found shipping line item with amount:', shippingAmount)
+        
+        // Infer category from amount
+        if (speed === 'next_day') {
+          if (shippingAmount === 24567) {
+            shippingLabel = 'International Next Day Shipping ($245.67)'
+          } else if (shippingAmount === 21335) {
+            shippingLabel = 'Domestic Next Day Shipping ($213.35)'
+          } else if (shippingAmount === 16055) {
+            shippingLabel = 'Military Next Day Shipping ($160.55)'
+          } else {
+            shippingLabel = `Next Day Shipping ($${(shippingAmount / 100).toFixed(2)})`
+          }
+        } else if (speed === 'express') {
+          if (shippingAmount === 21335) {
+            shippingLabel = 'International Express Shipping ($213.35)'
+          } else if (shippingAmount === 14835) {
+            shippingLabel = 'Domestic Express Shipping ($148.35)'
+          } else if (shippingAmount === 12822) {
+            shippingLabel = 'Military Express Shipping ($128.22)'
+          } else {
+            shippingLabel = `Express Shipping ($${(shippingAmount / 100).toFixed(2)})`
+          }
+        } else { // standard
+          if (shippingAmount === 18102) {
+            shippingLabel = 'International Standard Shipping ($181.02)'
+          } else if (shippingAmount === 10560) {
+            shippingLabel = 'Domestic Standard Shipping ($105.60)'
+          } else if (shippingAmount === 9590) {
+            shippingLabel = 'Military Standard Shipping ($95.90)'
+          } else {
+            shippingLabel = `Standard Shipping ($${(shippingAmount / 100).toFixed(2)})`
+          }
+        }
+        
+        console.log('Inferred shipping label:', shippingLabel)
+        productSummary.push(shippingLabel)
+        productDetails.shipping_option = shippingLabel
+      } else {
+        // Ultimate fallback to old system
+        console.log('Using old fallback shipping logic')
+        const shippingLabels = {
+          standard: 'US Standard Shipping ($9)',
+          express: 'US Express Shipping ($19)',
+          next_day: 'US Next Day Shipping ($49)'
+        }
+        const label = shippingLabels[formData.shippingOption] || formData.shippingOption
+        productSummary.push(label)
+        productDetails.shipping_option = label
+      }
+    } else {
+      console.log('=== SHIPPING FALLBACK TRIGGERED ===')
+      console.log('No shipping option found at all')
     }
 
     // Create PaymentIntent with detailed metadata
