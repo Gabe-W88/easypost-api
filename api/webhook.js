@@ -292,9 +292,11 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     if (parsedFileData) {
       console.log('Drivers License files count:', parsedFileData.driversLicense?.length || 0)
       console.log('Passport Photo files count:', parsedFileData.passportPhoto?.length || 0)
+      console.log('Signature available:', !!parsedFileData.signature)
       console.log('File structure:', {
         driversLicense: parsedFileData.driversLicense?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })),
-        passportPhoto: parsedFileData.passportPhoto?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl }))
+        passportPhoto: parsedFileData.passportPhoto?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })),
+        signature: parsedFileData.signature ? { fileName: parsedFileData.signature.fileName, publicUrl: parsedFileData.signature.publicUrl } : null
       })
     }
 
@@ -352,7 +354,8 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         email: formData.email,
         phone: formData.phone,
         date_of_birth: formData.dateOfBirth,
-        signature: formData.signature || null // Base64 signature data
+        signature_url: parsedFileData?.signature?.publicUrl || null, // Signature URL from storage
+        signature_email_url: parsedFileData?.signature?.publicUrl ? `${parsedFileData.signature.publicUrl}?width=400&height=200&resize=contain&format=png` : null // Optimized for email
       },
       
       // License information
@@ -433,9 +436,13 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         // Legacy fields for backward compatibility (first file URLs)
         id_document_url: parsedFileData?.driversLicense?.[0]?.publicUrl || null,
         passport_photo_url: parsedFileData?.passportPhoto?.[0]?.publicUrl || null,
+        signature_url: parsedFileData?.signature?.publicUrl || null,
+        // Signature with transformation for email
+        signature_email_url: parsedFileData?.signature?.publicUrl ? `${parsedFileData.signature.publicUrl}?width=400&height=200&resize=contain&format=png` : null,
         // File naming convention for Make.com to use
         id_document_filename: `${formData.firstName}${formData.lastName}_ID_Document.jpg`,
-        passport_photo_filename: `${formData.firstName}${formData.lastName}_Passport_Photo.jpg`
+        passport_photo_filename: `${formData.firstName}${formData.lastName}_Passport_Photo.jpg`,
+        signature_filename: `${formData.firstName}${formData.lastName}_Signature.png`
       },
       
       // EasyPost shipping data (for fastest rate selection)

@@ -165,6 +165,7 @@ export default async function handler(req, res) {
     // Upload files to Supabase Storage
     let uploadedDriversLicense = []
     let uploadedPassportPhoto = []
+    let uploadedSignature = null
 
     try {
       // Upload driver's license files
@@ -183,6 +184,25 @@ export default async function handler(req, res) {
         'passport_photo'
       )
 
+      // Upload signature if present
+      if (formData.signature) {
+        console.log('Uploading digital signature...')
+        const signatureFile = {
+          data: formData.signature,
+          name: 'signature.png',
+          type: 'image/png',
+          size: Math.round(formData.signature.length * 0.75) // Estimate base64 size
+        }
+        
+        const signatureResult = await uploadFilesToStorage(
+          [signatureFile],
+          applicationId,
+          'signature'
+        )
+        uploadedSignature = signatureResult[0] // First (and only) signature file
+        console.log('Signature uploaded:', uploadedSignature.publicUrl)
+      }
+
       console.log('All files uploaded successfully')
     } catch (uploadError) {
       console.error('File upload failed:', uploadError)
@@ -195,15 +215,20 @@ export default async function handler(req, res) {
     // Prepare file metadata for database (URLs instead of base64)
     const fileMetadata = {
       driversLicense: uploadedDriversLicense,
-      passportPhoto: uploadedPassportPhoto
+      passportPhoto: uploadedPassportPhoto,
+      signature: uploadedSignature // Add signature metadata
     }
+
+    // Clean form data - remove base64 signature since it's now in storage
+    const cleanFormData = { ...formData }
+    delete cleanFormData.signature
 
     // Save application to database with file URLs
     const { data, error } = await supabase
       .from('applications')
       .insert({
         application_id: applicationId,
-        form_data: formData,
+        form_data: cleanFormData,
         file_urls: fileMetadata, // Store URLs instead of base64
         payment_status: 'pending'
       })
