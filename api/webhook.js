@@ -431,10 +431,10 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           email: formData.email
         },
         parcel: {
-          length: 9,    // Standard envelope size
+          length: 4,    // IDP document size
           width: 6,
-          height: 0.5,
-          weight: 2     // 2 oz for IDP document
+          height: 0.1,
+          weight: 8     // 0.5 lb = 8 oz for IDP document
         },
         // Speed requirement for EasyPost to filter rates
         max_delivery_days: getShippingSpeedDays(formData.shippingOption),
