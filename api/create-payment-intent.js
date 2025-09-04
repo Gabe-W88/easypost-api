@@ -194,81 +194,84 @@ export default async function handler(req, res) {
       }
     }
     
-    // Add shipping fee
-    console.log('Shipping option:', formData.shippingOption)
-    if (formData.shippingOption) {
-      const shipping = formData.shippingOption
-      let productId = null
-      let fallbackAmount = 0
+    // Add shipping fee based on category and speed
+    console.log('Shipping category:', formData.shippingCategory, 'speed:', formData.shippingOption)
+    if (formData.shippingCategory && formData.shippingOption) {
+      const category = formData.shippingCategory
+      const speed = formData.shippingOption
+      let shippingAmount = 0
+      let shippingName = ''
       
-      // Map shipping options to new simplified values
-      if (shipping === 'standard') {
-        productId = STRIPE_PRODUCTS.shipping_standard
-        fallbackAmount = 900 // $9.00
-      } else if (shipping === 'express') {
-        productId = STRIPE_PRODUCTS.shipping_express
-        fallbackAmount = 1900 // $19.00
-      } else if (shipping === 'next_day') {
-        productId = STRIPE_PRODUCTS.shipping_next_day
-        fallbackAmount = 4900 // $49.00
+      // Calculate shipping cost based on category and speed
+      if (category === 'international') {
+        switch (speed) {
+          case 'standard':
+            shippingAmount = 18102 // $181.02
+            shippingName = 'International Standard Shipping'
+            break
+          case 'express':
+            shippingAmount = 21335 // $213.35
+            shippingName = 'International Express Shipping'
+            break
+          case 'next_day':
+            shippingAmount = 24567 // $245.67
+            shippingName = 'International Next Day Shipping'
+            break
+          default:
+            shippingAmount = 18102
+            shippingName = 'International Standard Shipping'
+        }
+      } else if (category === 'domestic') {
+        switch (speed) {
+          case 'standard':
+            shippingAmount = 10560 // $105.60
+            shippingName = 'Domestic Standard Shipping'
+            break
+          case 'express':
+            shippingAmount = 14835 // $148.35
+            shippingName = 'Domestic Express Shipping'
+            break
+          case 'next_day':
+            shippingAmount = 21335 // $213.35
+            shippingName = 'Domestic Next Day Shipping'
+            break
+          default:
+            shippingAmount = 10560
+            shippingName = 'Domestic Standard Shipping'
+        }
+      } else if (category === 'military') {
+        switch (speed) {
+          case 'standard':
+            shippingAmount = 9590 // $95.90
+            shippingName = 'Military Standard Shipping'
+            break
+          case 'express':
+            shippingAmount = 12822 // $128.22
+            shippingName = 'Military Express Shipping'
+            break
+          case 'next_day':
+            shippingAmount = 16055 // $160.55
+            shippingName = 'Military Next Day Shipping'
+            break
+          default:
+            shippingAmount = 9590
+            shippingName = 'Military Standard Shipping'
+        }
       }
       
-      console.log('Product ID for shipping:', productId)
-      if (productId) {
-        try {
-          const product = await stripe.products.retrieve(productId)
-          const prices = await stripe.prices.list({
-            product: productId,
-            active: true,
-            limit: 1
-          })
-          
-          console.log('Found prices for shipping:', prices.data.length)
-          if (prices.data.length > 0) {
-            const price = prices.data[0]
-            console.log('Adding shipping price:', price.unit_amount, 'cents')
-            totalAmount += price.unit_amount
-            lineItems.push({
-              price_data: {
-                currency: 'usd',
-                product_data: {
-                  name: product.name,
-                },
-                unit_amount: price.unit_amount,
-              },
-              quantity: 1,
-            })
-          } else {
-            // Fallback to hardcoded price
-            console.log('No prices found, using fallback price:', fallbackAmount, 'cents')
-            totalAmount += fallbackAmount
-            lineItems.push({
-              price_data: {
-                currency: 'usd',
-                product_data: {
-                  name: shipping,
-                },
-                unit_amount: fallbackAmount,
-              },
-              quantity: 1,
-            })
-          }
-        } catch (error) {
-          console.warn(`Product not found for shipping: ${formData.shippingOption}`, error)
-          // Use fallback pricing
-          console.log('Using fallback price:', fallbackAmount, 'cents')
-          totalAmount += fallbackAmount
-          lineItems.push({
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: shipping,
-              },
-              unit_amount: fallbackAmount,
+      if (shippingAmount > 0) {
+        console.log('Adding shipping:', shippingName, shippingAmount, 'cents')
+        totalAmount += shippingAmount
+        lineItems.push({
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: shippingName,
             },
-            quantity: 1,
-          })
-        }
+            unit_amount: shippingAmount,
+          },
+          quantity: 1,
+        })
       }
     }
 
@@ -352,7 +355,8 @@ export default async function handler(req, res) {
         product_summary: productSummary.join(', '),
         permit_count: formData.selectedPermits?.length || 0,
         processing_type: formData.processingOption || 'not_selected',
-        shipping_type: formData.shippingOption || 'not_selected',
+        shipping_category: formData.shippingCategory || 'not_selected',
+        shipping_speed: formData.shippingOption || 'not_selected',
         line_items: JSON.stringify(lineItems),
         ...productDetails
       },

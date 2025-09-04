@@ -177,33 +177,78 @@ function calculatePricing(formData) {
     }
   }
 
-  // Add shipping cost
-  if (formData.shippingOption) {
-    const shipping = formData.shippingOption
-    if (shipping === 'standard') {
+  // Add shipping cost based on category and speed
+  if (formData.shippingCategory && formData.shippingOption) {
+    const category = formData.shippingCategory
+    const speed = formData.shippingOption
+    let shippingPrice = 0
+    let shippingName = ''
+
+    // Calculate price based on category and speed
+    if (category === 'international') {
+      switch (speed) {
+        case 'standard':
+          shippingPrice = 181.02
+          shippingName = 'International Standard Shipping'
+          break
+        case 'express':
+          shippingPrice = 213.35
+          shippingName = 'International Express Shipping'
+          break
+        case 'next_day':
+          shippingPrice = 245.67
+          shippingName = 'International Next Day Shipping'
+          break
+        default:
+          shippingPrice = 181.02
+          shippingName = 'International Standard Shipping'
+      }
+    } else if (category === 'domestic') {
+      switch (speed) {
+        case 'standard':
+          shippingPrice = 105.60
+          shippingName = 'Domestic Standard Shipping'
+          break
+        case 'express':
+          shippingPrice = 148.35
+          shippingName = 'Domestic Express Shipping'
+          break
+        case 'next_day':
+          shippingPrice = 213.35
+          shippingName = 'Domestic Next Day Shipping'
+          break
+        default:
+          shippingPrice = 105.60
+          shippingName = 'Domestic Standard Shipping'
+      }
+    } else if (category === 'military') {
+      switch (speed) {
+        case 'standard':
+          shippingPrice = 95.90
+          shippingName = 'Military Standard Shipping'
+          break
+        case 'express':
+          shippingPrice = 128.22
+          shippingName = 'Military Express Shipping'
+          break
+        case 'next_day':
+          shippingPrice = 160.55
+          shippingName = 'Military Next Day Shipping'
+          break
+        default:
+          shippingPrice = 95.90
+          shippingName = 'Military Standard Shipping'
+      }
+    }
+
+    if (shippingPrice > 0) {
       lineItems.push({
-        productId: STRIPE_PRODUCTS.shipping_standard,
-        name: 'US Standard Shipping',
-        price: 9,
+        productId: `shipping_${category}_${speed}`,
+        name: shippingName,
+        price: shippingPrice,
         quantity: 1
       })
-      total += 9
-    } else if (shipping === 'express') {
-      lineItems.push({
-        productId: STRIPE_PRODUCTS.shipping_express,
-        name: 'US Express Shipping',
-        price: 19,
-        quantity: 1
-      })
-      total += 19
-    } else if (shipping === 'next_day') {
-      lineItems.push({
-        productId: STRIPE_PRODUCTS.shipping_next_day,
-        name: 'US Next Day Shipping',
-        price: 49,
-        quantity: 1
-      })
-      total += 49
+      total += shippingPrice
     }
   }
 

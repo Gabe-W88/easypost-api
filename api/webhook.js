@@ -404,7 +404,8 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         selected_permits: formData.selectedPermits || [],
         processing_option: formData.processingOption,
         processing_time_estimate: getProcessingTime(formData.processingOption),
-        shipping_option: formData.shippingOption
+        shipping_category: formData.shippingCategory,
+        shipping_speed: formData.shippingOption
       },
       
       // Customer uploaded files (base64 from Supabase)
