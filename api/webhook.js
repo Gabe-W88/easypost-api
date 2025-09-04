@@ -112,7 +112,7 @@ async function handleCheckoutCompleted(session) {
       updated_at: new Date().toISOString()
     })
     .eq('stripe_session_id', session.id)
-    .select('application_id, form_data, file_data')
+    .select('application_id, form_data, file_urls')
     .single()
 
   if (error) {
@@ -128,7 +128,7 @@ async function handleCheckoutCompleted(session) {
       payment_method: session.payment_method,
       amount: session.amount_total,
       currency: session.currency 
-    }, null, data.file_data)
+    }, null, data.file_urls)
     
     console.log(`Application ${data.application_id} payment completed successfully`)
   } else {
@@ -232,7 +232,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
       updated_at: new Date().toISOString()
     })
     .eq('application_id', applicationId)
-    .select('application_id, form_data, file_data')
+    .select('application_id, form_data, file_urls')
     .single()
 
   console.log('Database update result:', { data, error })
@@ -246,7 +246,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
   if (data) {
     console.log('Database updated successfully for application:', data.application_id)
     // Trigger Make.com automation with payment intent and address data
-    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData, data.file_data)
+    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData, data.file_urls)
     
     console.log(`Application ${data.application_id} payment completed successfully via PaymentIntent`)
   } else {
@@ -286,12 +286,16 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       ? JSON.parse(formDataString) 
       : formDataString
 
-    // Parse file data
+    // Parse file URLs (new structure)
     const parsedFileData = fileData ? (typeof fileData === 'string' ? JSON.parse(fileData) : fileData) : null
     console.log('File data available:', !!parsedFileData)
     if (parsedFileData) {
-      console.log('Drivers License images count:', parsedFileData.driversLicense?.length || 0)
-      console.log('Passport Photo images count:', parsedFileData.passportPhoto?.length || 0)
+      console.log('Drivers License files count:', parsedFileData.driversLicense?.length || 0)
+      console.log('Passport Photo files count:', parsedFileData.passportPhoto?.length || 0)
+      console.log('File structure:', {
+        driversLicense: parsedFileData.driversLicense?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })),
+        passportPhoto: parsedFileData.passportPhoto?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl }))
+      })
     }
 
     // Calculate processing time based on selection
@@ -408,10 +412,27 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         shipping_speed: formData.shippingOption
       },
       
-      // Customer uploaded files (base64 from Supabase)
+      // Customer uploaded files (URLs from Supabase Storage)
       customer_files: {
-        id_document: parsedFileData?.driversLicense || null,
-        passport_photo: parsedFileData?.passportPhoto || null,
+        id_document_urls: parsedFileData?.driversLicense?.map(file => ({
+          url: file.publicUrl,
+          fileName: file.fileName,
+          originalName: file.originalName,
+          // Add image transformation parameters for email attachments
+          emailUrl: `${file.publicUrl}?width=800&height=600&resize=contain&format=webp`,
+          thumbnailUrl: `${file.publicUrl}?width=200&height=200&resize=cover&format=webp`
+        })) || [],
+        passport_photo_urls: parsedFileData?.passportPhoto?.map(file => ({
+          url: file.publicUrl,
+          fileName: file.fileName,
+          originalName: file.originalName,
+          // Add image transformation parameters for email attachments
+          emailUrl: `${file.publicUrl}?width=800&height=600&resize=contain&format=webp`,
+          thumbnailUrl: `${file.publicUrl}?width=200&height=200&resize=cover&format=webp`
+        })) || [],
+        // Legacy fields for backward compatibility (first file URLs)
+        id_document_url: parsedFileData?.driversLicense?.[0]?.publicUrl || null,
+        passport_photo_url: parsedFileData?.passportPhoto?.[0]?.publicUrl || null,
         // File naming convention for Make.com to use
         id_document_filename: `${formData.firstName}${formData.lastName}_ID_Document.jpg`,
         passport_photo_filename: `${formData.firstName}${formData.lastName}_Passport_Photo.jpg`

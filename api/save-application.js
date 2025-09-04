@@ -6,6 +6,85 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
+// Helper function to convert base64 to file buffer
+function base64ToBuffer(base64String) {
+  // Remove the data URL prefix if present (e.g., "data:image/jpeg;base64,")
+  const base64Data = base64String.split(',')[1] || base64String
+  return Buffer.from(base64Data, 'base64')
+}
+
+// Helper function to upload file to Supabase Storage
+async function uploadFileToStorage(fileBuffer, fileName, contentType, bucket = 'application-files') {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, fileBuffer, {
+        contentType: contentType,
+        upsert: true // Replace if file already exists
+      })
+
+    if (error) {
+      console.error('Storage upload error:', error)
+      throw error
+    }
+
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName)
+
+    return {
+      path: data.path,
+      publicUrl: urlData.publicUrl
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error)
+    throw error
+  }
+}
+
+// Helper function to process and upload multiple files
+async function uploadFilesToStorage(files, applicationId, fileType) {
+  const uploadedFiles = []
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    
+    // Extract file extension from MIME type or data URL
+    let extension = 'jpg' // default
+    if (file.data && file.data.includes('data:image/')) {
+      const mimeType = file.data.split(';')[0].split(':')[1]
+      extension = mimeType.split('/')[1]
+    } else if (file.type) {
+      extension = file.type.split('/')[1]
+    }
+    
+    // Create unique filename
+    const fileName = `${applicationId}/${fileType}_${i + 1}.${extension}`
+    
+    // Convert base64 to buffer
+    const fileBuffer = base64ToBuffer(file.data)
+    
+    // Upload to storage
+    const uploadResult = await uploadFileToStorage(
+      fileBuffer, 
+      fileName, 
+      file.type || 'image/jpeg'
+    )
+    
+    uploadedFiles.push({
+      originalName: file.name,
+      fileName: fileName,
+      path: uploadResult.path,
+      publicUrl: uploadResult.publicUrl,
+      size: file.size,
+      type: file.type
+    })
+  }
+  
+  return uploadedFiles
+}
+
 // Stripe product mapping for form selections (updated with test product IDs)
 const STRIPE_PRODUCTS = {
   // Permits ($20 each)
@@ -81,13 +160,51 @@ export default async function handler(req, res) {
     // Generate unique application ID
     const applicationId = `IDP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-    // Save application to database
+    console.log('Processing file uploads for application:', applicationId)
+
+    // Upload files to Supabase Storage
+    let uploadedDriversLicense = []
+    let uploadedPassportPhoto = []
+
+    try {
+      // Upload driver's license files
+      console.log('Uploading driver\'s license files...')
+      uploadedDriversLicense = await uploadFilesToStorage(
+        fileData.driversLicense,
+        applicationId,
+        'drivers_license'
+      )
+
+      // Upload passport photo files
+      console.log('Uploading passport photo files...')
+      uploadedPassportPhoto = await uploadFilesToStorage(
+        fileData.passportPhoto,
+        applicationId,
+        'passport_photo'
+      )
+
+      console.log('All files uploaded successfully')
+    } catch (uploadError) {
+      console.error('File upload failed:', uploadError)
+      return res.status(500).json({ 
+        error: 'Failed to upload files to storage',
+        details: uploadError.message
+      })
+    }
+
+    // Prepare file metadata for database (URLs instead of base64)
+    const fileMetadata = {
+      driversLicense: uploadedDriversLicense,
+      passportPhoto: uploadedPassportPhoto
+    }
+
+    // Save application to database with file URLs
     const { data, error } = await supabase
       .from('applications')
       .insert({
         application_id: applicationId,
         form_data: formData,
-        file_data: fileData,
+        file_urls: fileMetadata, // Store URLs instead of base64
         payment_status: 'pending'
       })
       .select()
