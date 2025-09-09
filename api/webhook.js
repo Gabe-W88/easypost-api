@@ -334,6 +334,14 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       }
     }
 
+    // Determine carrier based on shipping category
+    const getCarrier = (category) => {
+      if (category === 'military') {
+        return 'USPS' // Only USPS can deliver to military bases
+      }
+      return null // Let EasyPost choose best carrier for domestic/international
+    }
+
     // Prepare comprehensive data for Make.com business workflow
     const automationData = {
       // Application identification
@@ -471,7 +479,9 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           weight: 8     // 0.5 lb = 8 oz for IDP document
         },
         // Speed requirement for EasyPost to filter rates
-        max_delivery_days: getShippingSpeedDays(formData.shippingOption),
+        max_delivery_days: getShippingSpeedDays(formData.shippingOption, formData.shippingCategory),
+        // Carrier specification (USPS required for military)
+        carrier: getCarrier(formData.shippingCategory),
         options: {
           label_format: 'PDF',
           label_size: '4x6'
