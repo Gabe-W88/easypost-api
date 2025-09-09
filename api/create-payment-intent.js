@@ -14,13 +14,16 @@ const STRIPE_PRODUCTS = {
   
   // Processing Options
   processing_standard: 'prod_StLCI6MmfjwY8u',    // $69
-  processing_express: 'prod_StLCgdjyMxHEkX',     // $99
-  processing_same_day: 'prod_StLCyJMauosNpo',    // $129
+  processing_express: 'prod_StLCgdjyMxHEkX',     // $109
+  processing_same_day: 'prod_StLCyJMauosNpo',    // $169
   
   // Shipping Options
-  shipping_standard: 'prod_StLCXINozg6poK',      // $9
-  shipping_express: 'prod_StLDaMbeIjAQ5K',       // $19
-  shipping_next_day: 'prod_StLD5UEXiEVuKH',      // $49
+  shipping_international_standard: 'prod_StLCXINozg6poK',      // $49
+  shipping_international_express: 'prod_StLDaMbeIjAQ5K',       // $79
+  shipping_domestic_standard: 'prod_StLD5UEXiEVuKH',           // $9
+  shipping_domestic_express: 'prod_StLD5UEXiEVuKI',            // $19
+  shipping_domestic_overnight: 'prod_StLD5UEXiEVuKJ',          // $49
+  shipping_military_free: 'prod_StLD5UEXiEVuKK',              // $0
 }
 
 export default async function handler(req, res) {
@@ -131,10 +134,10 @@ export default async function handler(req, res) {
         fallbackAmount = 6900 // $69.00
       } else if (processing === 'express') {
         productId = STRIPE_PRODUCTS.processing_express
-        fallbackAmount = 9900 // $99.00
+        fallbackAmount = 10900 // $109.00
       } else if (processing === 'same_day') {
         productId = STRIPE_PRODUCTS.processing_same_day
-        fallbackAmount = 12900 // $129.00
+        fallbackAmount = 16900 // $169.00
       }
       
       console.log('Product ID for processing:', productId)
@@ -208,57 +211,39 @@ export default async function handler(req, res) {
       if (category === 'international') {
         switch (speed) {
           case 'standard':
-            shippingAmount = 18102 // $181.02
-            shippingName = 'International Standard Shipping'
+            shippingAmount = 4900 // $49.00
+            shippingName = 'International Standard Shipping (4-8 business days)'
             break
           case 'express':
-            shippingAmount = 21335 // $213.35
-            shippingName = 'International Express Shipping'
-            break
-          case 'next_day':
-            shippingAmount = 24567 // $245.67
-            shippingName = 'International Next Day Shipping'
+            shippingAmount = 7900 // $79.00
+            shippingName = 'International Express Shipping (2-5 business days)'
             break
           default:
-            shippingAmount = 18102
-            shippingName = 'International Standard Shipping'
+            shippingAmount = 4900
+            shippingName = 'International Standard Shipping (4-8 business days)'
         }
       } else if (category === 'domestic') {
         switch (speed) {
           case 'standard':
-            shippingAmount = 10560 // $105.60
-            shippingName = 'Domestic Standard Shipping'
+            shippingAmount = 900 // $9.00
+            shippingName = 'Domestic Standard Shipping (3-5 business days)'
             break
           case 'express':
-            shippingAmount = 14835 // $148.35
-            shippingName = 'Domestic Express Shipping'
+            shippingAmount = 1900 // $19.00
+            shippingName = 'Domestic Express Shipping (2 business days)'
             break
-          case 'next_day':
-            shippingAmount = 21335 // $213.35
-            shippingName = 'Domestic Next Day Shipping'
+          case 'overnight':
+            shippingAmount = 4900 // $49.00
+            shippingName = 'Domestic Overnight Shipping (Next business day)'
             break
           default:
-            shippingAmount = 10560
-            shippingName = 'Domestic Standard Shipping'
+            shippingAmount = 900
+            shippingName = 'Domestic Standard Shipping (3-5 business days)'
         }
       } else if (category === 'military') {
-        switch (speed) {
-          case 'standard':
-            shippingAmount = 9590 // $95.90
-            shippingName = 'Military Standard Shipping'
-            break
-          case 'express':
-            shippingAmount = 12822 // $128.22
-            shippingName = 'Military Express Shipping'
-            break
-          case 'next_day':
-            shippingAmount = 16055 // $160.55
-            shippingName = 'Military Next Day Shipping'
-            break
-          default:
-            shippingAmount = 9590
-            shippingName = 'Military Standard Shipping'
-        }
+        // Military shipping is always free
+        shippingAmount = 0 // $0.00
+        shippingName = 'US Military Free Shipping'
       }
       
       if (shippingAmount > 0) {

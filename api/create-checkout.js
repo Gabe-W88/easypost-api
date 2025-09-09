@@ -20,13 +20,16 @@ const STRIPE_PRODUCTS = {
   
   // Processing Options
   processing_standard: 'prod_StLCI6MmfjwY8u',    // $69
-  processing_express: 'prod_StLCgdjyMxHEkX',     // $99
-  processing_same_day: 'prod_StLCyJMauosNpo',    // $129
+  processing_express: 'prod_StLCgdjyMxHEkX',     // $109
+  processing_same_day: 'prod_StLCyJMauosNpo',    // $169
   
   // Shipping Options
-  shipping_standard: 'prod_StLCXINozg6poK',      // $9
-  shipping_express: 'prod_StLDaMbeIjAQ5K',       // $19
-  shipping_next_day: 'prod_StLD5UEXiEVuKH',      // $49
+  shipping_international_standard: 'prod_StLCXINozg6poK',      // $49
+  shipping_international_express: 'prod_StLDaMbeIjAQ5K',       // $79
+  shipping_domestic_standard: 'prod_StLD5UEXiEVuKH',           // $9
+  shipping_domestic_express: 'prod_StLD5UEXiEVuKI',            // $19
+  shipping_domestic_overnight: 'prod_StLD5UEXiEVuKJ',          // $49
+  shipping_military_free: 'prod_StLD5UEXiEVuKK',              // $0
 }
 
 export default async function handler(req, res) {

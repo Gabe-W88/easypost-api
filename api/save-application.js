@@ -93,13 +93,16 @@ const STRIPE_PRODUCTS = {
   
   // Processing Options
   processing_standard: 'prod_StLCI6MmfjwY8u',    // $69
-  processing_express: 'prod_StLCgdjyMxHEkX',     // $99
-  processing_same_day: 'prod_StLCyJMauosNpo',    // $129
+  processing_express: 'prod_StLCgdjyMxHEkX',     // $109
+  processing_same_day: 'prod_StLCyJMauosNpo',    // $169
   
   // Shipping Options
-  shipping_standard: 'prod_StLCXINozg6poK',      // $9
-  shipping_express: 'prod_StLDaMbeIjAQ5K',       // $19
-  shipping_next_day: 'prod_StLD5UEXiEVuKH',      // $49
+  shipping_international_standard: 'prod_StLCXINozg6poK',      // $49
+  shipping_international_express: 'prod_StLDaMbeIjAQ5K',       // $79
+  shipping_domestic_standard: 'prod_StLD5UEXiEVuKH',           // $9
+  shipping_domestic_express: 'prod_StLD5UEXiEVuKI',            // $19
+  shipping_domestic_overnight: 'prod_StLD5UEXiEVuKJ',          // $49
+  shipping_military_free: 'prod_StLD5UEXiEVuKK',              // $0
 }
 
 export default async function handler(req, res) {
@@ -295,7 +298,7 @@ function calculatePricing(formData) {
     if (processing === 'standard') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.processing_standard,
-        name: 'Standard Processing',
+        name: '3-5 Business Days Processing',
         price: 69,
         quantity: 1
       })
@@ -303,19 +306,19 @@ function calculatePricing(formData) {
     } else if (processing === 'express') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.processing_express,
-        name: 'Express Processing',
-        price: 99,
+        name: '2 Business Days Processing',
+        price: 109,
         quantity: 1
       })
-      total += 99
+      total += 109
     } else if (processing === 'same_day') {
       lineItems.push({
         productId: STRIPE_PRODUCTS.processing_same_day,
-        name: 'Same Day Processing',
-        price: 129,
+        name: 'Same-Day/Next-Day Processing',
+        price: 169,
         quantity: 1
       })
-      total += 129
+      total += 169
     }
   }
 
@@ -330,60 +333,41 @@ function calculatePricing(formData) {
     if (category === 'international') {
       switch (speed) {
         case 'standard':
-          shippingPrice = 181.02
-          shippingName = 'International Standard Shipping'
+          shippingPrice = 49
+          shippingName = 'International Standard Shipping (4-8 business days)'
           break
         case 'express':
-          shippingPrice = 213.35
-          shippingName = 'International Express Shipping'
-          break
-        case 'next_day':
-          shippingPrice = 245.67
-          shippingName = 'International Next Day Shipping'
+          shippingPrice = 79
+          shippingName = 'International Express Shipping (2-5 business days)'
           break
         default:
-          shippingPrice = 181.02
-          shippingName = 'International Standard Shipping'
+          shippingPrice = 49
+          shippingName = 'International Standard Shipping (4-8 business days)'
       }
     } else if (category === 'domestic') {
       switch (speed) {
         case 'standard':
-          shippingPrice = 105.60
-          shippingName = 'Domestic Standard Shipping'
+          shippingPrice = 9
+          shippingName = 'Domestic Standard Shipping (3-5 business days)'
           break
         case 'express':
-          shippingPrice = 148.35
-          shippingName = 'Domestic Express Shipping'
+          shippingPrice = 19
+          shippingName = 'Domestic Express Shipping (2 business days)'
           break
-        case 'next_day':
-          shippingPrice = 213.35
-          shippingName = 'Domestic Next Day Shipping'
+        case 'overnight':
+          shippingPrice = 49
+          shippingName = 'Domestic Overnight Shipping (Next business day)'
           break
         default:
-          shippingPrice = 105.60
-          shippingName = 'Domestic Standard Shipping'
+          shippingPrice = 9
+          shippingName = 'Domestic Standard Shipping (3-5 business days)'
       }
     } else if (category === 'military') {
-      switch (speed) {
-        case 'standard':
-          shippingPrice = 95.90
-          shippingName = 'Military Standard Shipping'
-          break
-        case 'express':
-          shippingPrice = 128.22
-          shippingName = 'Military Express Shipping'
-          break
-        case 'next_day':
-          shippingPrice = 160.55
-          shippingName = 'Military Next Day Shipping'
-          break
-        default:
-          shippingPrice = 95.90
-          shippingName = 'Military Standard Shipping'
-      }
+      // Military shipping is always free
+      shippingPrice = 0
+      shippingName = 'US Military Free Shipping'
     }
-
-    if (shippingPrice > 0) {
+    if (shippingPrice >= 0) {
       lineItems.push({
         productId: `shipping_${category}_${speed}`,
         name: shippingName,

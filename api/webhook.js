@@ -308,21 +308,27 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         case 'express':
           return '2 business days'
         case 'same_day':
-          return 'Same/Next business day'
+          return 'Same-day/Next-day (if received before 12pm ET)'
         default:
           return '3-5 business days'
       }
     }
 
     // Calculate shipping speed requirement for EasyPost (in days)
-    const getShippingSpeedDays = (option) => {
+    const getShippingSpeedDays = (option, category) => {
+      if (category === 'military') {
+        return 14 // Military shipping can take longer
+      }
+      
       switch (option) {
         case 'standard':
-          return 5 // 3-5 days max
+          return category === 'international' ? 8 : 5 // International: 4-8 days, Domestic: 3-5 days
         case 'express':
-          return 2 // 2 days max
-        case 'next_day':
-          return 1 // next business day
+          return category === 'international' ? 5 : 2 // International: 2-5 days, Domestic: 2 days
+        case 'overnight':
+          return 1 // next business day (domestic only)
+        case 'free':
+          return 14 // Military free shipping
         default:
           return 5
       }
