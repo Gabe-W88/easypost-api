@@ -299,7 +299,9 @@ export default async function handler(req, res) {
     // Add permits to summary
     if (formData.selectedPermits && formData.selectedPermits.length > 0) {
       formData.selectedPermits.forEach((permit, index) => {
-        productSummary.push(`${permit} ($20)`)
+        // Shorten permit names for metadata
+        const shortName = permit.includes('Brazil') ? 'IAPD ($20)' : 'IDP ($20)'
+        productSummary.push(shortName)
         productDetails[`permit_${index + 1}`] = permit
         productDetails[`permit_${index + 1}_price`] = '$20.00'
       })
@@ -308,9 +310,9 @@ export default async function handler(req, res) {
     // Add processing option
     if (formData.processingOption) {
       const processingLabels = {
-        standard: 'Standard Processing ($69)',
-        express: 'Express Processing ($99)', 
-        same_day: 'Same Day Processing ($129)'
+        standard: 'Standard ($69)',
+        express: 'Express ($109)', 
+        same_day: 'Same Day ($169)'
       }
       const label = processingLabels[formData.processingOption] || formData.processingOption
       productSummary.push(label)
@@ -330,51 +332,44 @@ export default async function handler(req, res) {
       
       console.log('Building shipping label for category:', category, 'speed:', speed)
       
-      // Build shipping label based on category and speed with actual prices
+            // Build shipping label based on category and speed with actual prices
       if (category === 'international') {
         switch (speed) {
           case 'standard':
-            shippingLabel = 'International Standard Shipping ($181.02)'
+            shippingLabel = 'Intl Standard ($181.02)'
             break
           case 'express':
-            shippingLabel = 'International Express Shipping ($213.35)'
+            shippingLabel = 'Intl Express ($213.35)'
             break
           case 'next_day':
-            shippingLabel = 'International Next Day Shipping ($245.67)'
+            shippingLabel = 'Intl Next Day ($245.67)'
             break
           default:
-            shippingLabel = 'International Standard Shipping ($181.02)'
+            shippingLabel = 'Intl Standard ($181.02)'
         }
       } else if (category === 'domestic') {
         switch (speed) {
           case 'standard':
-            shippingLabel = 'Domestic Standard Shipping ($105.60)'
+            shippingLabel = 'Domestic Standard ($8.05)'
             break
           case 'express':
-            shippingLabel = 'Domestic Express Shipping ($148.35)'
+            shippingLabel = 'Domestic Express ($14.83)'
             break
-          case 'next_day':
-            shippingLabel = 'Domestic Next Day Shipping ($213.35)'
+          case 'overnight':
+            shippingLabel = 'Domestic Overnight ($21.33)'
             break
           default:
-            shippingLabel = 'Domestic Standard Shipping ($105.60)'
+            shippingLabel = 'Domestic Standard ($8.05)'
         }
       } else if (category === 'military') {
         switch (speed) {
-          case 'standard':
-            shippingLabel = 'Military Standard Shipping ($95.90)'
-            break
-          case 'express':
-            shippingLabel = 'Military Express Shipping ($128.22)'
-            break
-          case 'next_day':
-            shippingLabel = 'Military Next Day Shipping ($160.55)'
+          case 'free':
+            shippingLabel = 'Military Free ($0.00)'
             break
           default:
-            shippingLabel = 'Military Standard Shipping ($95.90)'
+            shippingLabel = 'Military Free ($0.00)'
         }
       } else {
-        // Fallback for unknown category
         console.log('Unknown shipping category, using fallback')
         shippingLabel = `${category} ${speed} Shipping`
       }
@@ -403,33 +398,33 @@ export default async function handler(req, res) {
         // Infer category from amount
         if (speed === 'next_day') {
           if (shippingAmount === 24567) {
-            shippingLabel = 'International Next Day Shipping ($245.67)'
+            shippingLabel = 'Intl Next Day ($245.67)'
           } else if (shippingAmount === 21335) {
-            shippingLabel = 'Domestic Next Day Shipping ($213.35)'
+            shippingLabel = 'Dom Next Day ($213.35)'
           } else if (shippingAmount === 16055) {
-            shippingLabel = 'Military Next Day Shipping ($160.55)'
+            shippingLabel = 'Mil Next Day ($160.55)'
           } else {
-            shippingLabel = `Next Day Shipping ($${(shippingAmount / 100).toFixed(2)})`
+            shippingLabel = `Next Day ($${(shippingAmount / 100).toFixed(2)})`
           }
         } else if (speed === 'express') {
           if (shippingAmount === 21335) {
-            shippingLabel = 'International Express Shipping ($213.35)'
+            shippingLabel = 'Intl Express ($213.35)'
           } else if (shippingAmount === 14835) {
-            shippingLabel = 'Domestic Express Shipping ($148.35)'
+            shippingLabel = 'Dom Express ($148.35)'
           } else if (shippingAmount === 12822) {
-            shippingLabel = 'Military Express Shipping ($128.22)'
+            shippingLabel = 'Mil Express ($128.22)'
           } else {
-            shippingLabel = `Express Shipping ($${(shippingAmount / 100).toFixed(2)})`
+            shippingLabel = `Express ($${(shippingAmount / 100).toFixed(2)})`
           }
         } else { // standard
           if (shippingAmount === 18102) {
-            shippingLabel = 'International Standard Shipping ($181.02)'
+            shippingLabel = 'Intl Standard ($181.02)'
           } else if (shippingAmount === 10560) {
-            shippingLabel = 'Domestic Standard Shipping ($105.60)'
+            shippingLabel = 'Dom Standard ($105.60)'
           } else if (shippingAmount === 9590) {
-            shippingLabel = 'Military Standard Shipping ($95.90)'
+            shippingLabel = 'Mil Standard ($95.90)'
           } else {
-            shippingLabel = `Standard Shipping ($${(shippingAmount / 100).toFixed(2)})`
+            shippingLabel = `Standard ($${(shippingAmount / 100).toFixed(2)})`
           }
         }
         
@@ -440,9 +435,9 @@ export default async function handler(req, res) {
         // Ultimate fallback to old system
         console.log('Using old fallback shipping logic')
         const shippingLabels = {
-          standard: 'US Standard Shipping ($9)',
-          express: 'US Express Shipping ($19)',
-          next_day: 'US Next Day Shipping ($49)'
+          standard: 'US Standard ($9)',
+          express: 'US Express ($19)',
+          next_day: 'US Next Day ($49)'
         }
         const label = shippingLabels[formData.shippingOption] || formData.shippingOption
         productSummary.push(label)
