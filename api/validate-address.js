@@ -135,6 +135,12 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('EasyPost validation error:', error)
     
+    // Ensure CORS headers are set even in error responses
+    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    res.setHeader('Access-Control-Max-Age', '86400')
+    
     // Handle rate limiting specifically
     if (error.message && error.message.includes('rate-limited')) {
       res.status(429).json({ 

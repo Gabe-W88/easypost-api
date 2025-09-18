@@ -7,10 +7,11 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  // Enable CORS for Framer domain
+  res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -64,6 +65,13 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Debug test error:', error)
+    
+    // Ensure CORS headers are set even in error responses
+    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    res.setHeader('Access-Control-Allow-Credentials', 'true')
+    
     res.status(500).json({ error: error.message })
   }
 }
