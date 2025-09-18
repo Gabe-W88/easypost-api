@@ -68,10 +68,13 @@ export default async function handler(req, res) {
         
         // Map human-readable names to product IDs (same as create-checkout.js)
         let productId = null
+        let shortPermitName = ''
         if (permit === 'International Driving Permit') {
           productId = STRIPE_PRODUCTS.idp_international
+          shortPermitName = 'IDP'
         } else if (permit === 'IAPD (Brazil / Uruguay only)') {
           productId = STRIPE_PRODUCTS.idp_brazil_uruguay
+          shortPermitName = 'IAPD'
         }
         
         console.log('Product ID for permit:', productId)
@@ -93,7 +96,7 @@ export default async function handler(req, res) {
                 price_data: {
                   currency: 'usd',
                   product_data: {
-                    name: product.name,
+                    name: shortPermitName,
                   },
                   unit_amount: price.unit_amount,
                 },
@@ -107,7 +110,7 @@ export default async function handler(req, res) {
                 price_data: {
                   currency: 'usd',
                   product_data: {
-                    name: permit,
+                    name: shortPermitName,
                   },
                   unit_amount: 2000, // $20.00
                 },
@@ -127,17 +130,21 @@ export default async function handler(req, res) {
       const processing = formData.processingOption
       let productId = null
       let fallbackAmount = 0
+      let shortName = ''
       
       // Map processing options to new simplified values
       if (processing === 'standard') {
         productId = STRIPE_PRODUCTS.processing_standard
         fallbackAmount = 6900 // $69.00
+        shortName = 'Standard'
       } else if (processing === 'express') {
         productId = STRIPE_PRODUCTS.processing_express
         fallbackAmount = 10900 // $109.00
+        shortName = 'Express'
       } else if (processing === 'same_day') {
         productId = STRIPE_PRODUCTS.processing_same_day
         fallbackAmount = 16900 // $169.00
+        shortName = 'Same Day'
       }
       
       console.log('Product ID for processing:', productId)
@@ -159,7 +166,7 @@ export default async function handler(req, res) {
               price_data: {
                 currency: 'usd',
                 product_data: {
-                  name: product.name,
+                  name: shortName,
                 },
                 unit_amount: price.unit_amount,
               },
@@ -173,7 +180,7 @@ export default async function handler(req, res) {
               price_data: {
                 currency: 'usd',
                 product_data: {
-                  name: processing,
+                  name: shortName,
                 },
                 unit_amount: fallbackAmount,
               },
@@ -212,38 +219,38 @@ export default async function handler(req, res) {
         switch (speed) {
           case 'standard':
             shippingAmount = 4900 // $49.00
-            shippingName = 'International Standard Shipping (4-8 business days)'
+            shippingName = 'Intl Standard'
             break
           case 'express':
             shippingAmount = 7900 // $79.00
-            shippingName = 'International Express Shipping (2-5 business days)'
+            shippingName = 'Intl Express'
             break
           default:
             shippingAmount = 4900
-            shippingName = 'International Standard Shipping (4-8 business days)'
+            shippingName = 'Intl Standard'
         }
       } else if (category === 'domestic') {
         switch (speed) {
           case 'standard':
             shippingAmount = 900 // $9.00
-            shippingName = 'Domestic Standard Shipping (3-5 business days)'
+            shippingName = 'Domestic Standard'
             break
           case 'express':
             shippingAmount = 1900 // $19.00
-            shippingName = 'Domestic Express Shipping (2 business days)'
+            shippingName = 'Domestic Express'
             break
           case 'overnight':
             shippingAmount = 4900 // $49.00
-            shippingName = 'Domestic Overnight Shipping (Next business day)'
+            shippingName = 'Domestic Overnight'
             break
           default:
             shippingAmount = 900
-            shippingName = 'Domestic Standard Shipping (3-5 business days)'
+            shippingName = 'Domestic Standard'
         }
       } else if (category === 'military') {
         // Military shipping is always free
         shippingAmount = 0 // $0.00
-        shippingName = 'US Military Free Shipping'
+        shippingName = 'Military Free'
       }
       
       if (shippingAmount > 0) {
@@ -275,7 +282,7 @@ export default async function handler(req, res) {
       price_data: {
         currency: 'usd',
         product_data: {
-          name: 'Tax (7.75% - Bellefontaine, OH)',
+          name: 'Tax',
         },
         unit_amount: taxAmount,
       },
@@ -463,7 +470,6 @@ export default async function handler(req, res) {
         processing_type: formData.processingOption || 'not_selected',
         shipping_category: formData.shippingCategory || 'not_selected',
         shipping_speed: formData.shippingOption || 'not_selected',
-        line_items: JSON.stringify(lineItems),
         ...productDetails
       },
       receipt_email: formData.email,
