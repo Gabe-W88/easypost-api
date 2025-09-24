@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 
 // Use the same Stripe key as other files
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
-console.log('Checkout using Stripe key ending with:', stripeSecretKey ? stripeSecretKey.slice(-6) : 'MISSING')
 const stripe = new Stripe(stripeSecretKey)
 
 // Initialize Supabase client
@@ -12,7 +11,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-// Stripe product mapping for form selections (updated with test product IDs)
+// Stripe product mapping for form selections
 const STRIPE_PRODUCTS = {
   // Permits ($20 each)
   idp_international: 'prod_StLB80b39cwGwe',

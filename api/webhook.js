@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 
 // Use the same Stripe key as other files
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
-console.log('Webhook using Stripe key ending with:', stripeSecretKey ? stripeSecretKey.slice(-6) : 'MISSING')
 const stripe = new Stripe(stripeSecretKey)
 
 // Initialize Supabase client
@@ -13,9 +12,6 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
-  console.log('🚀 WEBHOOK HANDLER STARTED 🚀')
-  console.log('Method:', req.method)
-  console.log('URL:', req.url)
   
   // Enable CORS for Framer domain
   res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
@@ -25,21 +21,14 @@ export default async function handler(req, res) {
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('OPTIONS request handled')
     return res.status(200).end()
   }
 
   // Only allow POST requests
   if (req.method !== 'POST') {
-    console.log('Invalid method:', req.method)
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  console.log('=== WEBHOOK CALLED ===')
-  console.log('Request method:', req.method)
-  console.log('Headers:', JSON.stringify(req.headers, null, 2))
-  console.log('Body type:', typeof req.body)
-  console.log('Body:', JSON.stringify(req.body, null, 2))
 
   const sig = req.headers['stripe-signature']
   let event
@@ -54,7 +43,6 @@ export default async function handler(req, res) {
       )
     } else {
       // This is a manual call from frontend (no signature)
-      console.log('Manual webhook call from frontend')
       event = req.body
     }
   } catch (err) {
@@ -64,32 +52,23 @@ export default async function handler(req, res) {
 
   // Handle the event
   try {
-    console.log('=== WEBHOOK EVENT RECEIVED ===')
-    console.log('Event type:', event.type)
-    console.log('Event object:', JSON.stringify(event, null, 2))
-    console.log('Event data object:', JSON.stringify(event.data?.object, null, 2))
     
     switch (event.type) {
       case 'checkout.session.completed':
-        console.log('>>> CALLING handleCheckoutCompleted')
         await handleCheckoutCompleted(event.data.object)
         break
       
       case 'payment_intent.succeeded':
-        console.log('>>> CALLING handlePaymentSucceeded')
         await handlePaymentSucceeded(event.data.object)
         break
       
       case 'checkout.session.expired':
-        console.log('>>> CALLING handleCheckoutExpired')
         await handleCheckoutExpired(event.data.object)
         break
       
       default:
-        console.log(`Unhandled event type: ${event.type}`)
     }
 
-    console.log('=== WEBHOOK PROCESSING COMPLETE ===')
     res.status(200).json({ received: true, eventType: event.type })
   } catch (error) {
     console.error('=== WEBHOOK HANDLER ERROR ===')
@@ -108,7 +87,6 @@ export default async function handler(req, res) {
 
 // Handle successful checkout completion
 async function handleCheckoutCompleted(session) {
-  console.log('Checkout completed:', session.id)
   
   // Update application with payment success using Supabase
   const { data, error } = await supabase
@@ -137,7 +115,6 @@ async function handleCheckoutCompleted(session) {
       currency: session.currency 
     }, null, data.file_urls)
     
-    console.log(`Application ${data.application_id} payment completed successfully`)
   } else {
     console.error('No application found for session:', session.id)
   }
@@ -145,18 +122,14 @@ async function handleCheckoutCompleted(session) {
 
 // Handle payment intent success (for embedded payments)
 async function handlePaymentSucceeded(paymentIntentData) {
-  console.log('=== PAYMENT SUCCEEDED HANDLER START ===')
-  console.log('Payment succeeded - Raw data:', JSON.stringify(paymentIntentData, null, 2))
   
   // If this is a simplified object from frontend, fetch the full PaymentIntent
   let paymentIntent = paymentIntentData
   if (!paymentIntent.amount || !paymentIntent.payment_method) {
-    console.log('Fetching full PaymentIntent details from Stripe...')
     try {
       paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentData.id, {
         expand: ['payment_method']
       })
-      console.log('Full PaymentIntent retrieved:', JSON.stringify(paymentIntent, null, 2))
     } catch (error) {
       console.error('Failed to retrieve PaymentIntent:', error)
       return
@@ -164,8 +137,6 @@ async function handlePaymentSucceeded(paymentIntentData) {
   }
   
   const applicationId = paymentIntent.metadata?.applicationId || paymentIntent.metadata?.application_id
-  console.log('Extracted application ID:', applicationId)
-  console.log('All metadata:', JSON.stringify(paymentIntent.metadata, null, 2))
   
   if (!applicationId) {
     console.error('No application ID in payment intent metadata')
@@ -173,17 +144,14 @@ async function handlePaymentSucceeded(paymentIntentData) {
     return
   }
 
-  console.log('Looking for application with ID:', applicationId)
 
   // First, let's check if the application exists at all
-  console.log('Checking if application exists...')
   const { data: checkData, error: checkError } = await supabase
     .from('applications')
     .select('application_id, payment_status')
     .eq('application_id', applicationId)
     .single()
   
-  console.log('Application check result:', { data: checkData, error: checkError })
 
   // Get the payment method to extract address details
   let paymentMethod = null
@@ -196,13 +164,11 @@ async function handlePaymentSucceeded(paymentIntentData) {
       } else {
         paymentMethod = paymentIntent.payment_method
       }
-      console.log('Payment method details:', JSON.stringify(paymentMethod, null, 2))
     }
     
     // Check if there's shipping information in the payment intent
     if (paymentIntent.shipping) {
       shippingAddress = paymentIntent.shipping.address
-      console.log('Shipping address from PaymentIntent:', shippingAddress)
     }
   } catch (error) {
     console.error('Failed to retrieve payment method details:', error)
@@ -219,8 +185,6 @@ async function handlePaymentSucceeded(paymentIntentData) {
     shipping_phone: paymentIntent.shipping?.phone || null,
   }
 
-  console.log('Updating application with payment data...')
-  console.log('Address data:', JSON.stringify(addressData, null, 2))
 
   const { data, error } = await supabase
     .from('applications')
@@ -242,7 +206,6 @@ async function handlePaymentSucceeded(paymentIntentData) {
     .select('application_id, form_data, file_urls')
     .single()
 
-  console.log('Database update result:', { data, error })
 
   if (error) {
     console.error('Database update failed:', error)
@@ -251,11 +214,9 @@ async function handlePaymentSucceeded(paymentIntentData) {
   }
 
   if (data) {
-    console.log('Database updated successfully for application:', data.application_id)
     // Trigger Make.com automation with payment intent and address data
     await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData, data.file_urls)
     
-    console.log(`Application ${data.application_id} payment completed successfully via PaymentIntent`)
   } else {
     console.error('No application found for payment intent:', paymentIntent.id)
   }
@@ -263,7 +224,6 @@ async function handlePaymentSucceeded(paymentIntentData) {
 
 // Handle expired checkout sessions
 async function handleCheckoutExpired(session) {
-  console.log('Checkout expired:', session.id)
   
   // Update application status to expired using Supabase
   const { error } = await supabase
@@ -277,15 +237,11 @@ async function handleCheckoutExpired(session) {
   if (error) {
     console.error('Failed to mark session as expired:', error)
   } else {
-    console.log(`Checkout session ${session.id} marked as expired`)
   }
 }
 
 // Trigger Make.com automation with application data for business workflow
 async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null, fileData = null) {
-  console.log('🚀 TRIGGERING MAKE AUTOMATION - START')
-  console.log('Application ID:', applicationId)
-  console.log('Payment Intent ID:', paymentIntent?.id)
   
   try {
     // Parse form data
@@ -295,12 +251,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
 
     // Parse file URLs (new structure)
     const parsedFileData = fileData ? (typeof fileData === 'string' ? JSON.parse(fileData) : fileData) : null
-    console.log('File data available:', !!parsedFileData)
     if (parsedFileData) {
-      console.log('Drivers License files count:', parsedFileData.driversLicense?.length || 0)
-      console.log('Passport Photo files count:', parsedFileData.passportPhoto?.length || 0)
-      console.log('Signature available:', !!parsedFileData.signature)
-      console.log('File structure:', {
         driversLicense: parsedFileData.driversLicense?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })),
         passportPhoto: parsedFileData.passportPhoto?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })),
         signature: parsedFileData.signature ? { fileName: parsedFileData.signature.fileName, publicUrl: parsedFileData.signature.publicUrl } : null
@@ -515,10 +466,6 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     const makeApiKey = process.env.MAKE_API_KEY || 'FIDP_webhook_key_2025_secure123'
     
     if (makeWebhookUrl) {
-      console.log('Triggering Make.com business workflow automation...')
-      console.log('Sending to:', makeWebhookUrl)
-      console.log('API Key:', makeApiKey ? 'SET' : 'NOT SET')
-      console.log('Payload:', JSON.stringify(automationData, null, 2))
       
       const response = await fetch(makeWebhookUrl, {
         method: 'POST',
@@ -528,8 +475,6 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         body: JSON.stringify(automationData)
       })
       
-      console.log('Make.com response status:', response.status)
-      console.log('Make.com response headers:', Object.fromEntries(response.headers.entries()))
       
       if (!response.ok) {
         const errorText = await response.text()
@@ -538,9 +483,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       }
       
       const responseText = await response.text()
-      console.log('Make.com response body:', responseText)
       
-      console.log('✅ Make.com business workflow triggered successfully for application:', applicationId)
       
       // Update database to track automation trigger
       await supabase
@@ -552,7 +495,6 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         .eq('application_id', applicationId)
         
     } else {
-      console.log('MAKE_WEBHOOK_URL not configured. Business workflow data prepared:', JSON.stringify(automationData, null, 2))
     }
 
   } catch (error) {

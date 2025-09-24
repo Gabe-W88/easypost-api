@@ -82,7 +82,6 @@ export default async function handler(req, res) {
     // Verify address with EasyPost
     const address = await easypost.Address.create(addressData)
     
-    console.log('EasyPost Address Response:', JSON.stringify(address, null, 2))
     
     // Check delivery verification results
     const deliveryVerification = address.verifications?.delivery

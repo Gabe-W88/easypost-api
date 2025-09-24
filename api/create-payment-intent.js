@@ -1,12 +1,11 @@
 import Stripe from 'stripe'
 
-// Use environment variable for the secret key with debugging
+// Use environment variable for the secret key
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
-console.log('Using Stripe key ending with:', stripeSecretKey ? stripeSecretKey.slice(-6) : 'MISSING')
 
 const stripe = new Stripe(stripeSecretKey)
 
-// Product mapping (updated with test product IDs)
+// Product mapping
 const STRIPE_PRODUCTS = {
   // Permits ($20 each)
   idp_international: 'prod_StLB80b39cwGwe',
@@ -50,21 +49,14 @@ export default async function handler(req, res) {
     if (!applicationId || !formData) {
       return res.status(400).json({ error: 'Application ID and form data required' })
     }
-
-    console.log('Creating payment intent for application:', applicationId)
-    console.log('Form data received:', JSON.stringify(formData, null, 2))
-    console.log('Shipping category received:', formData.shippingCategory)
-    console.log('Shipping option received:', formData.shippingOption)
     
     // Calculate total amount based on selections
     let totalAmount = 0
     const lineItems = []
     
     // Add permit fees ($20 each)
-    console.log('Processing permits:', formData.selectedPermits)
     if (formData.selectedPermits && formData.selectedPermits.length > 0) {
       for (const permit of formData.selectedPermits) {
-        console.log('Looking up permit:', permit)
         
         // Map human-readable names to product IDs (same as create-checkout.js)
         let productId = null
@@ -77,7 +69,6 @@ export default async function handler(req, res) {
           shortPermitName = 'IAPD'
         }
         
-        console.log('Product ID for permit:', productId)
         if (productId) {
           try {
             const product = await stripe.products.retrieve(productId)
@@ -87,10 +78,8 @@ export default async function handler(req, res) {
               limit: 1
             })
             
-            console.log('Found prices for permit:', prices.data.length)
             if (prices.data.length > 0) {
               const price = prices.data[0]
-              console.log('Adding permit price:', price.unit_amount, 'cents')
               totalAmount += price.unit_amount
               lineItems.push({
                 price_data: {
@@ -104,7 +93,6 @@ export default async function handler(req, res) {
               })
             } else {
               // Fallback to hardcoded price if no prices found
-              console.log('No prices found, using fallback price: 2000 cents')
               totalAmount += 2000
               lineItems.push({
                 price_data: {
@@ -125,7 +113,6 @@ export default async function handler(req, res) {
     }
     
     // Add processing fee
-    console.log('Processing option:', formData.processingOption)
     if (formData.processingOption) {
       const processing = formData.processingOption
       let productId = null
@@ -147,7 +134,6 @@ export default async function handler(req, res) {
         shortName = 'Same Day'
       }
       
-      console.log('Product ID for processing:', productId)
       if (productId) {
         try {
           const product = await stripe.products.retrieve(productId)
@@ -157,10 +143,8 @@ export default async function handler(req, res) {
             limit: 1
           })
           
-          console.log('Found prices for processing:', prices.data.length)
           if (prices.data.length > 0) {
             const price = prices.data[0]
-            console.log('Adding processing price:', price.unit_amount, 'cents')
             totalAmount += price.unit_amount
             lineItems.push({
               price_data: {
@@ -174,7 +158,6 @@ export default async function handler(req, res) {
             })
           } else {
             // Fallback to hardcoded price
-            console.log('No prices found, using fallback price:', fallbackAmount, 'cents')
             totalAmount += fallbackAmount
             lineItems.push({
               price_data: {
@@ -190,7 +173,6 @@ export default async function handler(req, res) {
         } catch (error) {
           console.warn(`Product not found for processing: ${formData.processingOption}`, error)
           // Use fallback pricing
-          console.log('Using fallback price:', fallbackAmount, 'cents')
           totalAmount += fallbackAmount
           lineItems.push({
             price_data: {
@@ -207,7 +189,6 @@ export default async function handler(req, res) {
     }
     
     // Add shipping fee based on category and speed
-    console.log('Shipping category:', formData.shippingCategory, 'speed:', formData.shippingOption)
     if (formData.shippingCategory && formData.shippingOption) {
       const category = formData.shippingCategory
       const speed = formData.shippingOption
@@ -254,7 +235,6 @@ export default async function handler(req, res) {
       }
       
       if (shippingAmount > 0) {
-        console.log('Adding shipping:', shippingName, shippingAmount, 'cents')
         totalAmount += shippingAmount
         lineItems.push({
           price_data: {
@@ -269,7 +249,6 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log('Final total amount (before tax):', totalAmount, 'cents')
 
     // Add tax (7.75% for Bellefontaine, OH)
     const subtotalAmount = totalAmount
@@ -289,15 +268,12 @@ export default async function handler(req, res) {
       quantity: 1,
     })
 
-    console.log('Tax amount:', taxAmount, 'cents')
-    console.log('Final total amount (with tax):', totalAmount, 'cents')
 
     // Minimum amount check
     if (totalAmount < 50) { // $0.50 minimum for Stripe
       return res.status(400).json({ error: 'Order total too low' })
     }
 
-    console.log('Total amount calculated:', totalAmount, 'cents')
 
     // Build product summary for metadata
     const productSummary = []
@@ -327,17 +303,11 @@ export default async function handler(req, res) {
     }
 
     // Add shipping option
-    console.log('=== SHIPPING DEBUG ===')
-    console.log('formData.shippingOption:', formData.shippingOption)
-    console.log('formData.shippingCategory:', formData.shippingCategory)
-    console.log('Both present?', !!(formData.shippingOption && formData.shippingCategory))
-    
     if (formData.shippingOption && formData.shippingCategory) {
       const category = formData.shippingCategory
       const speed = formData.shippingOption
       let shippingLabel = ''
       
-      console.log('Building shipping label for category:', category, 'speed:', speed)
       
             // Build shipping label based on category and speed with actual prices
       if (category === 'international') {
@@ -377,16 +347,13 @@ export default async function handler(req, res) {
             shippingLabel = 'Military Free ($0.00)'
         }
       } else {
-        console.log('Unknown shipping category, using fallback')
         shippingLabel = `${category} ${speed} Shipping`
       }
       
-      console.log('Final shipping label:', shippingLabel)
       productSummary.push(shippingLabel)
       productDetails.shipping_option = shippingLabel
     } else if (formData.shippingOption) {
       // Try to infer the category from the amount charged or make a smarter fallback
-      console.log('=== ATTEMPTING SMART FALLBACK ===')
       
       // Look at the line items to see what shipping amount was charged
       const shippingLineItem = lineItems.find(item => 
@@ -400,7 +367,6 @@ export default async function handler(req, res) {
         const speed = formData.shippingOption
         let shippingLabel = ''
         
-        console.log('Found shipping line item with amount:', shippingAmount)
         
         // Infer category from amount
         if (speed === 'next_day') {
@@ -435,12 +401,10 @@ export default async function handler(req, res) {
           }
         }
         
-        console.log('Inferred shipping label:', shippingLabel)
         productSummary.push(shippingLabel)
         productDetails.shipping_option = shippingLabel
       } else {
         // Ultimate fallback to old system
-        console.log('Using old fallback shipping logic')
         const shippingLabels = {
           standard: 'US Standard ($9)',
           express: 'US Express ($19)',
@@ -451,8 +415,6 @@ export default async function handler(req, res) {
         productDetails.shipping_option = label
       }
     } else {
-      console.log('=== SHIPPING FALLBACK TRIGGERED ===')
-      console.log('No shipping option found at all')
     }
 
     // Create PaymentIntent with detailed metadata
@@ -476,7 +438,6 @@ export default async function handler(req, res) {
       description: `IDP Application: ${productSummary.join(', ')} - ${formData.firstName} ${formData.lastName}`,
     })
 
-    console.log('PaymentIntent created:', paymentIntent.id)
 
     return res.status(200).json({
       clientSecret: paymentIntent.client_secret,

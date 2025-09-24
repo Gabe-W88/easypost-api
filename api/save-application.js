@@ -85,7 +85,7 @@ async function uploadFilesToStorage(files, applicationId, fileType) {
   return uploadedFiles
 }
 
-// Stripe product mapping for form selections (updated with test product IDs)
+// Stripe product mapping for form selections
 const STRIPE_PRODUCTS = {
   // Permits ($20 each)
   idp_international: 'prod_StLB80b39cwGwe',
@@ -106,11 +106,29 @@ const STRIPE_PRODUCTS = {
 }
 
 export default async function handler(req, res) {
-  // Enable CORS for Framer and main domain
-  res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  // More comprehensive CORS setup to handle various browser behaviors
+  const origin = req.headers.origin
+  const allowedOrigins = [
+    'https://ambiguous-methodologies-053772.framer.app',
+    'https://framer.app',
+    'https://preview.framer.app'
+  ]
+  
+  // Set CORS headers
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, User-Agent')
   res.setHeader('Access-Control-Allow-Credentials', 'true')
+  res.setHeader('Access-Control-Max-Age', '86400')
+  res.setHeader('Vary', 'Origin')
+  
+  // Additional headers that some browsers expect
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type')
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -131,10 +149,6 @@ export default async function handler(req, res) {
     }
 
     // Debug: Check what we're receiving
-    console.log('=== FORM VALIDATION DEBUG ===')
-    console.log('Full formData:', JSON.stringify(formData, null, 2))
-    console.log('shippingOption:', formData.shippingOption, 'type:', typeof formData.shippingOption)
-    console.log('processingOption:', formData.processingOption, 'type:', typeof formData.processingOption)
 
     // Validate required fields (temporarily skip shipping for debugging)
     const requiredFields = ['email', 'firstName', 'lastName', 'selectedPermits', 'processingOption']
@@ -142,7 +156,6 @@ export default async function handler(req, res) {
       const value = formData[field]
       
       if (!value || value === '' || (Array.isArray(value) && value.length === 0)) {
-        console.log(`Field validation failed: ${field}`, value)
         return res.status(400).json({ 
           error: `${field} is required`,
           received: value,
@@ -163,7 +176,6 @@ export default async function handler(req, res) {
     // Generate unique application ID
     const applicationId = `IDP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-    console.log('Processing file uploads for application:', applicationId)
 
     // Upload files to Supabase Storage
     let uploadedDriversLicense = []
@@ -172,7 +184,6 @@ export default async function handler(req, res) {
 
     try {
       // Upload driver's license files
-      console.log('Uploading driver\'s license files...')
       uploadedDriversLicense = await uploadFilesToStorage(
         fileData.driversLicense,
         applicationId,
@@ -180,7 +191,6 @@ export default async function handler(req, res) {
       )
 
       // Upload passport photo files
-      console.log('Uploading passport photo files...')
       uploadedPassportPhoto = await uploadFilesToStorage(
         fileData.passportPhoto,
         applicationId,
@@ -189,7 +199,6 @@ export default async function handler(req, res) {
 
       // Upload signature if present
       if (formData.signature) {
-        console.log('Uploading digital signature...')
         const signatureFile = {
           data: formData.signature,
           name: 'signature.png',
@@ -203,10 +212,8 @@ export default async function handler(req, res) {
           'signature'
         )
         uploadedSignature = signatureResult[0] // First (and only) signature file
-        console.log('Signature uploaded:', uploadedSignature.publicUrl)
       }
 
-      console.log('All files uploaded successfully')
     } catch (uploadError) {
       console.error('File upload failed:', uploadError)
       return res.status(500).json({ 
@@ -259,10 +266,25 @@ export default async function handler(req, res) {
     console.error('Save application error:', error)
     
     // Ensure CORS headers are set even in error responses
-    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    const origin = req.headers.origin
+    const allowedOrigins = [
+      'https://ambiguous-methodologies-053772.framer.app',
+      'https://framer.app', 
+      'https://preview.framer.app'
+    ]
+    
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin)
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+    }
+    
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, User-Agent')
     res.setHeader('Access-Control-Allow-Credentials', 'true')
+    res.setHeader('Access-Control-Max-Age', '86400')
+    res.setHeader('Vary', 'Origin')
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type')
     
     res.status(500).json({ 
       error: 'Failed to save application',
