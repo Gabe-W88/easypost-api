@@ -13,18 +13,36 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   
-  // Enable CORS for Framer domain
-  res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  console.log(`Webhook request: ${req.method} from origin: ${req.headers.origin}`)
+  
+  // Enhanced CORS configuration for Framer domain
+  const allowedOrigins = [
+    'https://ambiguous-methodologies-053772.framer.app',
+    'http://localhost:3000', // For local development
+    'https://localhost:3000'
+  ]
+  
+  const origin = req.headers.origin
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    console.log(`CORS origin allowed: ${origin}`)
+  } else {
+    console.log(`CORS origin NOT in allowlist: ${origin}`)
+    console.log(`Allowed origins:`, allowedOrigins)
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, stripe-signature')
   res.setHeader('Access-Control-Allow-Credentials', 'true')
+  res.setHeader('Access-Control-Max-Age', '86400') // 24 hours
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('CORS preflight request from:', origin)
     return res.status(200).end()
   }
 
-  // Only allow POST requests
+  // Only allow POST requests for actual webhook calls
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -251,12 +269,6 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
 
     // Parse file URLs (new structure)
     const parsedFileData = fileData ? (typeof fileData === 'string' ? JSON.parse(fileData) : fileData) : null
-    if (parsedFileData) {
-        driversLicense: parsedFileData.driversLicense?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })),
-        passportPhoto: parsedFileData.passportPhoto?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })),
-        signature: parsedFileData.signature ? { fileName: parsedFileData.signature.fileName, publicUrl: parsedFileData.signature.publicUrl } : null
-      })
-    }
 
     // Calculate processing time based on selection
     const getProcessingTime = (option) => {
