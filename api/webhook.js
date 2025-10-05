@@ -35,13 +35,6 @@ export default async function handler(req, res) {
   
   console.log(`Webhook request: ${req.method} from origin: ${req.headers.origin}`)
   
-  // Validate critical environment variables
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    console.error('❌ STRIPE_WEBHOOK_SECRET not configured in environment variables')
-  } else {
-    console.log('✅ STRIPE_WEBHOOK_SECRET is configured')
-  }
-  
   // Enhanced CORS configuration for Framer domain
   const allowedOrigins = [
     'https://ambiguous-methodologies-053772.framer.app',
@@ -56,6 +49,8 @@ export default async function handler(req, res) {
   } else {
     console.log(`CORS origin NOT in allowlist: ${origin}`)
     console.log(`Allowed origins:`, allowedOrigins)
+    // Always allow the main Framer domain
+    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -81,21 +76,25 @@ export default async function handler(req, res) {
   let event
 
   try {
-    if (sig && process.env.STRIPE_WEBHOOK_SECRET) {
-      // This is a real Stripe webhook with signature - use raw body buffer
+    if (sig) {
+      // This is a real Stripe webhook with signature - use raw body
       event = stripe.webhooks.constructEvent(
-        rawBody.toString(), 
+        rawBody, 
         sig, 
         process.env.STRIPE_WEBHOOK_SECRET
       )
     } else {
       // This is a manual call from frontend (no signature) - parse as JSON
-      event = JSON.parse(rawBody.toString())
+      try {
+        event = JSON.parse(rawBody.toString())
+      } catch (parseError) {
+        console.error('Failed to parse request body as JSON:', parseError.message)
+        return res.status(400).json({ error: 'Invalid JSON in request body' })
+      }
     }
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message)
     return res.status(400).json({ error: `Webhook Error: ${err.message}` })
-  }
   }
 
   // Handle the event
