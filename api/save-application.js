@@ -282,7 +282,7 @@ export default async function handler(req, res) {
     // Determine fulfillment type based on shipping category and country
     const fulfillmentType = determineFulfillmentType(
       formData.shippingCategory,
-      formData.shippingCountry
+      formData.shippingCountry // This will come from the custom shipping form fields
     )
 
     console.log('Fulfillment determination:', {
