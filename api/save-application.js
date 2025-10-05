@@ -105,6 +105,52 @@ const STRIPE_PRODUCTS = {
   shipping_military_free: 'prod_StLD5UEXiEVuKK',              // $0
 }
 
+// Countries that can be processed automatically through EasyPost
+const AUTOMATED_COUNTRIES = [
+  'AU', // Australia
+  'AT', // Austria
+  'BE', // Belgium
+  'CA', // Canada
+  'DK', // Denmark
+  'FI', // Finland
+  'FR', // France
+  'DE', // Germany
+  'IE', // Ireland
+  'IT', // Italy
+  'LU', // Luxembourg
+  'MX', // Mexico
+  'NL', // Netherlands
+  'NZ', // New Zealand
+  'NO', // Norway
+  'PT', // Portugal
+  'ES', // Spain
+  'SE', // Sweden
+  'CH', // Switzerland
+  'GB', // United Kingdom
+]
+
+// Helper function to determine fulfillment type based on shipping country
+function determineFulfillmentType(shippingCategory, shippingCountry) {
+  // Domestic and military shipments are always automated
+  if (shippingCategory === 'domestic' || shippingCategory === 'military') {
+    return 'automated'
+  }
+  
+  // For international shipments, check if country is in automated list
+  if (shippingCategory === 'international') {
+    if (!shippingCountry) {
+      // If no country provided, default to manual for safety
+      return 'manual'
+    }
+    
+    // Check if country code is in automated list
+    return AUTOMATED_COUNTRIES.includes(shippingCountry.toUpperCase()) ? 'automated' : 'manual'
+  }
+  
+  // Default to manual if category is unknown
+  return 'manual'
+}
+
 export default async function handler(req, res) {
   // More comprehensive CORS setup to handle various browser behaviors
   const origin = req.headers.origin
@@ -233,6 +279,18 @@ export default async function handler(req, res) {
     const cleanFormData = { ...formData }
     delete cleanFormData.signature
 
+    // Determine fulfillment type based on shipping category and country
+    const fulfillmentType = determineFulfillmentType(
+      formData.shippingCategory,
+      formData.shippingCountry
+    )
+
+    console.log('Fulfillment determination:', {
+      shippingCategory: formData.shippingCategory,
+      shippingCountry: formData.shippingCountry,
+      fulfillmentType: fulfillmentType
+    })
+
     // Save application to database with file URLs
     const { data, error } = await supabase
       .from('applications')
@@ -240,7 +298,8 @@ export default async function handler(req, res) {
         application_id: applicationId,
         form_data: cleanFormData,
         file_urls: fileMetadata, // Store URLs instead of base64
-        payment_status: 'pending'
+        payment_status: 'pending',
+        fulfillment_type: fulfillmentType // Add fulfillment type for Make automation
       })
       .select()
 
