@@ -1,6 +1,23 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
+// Disable Vercel's default body parsing to get raw body for Stripe webhooks
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
+// Helper function to read raw body from request
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    req.on('data', (chunk) => chunks.push(chunk))
+    req.on('end', () => resolve(Buffer.concat(chunks)))
+    req.on('error', reject)
+  })
+}
+
 // Use the same Stripe key as other files
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
 const stripe = new Stripe(stripeSecretKey)
@@ -47,21 +64,27 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-
+  // Get raw body for Stripe webhook signature verification
+  const rawBody = await getRawBody(req)
   const sig = req.headers['stripe-signature']
   let event
 
   try {
     if (sig) {
-      // This is a real Stripe webhook with signature
+      // This is a real Stripe webhook with signature - use raw body
       event = stripe.webhooks.constructEvent(
-        req.body, 
+        rawBody, 
         sig, 
         process.env.STRIPE_WEBHOOK_SECRET
       )
     } else {
-      // This is a manual call from frontend (no signature)
-      event = req.body
+      // This is a manual call from frontend (no signature) - parse as JSON
+      try {
+        event = JSON.parse(rawBody.toString())
+      } catch (parseError) {
+        console.error('Failed to parse request body as JSON:', parseError.message)
+        return res.status(400).json({ error: 'Invalid JSON in request body' })
+      }
     }
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message)
@@ -341,7 +364,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         signature_url: parsedFileData?.signature?.publicUrl || null, // Signature URL from storage
         signature_email_url: parsedFileData?.signature?.publicUrl ? `${parsedFileData.signature.publicUrl}?width=400&height=200&resize=contain&format=png` : null // Optimized for email
       },
-      
+    
       // License information
       license_info: {
         license_number: formData.licenseNumber,
