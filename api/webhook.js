@@ -497,7 +497,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     }
 
     // Send to Make.com webhook
-    const makeWebhookUrl = process.env.MAKE_WEBHOOK_URL || 'https://hook.us2.make.com/ycaa7o76udppdd7m4hn22xe1toj623ts'
+    const makeWebhookUrl = process.env.MAKE_WEBHOOK_URL || 'https://hook.us2.make.com/ug16tj9ocleg8u1vz2qdltztx779wf4t'
     const makeApiKey = process.env.MAKE_API_KEY || 'FIDP_webhook_key_2025_secure123'
     
     if (makeWebhookUrl) {
