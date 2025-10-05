@@ -77,7 +77,7 @@ export default async function handler(req, res) {
 
   try {
     if (sig) {
-      // This is a real Stripe webhook with signature - use raw body
+      // This is a real Stripe webhook with signature - use raw body buffer
       event = stripe.webhooks.constructEvent(
         rawBody, 
         sig, 
