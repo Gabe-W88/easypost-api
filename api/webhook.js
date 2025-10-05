@@ -13,7 +13,10 @@ function getRawBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = []
     req.on('data', (chunk) => chunks.push(chunk))
-    req.on('end', () => resolve(Buffer.concat(chunks)))
+    req.on('end', () => {
+      const buffer = Buffer.concat(chunks)
+      resolve(buffer)
+    })
     req.on('error', reject)
   })
 }
@@ -31,6 +34,13 @@ const supabase = createClient(
 export default async function handler(req, res) {
   
   console.log(`Webhook request: ${req.method} from origin: ${req.headers.origin}`)
+  
+  // Validate critical environment variables
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error('❌ STRIPE_WEBHOOK_SECRET not configured in environment variables')
+  } else {
+    console.log('✅ STRIPE_WEBHOOK_SECRET is configured')
+  }
   
   // Enhanced CORS configuration for Framer domain
   const allowedOrigins = [
@@ -67,28 +77,25 @@ export default async function handler(req, res) {
   // Get raw body for Stripe webhook signature verification
   const rawBody = await getRawBody(req)
   const sig = req.headers['stripe-signature']
+  
   let event
 
   try {
-    if (sig) {
-      // This is a real Stripe webhook with signature - use raw body
+    if (sig && process.env.STRIPE_WEBHOOK_SECRET) {
+      // This is a real Stripe webhook with signature - use raw body buffer
       event = stripe.webhooks.constructEvent(
-        rawBody, 
+        rawBody.toString(), 
         sig, 
         process.env.STRIPE_WEBHOOK_SECRET
       )
     } else {
       // This is a manual call from frontend (no signature) - parse as JSON
-      try {
-        event = JSON.parse(rawBody.toString())
-      } catch (parseError) {
-        console.error('Failed to parse request body as JSON:', parseError.message)
-        return res.status(400).json({ error: 'Invalid JSON in request body' })
-      }
+      event = JSON.parse(rawBody.toString())
     }
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message)
     return res.status(400).json({ error: `Webhook Error: ${err.message}` })
+  }
   }
 
   // Handle the event
