@@ -130,8 +130,93 @@ const AUTOMATED_COUNTRIES = [
   'GB', // United Kingdom
 ]
 
+// Country name to code mapping for parsing international addresses
+const COUNTRY_NAME_TO_CODE = {
+  // Automated countries - full names to codes
+  'australia': 'AU',
+  'austria': 'AT', 
+  'belgium': 'BE',
+  'canada': 'CA',
+  'denmark': 'DK',
+  'finland': 'FI',
+  'france': 'FR',
+  'germany': 'DE',
+  'ireland': 'IE',
+  'italy': 'IT',
+  'luxembourg': 'LU',
+  'mexico': 'MX',
+  'netherlands': 'NL',
+  'new zealand': 'NZ',
+  'norway': 'NO',
+  'portugal': 'PT',
+  'spain': 'ES',
+  'sweden': 'SE',
+  'switzerland': 'CH',
+  'united kingdom': 'GB',
+  'uk': 'GB',
+  'great britain': 'GB',
+  'england': 'GB',
+  'scotland': 'GB',
+  'wales': 'GB',
+  'northern ireland': 'GB',
+  
+  // Common variations
+  'usa': 'US',
+  'united states': 'US',
+  'united states of america': 'US',
+  'america': 'US',
+}
+
+// Helper function to extract country from international address
+function extractCountryFromAddress(internationalFullAddress) {
+  if (!internationalFullAddress || typeof internationalFullAddress !== 'string') {
+    return null
+  }
+  
+  // Split address into lines and get the last non-empty line (usually the country)
+  const lines = internationalFullAddress.trim().split('\n').map(line => line.trim()).filter(line => line.length > 0)
+  
+  if (lines.length === 0) {
+    return null
+  }
+  
+  // Check the last line first (most common format)
+  const lastLine = lines[lines.length - 1].toLowerCase().trim()
+  
+  // First, check if it's already a country code (2 letters)
+  if (lastLine.length === 2 && /^[a-z]{2}$/.test(lastLine)) {
+    return lastLine.toUpperCase()
+  }
+  
+  // Check if the last line matches a known country name
+  if (COUNTRY_NAME_TO_CODE[lastLine]) {
+    return COUNTRY_NAME_TO_CODE[lastLine]
+  }
+  
+  // If last line doesn't match, search through all lines for country mentions
+  for (const line of lines.reverse()) { // Start from last line and work backwards
+    const lineLower = line.toLowerCase().trim()
+    
+    // Check for exact country name matches
+    for (const [countryName, countryCode] of Object.entries(COUNTRY_NAME_TO_CODE)) {
+      if (lineLower === countryName || lineLower.includes(countryName)) {
+        return countryCode
+      }
+    }
+    
+    // Check for country code (case insensitive)
+    const possibleCode = line.trim().toUpperCase()
+    if (possibleCode.length === 2 && /^[A-Z]{2}$/.test(possibleCode)) {
+      return possibleCode
+    }
+  }
+  
+  console.log('Could not extract country from address:', internationalFullAddress)
+  return null
+}
+
 // Helper function to determine fulfillment type based on shipping country
-function determineFulfillmentType(shippingCategory, shippingCountry) {
+function determineFulfillmentType(shippingCategory, shippingCountry, internationalFullAddress = null) {
   // Domestic and military shipments are always automated
   if (shippingCategory === 'domestic' || shippingCategory === 'military') {
     return 'automated'
@@ -139,13 +224,32 @@ function determineFulfillmentType(shippingCategory, shippingCountry) {
   
   // For international shipments, check if country is in automated list
   if (shippingCategory === 'international') {
-    if (!shippingCountry) {
+    let countryCode = shippingCountry
+    
+    // If no explicit shipping country provided, try to extract from international address
+    if (!countryCode && internationalFullAddress) {
+      countryCode = extractCountryFromAddress(internationalFullAddress)
+      console.log('Extracted country from address:', {
+        address: internationalFullAddress,
+        extractedCountry: countryCode
+      })
+    }
+    
+    if (!countryCode) {
+      console.log('No country found for international shipment, defaulting to manual')
       // If no country provided, default to manual for safety
       return 'manual'
     }
     
     // Check if country code is in automated list
-    return AUTOMATED_COUNTRIES.includes(shippingCountry.toUpperCase()) ? 'automated' : 'manual'
+    const isAutomated = AUTOMATED_COUNTRIES.includes(countryCode.toUpperCase())
+    console.log('Country automation check:', {
+      countryCode: countryCode.toUpperCase(),
+      isAutomated,
+      automatedCountries: AUTOMATED_COUNTRIES
+    })
+    
+    return isAutomated ? 'automated' : 'manual'
   }
   
   // Default to manual if category is unknown
@@ -292,12 +396,14 @@ export default async function handler(req, res) {
     // Determine fulfillment type based on shipping category and country
     const fulfillmentType = determineFulfillmentType(
       formData.shippingCategory,
-      formData.shippingCountry // This will come from the custom shipping form fields
+      formData.shippingCountry, // This will come from the custom shipping form fields
+      formData.internationalFullAddress // Pass international address for country extraction
     )
 
     console.log('Fulfillment determination:', {
       shippingCategory: formData.shippingCategory,
       shippingCountry: formData.shippingCountry,
+      internationalFullAddress: formData.internationalFullAddress,
       fulfillmentType: fulfillmentType
     })
 
