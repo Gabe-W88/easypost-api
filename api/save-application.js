@@ -301,7 +301,14 @@ export default async function handler(req, res) {
       fulfillmentType: fulfillmentType
     })
 
-    // Save application to database with file URLs
+    // Save application to database with file URLs and international fields
+    console.log('=== DATABASE INSERT DEBUG ===')
+    console.log('About to insert international fields:', {
+      international_full_address: formData.internationalFullAddress || null,
+      international_local_address: formData.internationalLocalAddress || null,
+      international_delivery_instructions: formData.internationalDeliveryInstructions || null
+    })
+    
     const { data, error } = await supabase
       .from('applications')
       .insert({
@@ -309,9 +316,16 @@ export default async function handler(req, res) {
         form_data: cleanFormData,
         file_urls: fileMetadata, // Store URLs instead of base64
         payment_status: 'pending',
-        fulfillment_type: fulfillmentType // Add fulfillment type for Make automation
+        fulfillment_type: fulfillmentType, // Add fulfillment type for Make automation
+        // Extract international shipping fields to individual columns
+        international_full_address: formData.internationalFullAddress || null,
+        international_local_address: formData.internationalLocalAddress || null,
+        international_delivery_instructions: formData.internationalDeliveryInstructions || null
       })
       .select()
+
+    console.log('Database insert result:', { data, error })
+    console.log('=== END DATABASE DEBUG ===')
 
     if (error) {
       console.error('Database error:', error)
