@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
+// TEST: This is a test comment to verify file editing works
 // Initialize Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -195,6 +196,15 @@ export default async function handler(req, res) {
     }
 
     // Debug: Check what we're receiving
+    console.log('=== SAVE APPLICATION DEBUG ===')
+    console.log('All formData keys:', Object.keys(formData))
+    console.log('Full formData:', JSON.stringify(formData, null, 2))
+    console.log('International fields check:', {
+      internationalFullAddress: formData.internationalFullAddress,
+      internationalLocalAddress: formData.internationalLocalAddress, 
+      internationalDeliveryInstructions: formData.internationalDeliveryInstructions
+    })
+    console.log('=== END DEBUG ===')
 
     // Validate required fields (temporarily skip shipping for debugging)
     const requiredFields = ['email', 'firstName', 'lastName', 'selectedPermits', 'processingOption']
