@@ -299,16 +299,6 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     // Parse file URLs (new structure)
     const parsedFileData = fileData ? (typeof fileData === 'string' ? JSON.parse(fileData) : fileData) : null
 
-    // Debug: Check what file data we're sending to Make.com
-    console.log('=== WEBHOOK FILE DEBUG ===')
-    console.log('Raw fileData from database:', fileData)
-    console.log('Parsed fileData:', parsedFileData)
-    console.log('driversLicense array length:', parsedFileData?.driversLicense?.length)
-    console.log('passportPhoto array length:', parsedFileData?.passportPhoto?.length)
-    console.log('driversLicense files:', parsedFileData?.driversLicense?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })))
-    console.log('passportPhoto files:', parsedFileData?.passportPhoto?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })))
-    console.log('=== END WEBHOOK FILE DEBUG ===')
-
     // Calculate processing time based on selection
     const getProcessingTime = (option) => {
       switch (option) {

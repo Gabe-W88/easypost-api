@@ -329,14 +329,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Both driver\'s license and passport photo uploads are required' })
     }
 
-    // Debug: Check what files we received
-    console.log('=== FILE UPLOAD DEBUG ===')
-    console.log('fileData.driversLicense length:', fileData.driversLicense?.length)
-    console.log('fileData.passportPhoto length:', fileData.passportPhoto?.length)
-    console.log('fileData.driversLicense:', fileData.driversLicense?.map(f => ({ name: f.name, size: f.size, type: f.type })))
-    console.log('fileData.passportPhoto:', fileData.passportPhoto?.map(f => ({ name: f.name, size: f.size, type: f.type })))
-    console.log('=== END FILE DEBUG ===')
-
     if (fileData.driversLicense.length === 0 || fileData.passportPhoto.length === 0) {
       return res.status(400).json({ error: 'At least one file must be uploaded for each document type' })
     }
@@ -396,14 +388,6 @@ export default async function handler(req, res) {
       passportPhoto: uploadedPassportPhoto,
       signature: uploadedSignature // Add signature metadata
     }
-
-    // Debug: Check what file metadata we're storing
-    console.log('=== FILE METADATA DEBUG ===')
-    console.log('uploadedDriversLicense length:', uploadedDriversLicense?.length)
-    console.log('uploadedPassportPhoto length:', uploadedPassportPhoto?.length) 
-    console.log('fileMetadata.driversLicense:', uploadedDriversLicense?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })))
-    console.log('fileMetadata.passportPhoto:', uploadedPassportPhoto?.map(f => ({ fileName: f.fileName, publicUrl: f.publicUrl })))
-    console.log('=== END FILE METADATA DEBUG ===')
 
     // Clean form data - remove base64 signature since it's now in storage
     const cleanFormData = { ...formData }
