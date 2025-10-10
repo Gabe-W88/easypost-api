@@ -424,8 +424,7 @@ export default async function handler(req, res) {
         // Extract international shipping fields to individual columns
         international_full_address: formData.internationalFullAddress || null,
         international_local_address: formData.internationalLocalAddress || null,
-        international_delivery_instructions: formData.internationalDeliveryInstructions || null,
-        korean_pccc: formData.koreanPccc || null
+        international_delivery_instructions: formData.internationalDeliveryInstructions || null
       })
       .select()
 

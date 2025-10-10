@@ -144,7 +144,7 @@ async function handleCheckoutCompleted(session) {
       updated_at: new Date().toISOString()
     })
     .eq('stripe_session_id', session.id)
-    .select('application_id, form_data, file_urls, international_full_address, international_local_address, international_delivery_instructions, korean_pccc')
+    .select('application_id, form_data, file_urls')
     .single()
 
   if (error) {
@@ -155,18 +155,12 @@ async function handleCheckoutCompleted(session) {
   if (data) {
     // For checkout sessions, we don't have detailed address data like PaymentIntents
     // But we can still trigger the automation
-    const internationalFields = {
-      international_full_address: data.international_full_address,
-      international_local_address: data.international_local_address,
-      international_delivery_instructions: data.international_delivery_instructions,
-      korean_pccc: data.korean_pccc
-    }
     await triggerMakeAutomation(data.application_id, data.form_data, { 
       id: session.payment_intent,
       payment_method: session.payment_method,
       amount: session.amount_total,
       currency: session.currency 
-    }, null, data.file_urls, internationalFields)
+    }, null, data.file_urls)
     
   } else {
     console.error('No application found for session:', session.id)
@@ -256,7 +250,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
       updated_at: new Date().toISOString()
     })
     .eq('application_id', applicationId)
-    .select('application_id, form_data, file_urls, international_full_address, international_local_address, international_delivery_instructions, korean_pccc')
+    .select('application_id, form_data, file_urls')
     .single()
 
 
@@ -268,13 +262,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
 
   if (data) {
     // Trigger Make.com automation with payment intent and address data
-    const internationalFields = {
-      international_full_address: data.international_full_address,
-      international_local_address: data.international_local_address,
-      international_delivery_instructions: data.international_delivery_instructions,
-      korean_pccc: data.korean_pccc
-    }
-    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData, data.file_urls, internationalFields)
+    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData, data.file_urls)
     
   } else {
     console.error('No application found for payment intent:', paymentIntent.id)
@@ -300,7 +288,7 @@ async function handleCheckoutExpired(session) {
 }
 
 // Trigger Make.com automation with application data for business workflow
-async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null, fileData = null, internationalFields = {}) {
+async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null, fileData = null) {
   
   try {
     // Parse form data
@@ -438,14 +426,6 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         processing_time_estimate: getProcessingTime(formData.processingOption),
         shipping_category: formData.shippingCategory,
         shipping_speed: formData.shippingOption
-      },
-      
-      // International shipping details (for international orders)
-      international_shipping: {
-        full_address: internationalFields.international_full_address || null,
-        local_address: internationalFields.international_local_address || null,
-        delivery_instructions: internationalFields.international_delivery_instructions || null,
-        korean_pccc: internationalFields.korean_pccc || null
       },
       
       // Customer uploaded files (URLs from Supabase Storage)
