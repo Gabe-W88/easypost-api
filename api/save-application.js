@@ -265,7 +265,7 @@ export default async function handler(req, res) {
     'https://preview.framer.app'
   ]
   
-  // Set CORS headers
+  // Set CORS headers first, before any other processing
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin)
   } else {
@@ -277,8 +277,6 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Max-Age', '86400')
   res.setHeader('Vary', 'Origin')
-  
-  // Additional headers that some browsers expect
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type')
   
   // Handle preflight requests
@@ -426,7 +424,8 @@ export default async function handler(req, res) {
         // Extract international shipping fields to individual columns
         international_full_address: formData.internationalFullAddress || null,
         international_local_address: formData.internationalLocalAddress || null,
-        international_delivery_instructions: formData.internationalDeliveryInstructions || null
+        international_delivery_instructions: formData.internationalDeliveryInstructions || null,
+        korean_pccc: formData.koreanPccc || null
       })
       .select()
 
