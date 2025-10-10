@@ -446,6 +446,36 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           emailUrl: `${file.publicUrl}?width=800&height=600&resize=contain&format=webp`,
           thumbnailUrl: `${file.publicUrl}?width=200&height=200&resize=cover&format=webp`
         })) || [],
+        
+        // Flattened individual fields for reliable Make.com mapping (up to 10 each)
+        // ID Document URLs
+        id_document_url_1: parsedFileData?.driversLicense?.[0]?.publicUrl || null,
+        id_document_url_2: parsedFileData?.driversLicense?.[1]?.publicUrl || null,
+        id_document_url_3: parsedFileData?.driversLicense?.[2]?.publicUrl || null,
+        id_document_url_4: parsedFileData?.driversLicense?.[3]?.publicUrl || null,
+        id_document_url_5: parsedFileData?.driversLicense?.[4]?.publicUrl || null,
+        id_document_url_6: parsedFileData?.driversLicense?.[5]?.publicUrl || null,
+        id_document_url_7: parsedFileData?.driversLicense?.[6]?.publicUrl || null,
+        id_document_url_8: parsedFileData?.driversLicense?.[7]?.publicUrl || null,
+        id_document_url_9: parsedFileData?.driversLicense?.[8]?.publicUrl || null,
+        id_document_url_10: parsedFileData?.driversLicense?.[9]?.publicUrl || null,
+        
+        // Passport Photo URLs
+        passport_photo_url_1: parsedFileData?.passportPhoto?.[0]?.publicUrl || null,
+        passport_photo_url_2: parsedFileData?.passportPhoto?.[1]?.publicUrl || null,
+        passport_photo_url_3: parsedFileData?.passportPhoto?.[2]?.publicUrl || null,
+        passport_photo_url_4: parsedFileData?.passportPhoto?.[3]?.publicUrl || null,
+        passport_photo_url_5: parsedFileData?.passportPhoto?.[4]?.publicUrl || null,
+        passport_photo_url_6: parsedFileData?.passportPhoto?.[5]?.publicUrl || null,
+        passport_photo_url_7: parsedFileData?.passportPhoto?.[6]?.publicUrl || null,
+        passport_photo_url_8: parsedFileData?.passportPhoto?.[7]?.publicUrl || null,
+        passport_photo_url_9: parsedFileData?.passportPhoto?.[8]?.publicUrl || null,
+        passport_photo_url_10: parsedFileData?.passportPhoto?.[9]?.publicUrl || null,
+        
+        // File counts for reference
+        total_id_documents: parsedFileData?.driversLicense?.length || 0,
+        total_passport_photos: parsedFileData?.passportPhoto?.length || 0,
+        
         // Legacy fields for backward compatibility (first file URLs)
         id_document_url: parsedFileData?.driversLicense?.[0]?.publicUrl || null,
         passport_photo_url: parsedFileData?.passportPhoto?.[0]?.publicUrl || null,
