@@ -112,137 +112,69 @@ export default async function handler(req, res) {
       }
     }
     
-    // Add processing fee
-    if (formData.processingOption) {
-      const processing = formData.processingOption
-      let productId = null
-      let fallbackAmount = 0
-      let shortName = ''
-      
-      // Map processing options to new simplified values
-      if (processing === 'standard') {
-        productId = STRIPE_PRODUCTS.processing_standard
-        fallbackAmount = 6900 // $69.00
-        shortName = 'Standard'
-      } else if (processing === 'express') {
-        productId = STRIPE_PRODUCTS.processing_express
-        fallbackAmount = 10900 // $109.00
-        shortName = 'Express'
-      } else if (processing === 'same_day') {
-        productId = STRIPE_PRODUCTS.processing_same_day
-        fallbackAmount = 16900 // $169.00
-        shortName = 'Same Day'
-      }
-      
-      if (productId) {
-        try {
-          const product = await stripe.products.retrieve(productId)
-          const prices = await stripe.prices.list({
-            product: productId,
-            active: true,
-            limit: 1
-          })
-          
-          if (prices.data.length > 0) {
-            const price = prices.data[0]
-            totalAmount += price.unit_amount
-            lineItems.push({
-              price_data: {
-                currency: 'usd',
-                product_data: {
-                  name: shortName,
-                },
-                unit_amount: price.unit_amount,
-              },
-              quantity: 1,
-            })
-          } else {
-            // Fallback to hardcoded price
-            totalAmount += fallbackAmount
-            lineItems.push({
-              price_data: {
-                currency: 'usd',
-                product_data: {
-                  name: shortName,
-                },
-                unit_amount: fallbackAmount,
-              },
-              quantity: 1,
-            })
-          }
-        } catch (error) {
-          console.warn(`Product not found for processing: ${formData.processingOption}`, error)
-          // Use fallback pricing
-          totalAmount += fallbackAmount
-          lineItems.push({
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: processing,
-              },
-              unit_amount: fallbackAmount,
-            },
-            quantity: 1,
-          })
-        }
-      }
-    }
-    
-    // Add shipping fee based on category and speed
-    if (formData.shippingCategory && formData.shippingOption) {
+    // Add combined processing & shipping fee
+    if (formData.processingOption && formData.shippingCategory) {
+      const speed = formData.processingOption
       const category = formData.shippingCategory
-      const speed = formData.shippingOption
-      let shippingAmount = 0
-      let shippingName = ''
+      let amount = 0
+      let displayName = ''
+      let backendNote = ''
       
-      // Calculate shipping cost based on category and speed
-      if (category === 'international') {
-        switch (speed) {
-          case 'standard':
-            shippingAmount = 4900 // $49.00
-            shippingName = 'Intl Standard'
-            break
-          case 'express':
-            shippingAmount = 7900 // $79.00
-            shippingName = 'Intl Express'
-            break
-          default:
-            shippingAmount = 4900
-            shippingName = 'Intl Standard'
+      // Calculate combined pricing based on category and speed
+      if (category === 'domestic') {
+        if (speed === 'standard') {
+          amount = 5800 // $58.00
+          displayName = 'Standard Processing & Shipping'
+          backendNote = '3-5 business days processing & standard shipping'
+        } else if (speed === 'fast') {
+          amount = 10800 // $108.00
+          displayName = 'Fast Processing & Shipping'
+          backendNote = '1-2 business days processing & expedited shipping'
+        } else if (speed === 'fastest') {
+          amount = 16800 // $168.00
+          displayName = 'Fastest Processing & Shipping'
+          backendNote = 'Same-day processing & overnight shipping'
         }
-      } else if (category === 'domestic') {
-        switch (speed) {
-          case 'standard':
-            shippingAmount = 900 // $9.00
-            shippingName = 'Domestic Standard'
-            break
-          case 'express':
-            shippingAmount = 1900 // $19.00
-            shippingName = 'Domestic Express'
-            break
-          case 'overnight':
-            shippingAmount = 4900 // $49.00
-            shippingName = 'Domestic Overnight'
-            break
-          default:
-            shippingAmount = 900
-            shippingName = 'Domestic Standard'
+      } else if (category === 'international') {
+        if (speed === 'standard') {
+          amount = 9800 // $98.00
+          displayName = 'Standard Processing & Shipping'
+          backendNote = '3-5 business days processing & standard shipping'
+        } else if (speed === 'fast') {
+          amount = 14800 // $148.00
+          displayName = 'Fast Processing & Shipping'
+          backendNote = '1-2 business days processing & expedited shipping'
+        } else if (speed === 'fastest') {
+          amount = 19800 // $198.00
+          displayName = 'Fastest Processing & Shipping'
+          backendNote = 'Same-day processing & overnight shipping'
         }
       } else if (category === 'military') {
-        // Military shipping is always free
-        shippingAmount = 0 // $0.00
-        shippingName = 'Military Free'
+        if (speed === 'standard') {
+          amount = 4900 // $49.00
+          displayName = 'Standard Processing & Shipping'
+          backendNote = '3-5 business days processing & standard shipping'
+        } else if (speed === 'fast') {
+          amount = 8900 // $89.00
+          displayName = 'Fast Processing & Shipping'
+          backendNote = '1-2 business days processing & expedited shipping'
+        } else if (speed === 'fastest') {
+          amount = 11900 // $119.00
+          displayName = 'Fastest Processing & Shipping'
+          backendNote = 'Same-day processing & overnight shipping'
+        }
       }
       
-      if (shippingAmount > 0) {
-        totalAmount += shippingAmount
+      if (amount > 0) {
+        totalAmount += amount
         lineItems.push({
           price_data: {
             currency: 'usd',
             product_data: {
-              name: shippingName,
+              name: displayName,
+              description: backendNote
             },
-            unit_amount: shippingAmount,
+            unit_amount: amount,
           },
           quantity: 1,
         })
@@ -302,121 +234,6 @@ export default async function handler(req, res) {
       productDetails.processing_option = label
     }
 
-    // Add shipping option
-    if (formData.shippingOption && formData.shippingCategory) {
-      const category = formData.shippingCategory
-      const speed = formData.shippingOption
-      let shippingLabel = ''
-      
-      
-            // Build shipping label based on category and speed with actual prices
-      if (category === 'international') {
-        switch (speed) {
-          case 'standard':
-            shippingLabel = 'Intl Standard ($181.02)'
-            break
-          case 'express':
-            shippingLabel = 'Intl Express ($213.35)'
-            break
-          case 'next_day':
-            shippingLabel = 'Intl Next Day ($245.67)'
-            break
-          default:
-            shippingLabel = 'Intl Standard ($181.02)'
-        }
-      } else if (category === 'domestic') {
-        switch (speed) {
-          case 'standard':
-            shippingLabel = 'Domestic Standard ($8.05)'
-            break
-          case 'express':
-            shippingLabel = 'Domestic Express ($14.83)'
-            break
-          case 'overnight':
-            shippingLabel = 'Domestic Overnight ($21.33)'
-            break
-          default:
-            shippingLabel = 'Domestic Standard ($8.05)'
-        }
-      } else if (category === 'military') {
-        switch (speed) {
-          case 'free':
-            shippingLabel = 'Military Free ($0.00)'
-            break
-          default:
-            shippingLabel = 'Military Free ($0.00)'
-        }
-      } else {
-        shippingLabel = `${category} ${speed} Shipping`
-      }
-      
-      productSummary.push(shippingLabel)
-      productDetails.shipping_option = shippingLabel
-    } else if (formData.shippingOption) {
-      // Try to infer the category from the amount charged or make a smarter fallback
-      
-      // Look at the line items to see what shipping amount was charged
-      const shippingLineItem = lineItems.find(item => 
-        item.price_data && item.price_data.product_data && 
-        item.price_data.product_data.name && 
-        item.price_data.product_data.name.toLowerCase().includes('shipping')
-      )
-      
-      if (shippingLineItem) {
-        const shippingAmount = shippingLineItem.price_data.unit_amount
-        const speed = formData.shippingOption
-        let shippingLabel = ''
-        
-        
-        // Infer category from amount
-        if (speed === 'next_day') {
-          if (shippingAmount === 24567) {
-            shippingLabel = 'Intl Next Day ($245.67)'
-          } else if (shippingAmount === 21335) {
-            shippingLabel = 'Dom Next Day ($213.35)'
-          } else if (shippingAmount === 16055) {
-            shippingLabel = 'Mil Next Day ($160.55)'
-          } else {
-            shippingLabel = `Next Day ($${(shippingAmount / 100).toFixed(2)})`
-          }
-        } else if (speed === 'express') {
-          if (shippingAmount === 21335) {
-            shippingLabel = 'Intl Express ($213.35)'
-          } else if (shippingAmount === 14835) {
-            shippingLabel = 'Dom Express ($148.35)'
-          } else if (shippingAmount === 12822) {
-            shippingLabel = 'Mil Express ($128.22)'
-          } else {
-            shippingLabel = `Express ($${(shippingAmount / 100).toFixed(2)})`
-          }
-        } else { // standard
-          if (shippingAmount === 18102) {
-            shippingLabel = 'Intl Standard ($181.02)'
-          } else if (shippingAmount === 10560) {
-            shippingLabel = 'Dom Standard ($105.60)'
-          } else if (shippingAmount === 9590) {
-            shippingLabel = 'Mil Standard ($95.90)'
-          } else {
-            shippingLabel = `Standard ($${(shippingAmount / 100).toFixed(2)})`
-          }
-        }
-        
-        productSummary.push(shippingLabel)
-        productDetails.shipping_option = shippingLabel
-      } else {
-        // Ultimate fallback to old system
-        const shippingLabels = {
-          standard: 'US Standard ($9)',
-          express: 'US Express ($19)',
-          next_day: 'US Next Day ($49)'
-        }
-        const label = shippingLabels[formData.shippingOption] || formData.shippingOption
-        productSummary.push(label)
-        productDetails.shipping_option = label
-      }
-    } else {
-    }
-
     // Create PaymentIntent with detailed metadata
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAmount,
@@ -431,7 +248,6 @@ export default async function handler(req, res) {
         permit_count: formData.selectedPermits?.length || 0,
         processing_type: formData.processingOption || 'not_selected',
         shipping_category: formData.shippingCategory || 'not_selected',
-        shipping_speed: formData.shippingOption || 'not_selected',
         ...productDetails
       },
       receipt_email: formData.email,

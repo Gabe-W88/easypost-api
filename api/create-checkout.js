@@ -64,7 +64,7 @@ export default async function handler(req, res) {
     }
 
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
@@ -80,7 +80,15 @@ export default async function handler(req, res) {
       shipping_address_collection: {
         allowed_countries: ['US']
       }
-    })
+    }
+
+    // Add promo code support if provided
+    if (formData.promoCode && formData.promoCode.trim()) {
+      sessionConfig.allow_promotion_codes = true
+      // Note: Stripe will validate the promo code automatically during checkout
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     // Update database with Stripe session ID using Supabase
     const { error: updateError } = await supabase
@@ -148,66 +156,47 @@ function buildStripeLineItems(formData) {
     })
   }
 
-  // Add processing option
-  if (formData.processingOption) {
-    const processing = formData.processingOption
-    if (processing === 'standard') {
-      lineItems.push({
-        price_data: {
-          currency: 'usd',
-          product: STRIPE_PRODUCTS.processing_standard,
-          unit_amount: 6900 // $69.00 in cents
-        },
-        quantity: 1
-      })
-    } else if (processing === 'express') {
-      lineItems.push({
-        price_data: {
-          currency: 'usd',
-          product: STRIPE_PRODUCTS.processing_express,
-          unit_amount: 9900 // $99.00 in cents
-        },
-        quantity: 1
-      })
-    } else if (processing === 'same_day') {
-      lineItems.push({
-        price_data: {
-          currency: 'usd',
-          product: STRIPE_PRODUCTS.processing_same_day,
-          unit_amount: 12900 // $129.00 in cents
-        },
-        quantity: 1
-      })
+  // Add combined processing & shipping option
+  if (formData.processingOption && formData.shippingCategory) {
+    const speed = formData.processingOption
+    const category = formData.shippingCategory
+    let amount = 0
+    
+    // Calculate combined pricing based on category and speed
+    if (category === 'domestic') {
+      if (speed === 'standard') {
+        amount = 5800 // $58.00 in cents
+      } else if (speed === 'fast') {
+        amount = 10800 // $108.00 in cents
+      } else if (speed === 'fastest') {
+        amount = 16800 // $168.00 in cents
+      }
+    } else if (category === 'international') {
+      if (speed === 'standard') {
+        amount = 9800 // $98.00 in cents
+      } else if (speed === 'fast') {
+        amount = 14800 // $148.00 in cents
+      } else if (speed === 'fastest') {
+        amount = 19800 // $198.00 in cents
+      }
+    } else if (category === 'military') {
+      if (speed === 'standard') {
+        amount = 4900 // $49.00 in cents
+      } else if (speed === 'fast') {
+        amount = 8900 // $89.00 in cents
+      } else if (speed === 'fastest') {
+        amount = 11900 // $119.00 in cents
+      }
     }
-  }
-
-  // Add shipping option
-  if (formData.shippingOption) {
-    const shipping = formData.shippingOption
-    if (shipping === 'standard') {
+    
+    if (amount > 0) {
       lineItems.push({
         price_data: {
           currency: 'usd',
-          product: STRIPE_PRODUCTS.shipping_standard,
-          unit_amount: 900 // $9.00 in cents
-        },
-        quantity: 1
-      })
-    } else if (shipping === 'express') {
-      lineItems.push({
-        price_data: {
-          currency: 'usd',
-          product: STRIPE_PRODUCTS.shipping_express,
-          unit_amount: 1900 // $19.00 in cents
-        },
-        quantity: 1
-      })
-    } else if (shipping === 'next_day') {
-      lineItems.push({
-        price_data: {
-          currency: 'usd',
-          product: STRIPE_PRODUCTS.shipping_next_day,
-          unit_amount: 4900 // $49.00 in cents
+          product_data: {
+            name: `${speed.charAt(0).toUpperCase() + speed.slice(1)} Processing & Shipping`
+          },
+          unit_amount: amount
         },
         quantity: 1
       })

@@ -424,7 +424,9 @@ export default async function handler(req, res) {
         // Extract international shipping fields to individual columns
         international_full_address: formData.internationalFullAddress || null,
         international_local_address: formData.internationalLocalAddress || null,
-        international_delivery_instructions: formData.internationalDeliveryInstructions || null
+        international_delivery_instructions: formData.internationalDeliveryInstructions || null,
+        shipping_country: formData.shippingCountry || null,
+        pccc_code: formData.pcccCode || null
       })
       .select()
 
@@ -538,59 +540,57 @@ function calculatePricing(formData) {
     }
   }
 
-  // Add shipping cost based on category and speed
-  if (formData.shippingCategory && formData.shippingOption) {
+  // Add combined processing & shipping cost
+  if (formData.shippingCategory && formData.processingOption) {
     const category = formData.shippingCategory
-    const speed = formData.shippingOption
-    let shippingPrice = 0
-    let shippingName = ''
+    const speed = formData.processingOption
+    let combinedPrice = 0
+    let combinedName = ''
 
-    // Calculate price based on category and speed
-    if (category === 'international') {
-      switch (speed) {
-        case 'standard':
-          shippingPrice = 49
-          shippingName = 'International Standard Shipping (4-8 business days)'
-          break
-        case 'express':
-          shippingPrice = 79
-          shippingName = 'International Express Shipping (2-5 business days)'
-          break
-        default:
-          shippingPrice = 49
-          shippingName = 'International Standard Shipping (4-8 business days)'
+    // Calculate combined price based on category and speed
+    if (category === 'domestic') {
+      if (speed === 'standard') {
+        combinedPrice = 58
+        combinedName = 'Standard Processing & Shipping'
+      } else if (speed === 'fast') {
+        combinedPrice = 108
+        combinedName = 'Fast Processing & Shipping'
+      } else if (speed === 'fastest') {
+        combinedPrice = 168
+        combinedName = 'Fastest Processing & Shipping'
       }
-    } else if (category === 'domestic') {
-      switch (speed) {
-        case 'standard':
-          shippingPrice = 9
-          shippingName = 'Domestic Standard Shipping (3-5 business days)'
-          break
-        case 'express':
-          shippingPrice = 19
-          shippingName = 'Domestic Express Shipping (2 business days)'
-          break
-        case 'overnight':
-          shippingPrice = 49
-          shippingName = 'Domestic Overnight Shipping (Next business day)'
-          break
-        default:
-          shippingPrice = 9
-          shippingName = 'Domestic Standard Shipping (3-5 business days)'
+    } else if (category === 'international') {
+      if (speed === 'standard') {
+        combinedPrice = 98
+        combinedName = 'Standard Processing & Shipping'
+      } else if (speed === 'fast') {
+        combinedPrice = 148
+        combinedName = 'Fast Processing & Shipping'
+      } else if (speed === 'fastest') {
+        combinedPrice = 198
+        combinedName = 'Fastest Processing & Shipping'
       }
     } else if (category === 'military') {
-      // Military shipping is always free
-      shippingPrice = 0
-      shippingName = 'US Military Free Shipping'
+      if (speed === 'standard') {
+        combinedPrice = 49
+        combinedName = 'Standard Processing & Shipping'
+      } else if (speed === 'fast') {
+        combinedPrice = 89
+        combinedName = 'Fast Processing & Shipping'
+      } else if (speed === 'fastest') {
+        combinedPrice = 119
+        combinedName = 'Fastest Processing & Shipping'
+      }
     }
-    if (shippingPrice >= 0) {
+    
+    if (combinedPrice > 0) {
       lineItems.push({
-        productId: `shipping_${category}_${speed}`,
-        name: shippingName,
-        price: shippingPrice,
+        productId: `processing_shipping_${category}_${speed}`,
+        name: combinedName,
+        price: combinedPrice,
         quantity: 1
       })
-      total += shippingPrice
+      total += combinedPrice
     }
   }
 

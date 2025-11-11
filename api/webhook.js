@@ -304,33 +304,64 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       switch (option) {
         case 'standard':
           return '3-5 business days'
-        case 'express':
-          return '2 business days'
-        case 'same_day':
+        case 'fast':
+          return '1-2 business days'
+        case 'fastest':
           return 'Same-day/Next-day (if received before 12pm ET)'
         default:
           return '3-5 business days'
       }
     }
 
+    // Get delivery details (backend note) based on speed
+    const getDeliveryDetails = (speed) => {
+      const details = {
+        'standard': '3-5 business days processing & standard shipping',
+        'fast': '1-2 business days processing & expedited shipping',
+        'fastest': 'Same-day processing & overnight shipping'
+      }
+      return details[speed] || details.standard
+    }
+
+    // Get delivery estimate (customer-facing) based on speed and category
+    const getDeliveryEstimate = (speed, category) => {
+      if (category === 'domestic') {
+        if (speed === 'standard') return 'Arrives in 6-8 business days - longer for US Territories'
+        if (speed === 'fast') return 'Arrives in 3-4 business days - longer for US Territories'
+        if (speed === 'fastest') return 'Arrives the next business day (or in 2 bus. days if application is received after noon ET - longer for US territories'
+      } else if (category === 'international') {
+        if (speed === 'standard') return 'Arrives in 7-10 business days'
+        if (speed === 'fast') return 'Arrives in 4-7 business days'
+        if (speed === 'fastest') return 'Processing by noon ET. Arrives in 2-5 business days - contact us for your location\'s shipping timeline'
+      } else if (category === 'military') {
+        if (speed === 'standard') return 'Arrives in 8-15 business days'
+        if (speed === 'fast') return 'Arrives in 6-12 business days'
+        if (speed === 'fastest') return 'Arrives in 5-11 business days'
+      }
+      return 'Delivery estimate unavailable'
+    }
+
     // Calculate shipping speed requirement for EasyPost (in days)
     const getShippingSpeedDays = (option, category) => {
       if (category === 'military') {
-        return 14 // Military shipping can take longer
+        if (option === 'standard') return 15
+        if (option === 'fast') return 12
+        if (option === 'fastest') return 11
+        return 15
       }
       
-      switch (option) {
-        case 'standard':
-          return category === 'international' ? 8 : 5 // International: 4-8 days, Domestic: 3-5 days
-        case 'express':
-          return category === 'international' ? 5 : 2 // International: 2-5 days, Domestic: 2 days
-        case 'overnight':
-          return 1 // next business day (domestic only)
-        case 'free':
-          return 14 // Military free shipping
-        default:
-          return 5
+      if (category === 'international') {
+        if (option === 'standard') return 10
+        if (option === 'fast') return 7
+        if (option === 'fastest') return 5
+        return 10
       }
+      
+      // Domestic
+      if (option === 'standard') return 8
+      if (option === 'fast') return 4
+      if (option === 'fastest') return 2
+      return 8
     }
 
     // Determine carrier based on shipping category
@@ -422,11 +453,23 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       selections: {
         license_types: formData.licenseTypes || [],
         selected_permits: formData.selectedPermits || [],
-        processing_option: formData.processingOption,
-        processing_time_estimate: getProcessingTime(formData.processingOption),
-        shipping_category: formData.shippingCategory,
-        shipping_speed: formData.shippingOption
+        delivery_speed: formData.processingOption, // 'standard', 'fast', or 'fastest'
+        shipping_category: formData.shippingCategory, // 'domestic', 'international', or 'military'
+        delivery_details: getDeliveryDetails(formData.processingOption), // Backend processing note
+        estimated_delivery: getDeliveryEstimate(formData.processingOption, formData.shippingCategory), // Customer delivery estimate
+        processing_time_estimate: getProcessingTime(formData.processingOption) // Legacy field for compatibility
       },
+      
+      // International shipping details (when applicable)
+      international_shipping: formData.shippingCategory === 'international' ? {
+        country: formData.shippingCountry,
+        pccc_code: formData.pcccCode || null,
+        recipient_name: formData.recipientName,
+        recipient_phone: formData.recipientPhone,
+        full_address: formData.internationalFullAddress,
+        local_address: formData.internationalLocalAddress || null,
+        delivery_instructions: formData.internationalDeliveryInstructions || null
+      } : null,
       
       // Customer uploaded files (URLs from Supabase Storage)
       customer_files: {
@@ -492,7 +535,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           weight: 8     // 0.5 lb = 8 oz for IDP document
         },
         // Speed requirement for EasyPost to filter rates
-        max_delivery_days: getShippingSpeedDays(formData.shippingOption, formData.shippingCategory),
+        max_delivery_days: getShippingSpeedDays(formData.processingOption, formData.shippingCategory),
         // Carrier specification (USPS required for military)
         carrier: getCarrier(formData.shippingCategory),
         options: {
