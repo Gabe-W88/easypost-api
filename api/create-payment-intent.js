@@ -27,7 +27,8 @@ const STRIPE_PRODUCTS = {
 
 export default async function handler(req, res) {
   // Enable CORS for Framer and main domain
-  res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+  // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
+  res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   res.setHeader('Access-Control-Allow-Credentials', 'true')
@@ -264,7 +265,8 @@ export default async function handler(req, res) {
     console.error('Payment intent creation error:', error)
     
     // Ensure CORS headers are set even in error responses
-    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+    // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
+    res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
     res.setHeader('Access-Control-Allow-Credentials', 'true')

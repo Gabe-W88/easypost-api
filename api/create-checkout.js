@@ -33,7 +33,8 @@ const STRIPE_PRODUCTS = {
 
 export default async function handler(req, res) {
   // Enable CORS for Framer and main domain
-  res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+  // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
+  res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   res.setHeader('Access-Control-Allow-Credentials', 'true')
@@ -68,8 +69,9 @@ export default async function handler(req, res) {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `https://www.fastidp.com/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://www.fastidp.com/apply?step=3`,
+      // Previous URLs (rollback): success: 'https://www.fastidp.com/success?session_id={CHECKOUT_SESSION_ID}', cancel: 'https://www.fastidp.com/apply?step=3'
+      success_url: `https://serious-flows-972417.framer.app?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `https://serious-flows-972417.framer.app`,
       metadata: {
         application_id: applicationId,
         customer_email: formData.email || '',
@@ -115,7 +117,8 @@ export default async function handler(req, res) {
     console.error('Create checkout error:', error)
     
     // Ensure CORS headers are set even in error responses
-    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+    // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
+    res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
     res.setHeader('Access-Control-Allow-Credentials', 'true')

@@ -36,8 +36,9 @@ export default async function handler(req, res) {
   console.log(`Webhook request: ${req.method} from origin: ${req.headers.origin}`)
   
   // Enhanced CORS configuration for Framer domain
+  // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
   const allowedOrigins = [
-    'https://ambiguous-methodologies-053772.framer.app',
+    'https://serious-flows-972417.framer.app',
     'http://localhost:3000', // For local development
     'https://localhost:3000'
   ]
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
     console.log(`CORS origin NOT in allowlist: ${origin}`)
     console.log(`Allowed origins:`, allowedOrigins)
     // Always allow the main Framer domain
-    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+    res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -123,7 +124,8 @@ export default async function handler(req, res) {
     console.error('Stack trace:', error.stack)
     
     // Ensure CORS headers are set even in error responses
-    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+    // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
+    res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
     res.setHeader('Access-Control-Allow-Credentials', 'true')

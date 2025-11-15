@@ -37,7 +37,8 @@ function checkZipCodeMismatch(state, zip, city) {
 
 export default async function handler(req, res) {
   // Enable CORS for Framer domain
-  res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+  // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
+  res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.setHeader('Access-Control-Max-Age', '86400')
@@ -135,7 +136,8 @@ export default async function handler(req, res) {
     console.error('EasyPost validation error:', error)
     
     // Ensure CORS headers are set even in error responses
-    res.setHeader('Access-Control-Allow-Origin', 'https://ambiguous-methodologies-053772.framer.app')
+    // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
+    res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     res.setHeader('Access-Control-Max-Age', '86400')
