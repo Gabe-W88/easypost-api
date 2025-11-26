@@ -7,7 +7,6 @@ import {
     useStripe,
     useElements,
 } from "@stripe/react-stripe-js"
-import heic2any from "https://cdn.skypack.dev/heic2any"
 
 // Initialize Stripe
 const stripePromise = loadStripe(
@@ -2236,32 +2235,8 @@ export default function MultistepForm() {
 
     // File upload handlers
     const handleFileUpload = useCallback(async (files, uploadType) => {
-        // Convert HEIC files to JPG for universal compatibility
-        const convertedFiles = await Promise.all(
-            Array.from(files).map(async (file) => {
-                if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif")) {
-                    try {
-                        const convertedBlob = await heic2any({
-                            blob: file,
-                            toType: "image/jpeg",
-                            quality: 0.9
-                        })
-                        return new File(
-                            [convertedBlob],
-                            file.name.replace(/\.(heic|heif)$/i, ".jpg"),
-                            { type: "image/jpeg" }
-                        )
-                    } catch (error) {
-                        console.error("HEIC conversion failed:", error)
-                        alert(`Failed to convert ${file.name}. Please try a different file.`)
-                        return null
-                    }
-                }
-                return file
-            })
-        )
-
-        const validFiles = convertedFiles.filter(file => file !== null).filter((file) => {
+        // HEIC files will be handled and converted on the backend
+        const validFiles = Array.from(files).filter((file) => {
             // Accept common image formats, HEIC (iPhone photos), and PDF
             const validTypes = [
                 "image/jpeg",

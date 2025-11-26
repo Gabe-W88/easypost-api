@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import heicConvert from 'heic-convert'
 
 // TEST: This is a test comment to verify file editing works
 // Initialize Supabase client
@@ -12,6 +13,21 @@ function base64ToBuffer(base64String) {
   // Remove the data URL prefix if present (e.g., "data:image/jpeg;base64,")
   const base64Data = base64String.split(',')[1] || base64String
   return Buffer.from(base64Data, 'base64')
+}
+
+// Helper function to convert HEIC to JPEG
+async function convertHeicToJpeg(heicBuffer) {
+  try {
+    const outputBuffer = await heicConvert({
+      buffer: heicBuffer,
+      format: 'JPEG',
+      quality: 0.9
+    })
+    return outputBuffer
+  } catch (error) {
+    console.error('HEIC conversion error:', error)
+    throw error
+  }
 }
 
 // Helper function to upload file to Supabase Storage
@@ -53,24 +69,57 @@ async function uploadFilesToStorage(files, applicationId, fileType) {
     
     // Extract file extension from MIME type or data URL
     let extension = 'jpg' // default
+    let contentType = file.type || 'image/jpeg'
+    let isHeic = false
+    
     if (file.data && file.data.includes('data:image/')) {
       const mimeType = file.data.split(';')[0].split(':')[1]
       extension = mimeType.split('/')[1]
+      
+      // Check if it's a HEIC/HEIF file
+      if (extension === 'heic' || extension === 'heif') {
+        isHeic = true
+        extension = 'jpg' // Convert to JPG
+        contentType = 'image/jpeg'
+      }
     } else if (file.type) {
       extension = file.type.split('/')[1]
+      if (extension === 'heic' || extension === 'heif') {
+        isHeic = true
+        extension = 'jpg'
+        contentType = 'image/jpeg'
+      }
+    }
+    
+    // Also check filename for HEIC extension
+    if (file.name && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif'))) {
+      isHeic = true
+      extension = 'jpg'
+      contentType = 'image/jpeg'
     }
     
     // Create unique filename
     const fileName = `${applicationId}/${fileType}_${i + 1}.${extension}`
     
     // Convert base64 to buffer
-    const fileBuffer = base64ToBuffer(file.data)
+    let fileBuffer = base64ToBuffer(file.data)
+    
+    // Convert HEIC to JPEG if needed
+    if (isHeic) {
+      try {
+        console.log(`Converting HEIC file: ${file.name}`)
+        fileBuffer = await convertHeicToJpeg(fileBuffer)
+      } catch (error) {
+        console.error(`Failed to convert HEIC file ${file.name}:`, error)
+        throw new Error(`Failed to convert HEIC file: ${file.name}`)
+      }
+    }
     
     // Upload to storage
     const uploadResult = await uploadFileToStorage(
       fileBuffer, 
       fileName, 
-      file.type || 'image/jpeg'
+      contentType
     )
     
     uploadedFiles.push({
