@@ -2393,7 +2393,11 @@ export default function MultistepForm() {
                 "https://easypost-api.vercel.app/api/save-application",
                 {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    credentials: "omit",
                     body: JSON.stringify({ formData: formDataWithShipping, fileData }),
                 }
             )
