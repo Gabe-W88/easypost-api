@@ -51,7 +51,21 @@ async function uploadFilesToStorage(files, applicationId, fileType) {
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
     
-    // Extract file extension from MIME type or data URL
+    // Check if file already has publicUrl (uploaded from frontend)
+    if (file.publicUrl && file.path) {
+      // File was already uploaded directly to Supabase from frontend
+      uploadedFiles.push({
+        originalName: file.name,
+        fileName: file.path,
+        path: file.path,
+        publicUrl: file.publicUrl,
+        size: file.size,
+        type: file.type
+      })
+      continue
+    }
+    
+    // Legacy support: Handle base64 uploads (if any old clients still use this)
     let extension = 'jpg' // default
     let contentType = file.type || 'image/jpeg'
     
@@ -62,8 +76,7 @@ async function uploadFilesToStorage(files, applicationId, fileType) {
       extension = file.type.split('/')[1]
     }
     
-    // For HEIC files, keep original format (browser/OS will handle viewing)
-    // Note: HEIC files will be stored as-is and can be downloaded/processed later if needed
+    // For HEIC files, keep original format
     if (file.name && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif'))) {
       extension = 'heic'
       contentType = 'image/heic'

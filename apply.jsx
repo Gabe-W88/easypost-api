@@ -7,10 +7,17 @@ import {
     useStripe,
     useElements,
 } from "@stripe/react-stripe-js"
+import { createClient } from "@supabase/supabase-js"
 
 // Initialize Stripe
 const stripePromise = loadStripe(
     "pk_test_51P8oMiRtjDxL2xZGzUyexo8wZKuOFmaNW59bMQ526nFjL6JZyDFkrzQXkWRIEkw9cw4eafRRtFLAYqTFwipOBKsx00y7zDiTOv"
+)
+
+// Initialize Supabase client (using anon key for frontend uploads)
+const supabase = createClient(
+    "https://yfzkuqzjggmnhjzvnnmb.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlmemt1cXpqZ2dtbmhqenZubm1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM3NDI2OTQsImV4cCI6MjAyOTMxODY5NH0.7LqGXwFfPQqQO-jH8yKXvK4XqRfB0dxB8P_DP3zqGqo"
 )
 
 // Tooltip component for form fields
@@ -2602,34 +2609,60 @@ export default function MultistepForm() {
             console.log("Form data:", formData)
             console.log("Uploaded files:", uploadedFiles)
 
-            // Convert files to base64 for transmission (same as old checkout handler)
-            const convertFilesToBase64 = async (files) => {
-                const filePromises = files.map((file) => {
-                    return new Promise((resolve) => {
-                        const reader = new FileReader()
-                        reader.onload = () => {
-                            resolve({
-                                name: file.name,
-                                type: file.type,
-                                size: file.size,
-                                data: reader.result, // This includes the data:image/jpeg;base64, prefix
-                            })
-                        }
-                        reader.readAsDataURL(file)
+            // Generate application ID first (timestamp-based)
+            const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            console.log("Generated application ID:", applicationId)
+
+            // Upload files directly to Supabase Storage
+            console.log("Uploading files to Supabase...")
+            const uploadFileToSupabase = async (file, fileType, index) => {
+                const fileExtension = file.name.split('.').pop()
+                const fileName = `${applicationId}/${fileType}_${index + 1}.${fileExtension}`
+                
+                const { data, error } = await supabase.storage
+                    .from('application-files')
+                    .upload(fileName, file, {
+                        contentType: file.type,
+                        upsert: true
                     })
-                })
-                return Promise.all(filePromises)
+
+                if (error) {
+                    console.error('Supabase upload error:', error)
+                    throw new Error(`Failed to upload ${file.name}: ${error.message}`)
+                }
+
+                const { data: urlData } = supabase.storage
+                    .from('application-files')
+                    .getPublicUrl(fileName)
+
+                return {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    path: data.path,
+                    publicUrl: urlData.publicUrl
+                }
             }
+
+            // Upload all files
+            const driversLicenseUploads = await Promise.all(
+                uploadedFiles.driversLicense.map((file, index) => 
+                    uploadFileToSupabase(file, 'driversLicense', index)
+                )
+            )
+
+            const passportPhotoUploads = await Promise.all(
+                uploadedFiles.passportPhoto.map((file, index) => 
+                    uploadFileToSupabase(file, 'passportPhoto', index)
+                )
+            )
 
             const fileData = {
-                driversLicense: await convertFilesToBase64(
-                    uploadedFiles.driversLicense
-                ),
-                passportPhoto: await convertFilesToBase64(
-                    uploadedFiles.passportPhoto
-                ),
+                driversLicense: driversLicenseUploads,
+                passportPhoto: passportPhotoUploads,
             }
 
+            console.log("Files uploaded successfully")
             console.log("Saving application...")
 
             // Add shipping country to formData for fulfillment type determination
@@ -2646,6 +2679,7 @@ export default function MultistepForm() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        applicationId,
                         formData: formDataWithShipping,
                         fileData,
                     }),
@@ -2658,8 +2692,8 @@ export default function MultistepForm() {
                 throw new Error("Failed to save application")
             }
 
-            const { applicationId } = await saveResponse.json()
-            console.log("Application saved with ID:", applicationId)
+            const responseData = await saveResponse.json()
+            console.log("Application saved with ID:", responseData.applicationId || applicationId)
 
             // Create payment intent
             console.log("Creating payment intent...")
