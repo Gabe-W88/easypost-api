@@ -295,7 +295,9 @@ const InternationalPhoneField = ({
                     value={value}
                     onChange={(e) => {
                         // Only allow digits and limit to 10 characters
-                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                        const digits = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 10)
                         onChange(name, digits)
                     }}
                     onBlur={() => onBlur && onBlur(name)}
@@ -333,38 +335,38 @@ const SignatureField = ({
         canvas.width = 600
         canvas.height = 150
 
-        const ctx = canvas.getContext('2d')
-        ctx.strokeStyle = '#000000'
+        const ctx = canvas.getContext("2d")
+        ctx.strokeStyle = "#000000"
         ctx.lineWidth = 2
-        ctx.lineCap = 'round'
-        ctx.lineJoin = 'round'
+        ctx.lineCap = "round"
+        ctx.lineJoin = "round"
     }, [])
 
     const startDrawing = (e) => {
         const canvas = canvasRef.current
         if (!canvas) return
-        
+
         setIsDrawing(true)
         const rect = canvas.getBoundingClientRect()
         const x = (e.clientX - rect.left) * (canvas.width / rect.width)
         const y = (e.clientY - rect.top) * (canvas.height / rect.height)
-        
-        const ctx = canvas.getContext('2d')
+
+        const ctx = canvas.getContext("2d")
         ctx.beginPath()
         ctx.moveTo(x, y)
     }
 
     const draw = (e) => {
         if (!isDrawing) return
-        
+
         const canvas = canvasRef.current
         if (!canvas) return
-        
+
         const rect = canvas.getBoundingClientRect()
         const x = (e.clientX - rect.left) * (canvas.width / rect.width)
         const y = (e.clientY - rect.top) * (canvas.height / rect.height)
-        
-        const ctx = canvas.getContext('2d')
+
+        const ctx = canvas.getContext("2d")
         ctx.lineTo(x, y)
         ctx.stroke()
     }
@@ -382,9 +384,9 @@ const SignatureField = ({
     const clearSignature = () => {
         const canvas = canvasRef.current
         if (canvas) {
-            const ctx = canvas.getContext('2d')
+            const ctx = canvas.getContext("2d")
             ctx.clearRect(0, 0, canvas.width, canvas.height)
-            onChange(name, '')
+            onChange(name, "")
         }
     }
 
@@ -418,7 +420,7 @@ const SignatureField = ({
                         maxWidth: "100%",
                         height: "150px",
                         touchAction: "none",
-                        userSelect: "none"
+                        userSelect: "none",
                     }}
                 />
                 <button
@@ -664,26 +666,34 @@ const PaymentForm = ({
                     </div>
 
                     {/* Same as shipping address checkbox */}
-                    <div className="form-group" style={{ marginBottom: "20px" }}>
-                        <label style={{ 
-                            display: "flex", 
-                            alignItems: "center", 
-                            gap: "8px", 
-                            cursor: "pointer",
-                            fontSize: "14px",
-                            fontWeight: "normal"
-                        }}>
+                    <div
+                        className="form-group"
+                        style={{ marginBottom: "20px" }}
+                    >
+                        <label
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                fontWeight: "normal",
+                            }}
+                        >
                             <input
                                 type="checkbox"
                                 checked={formData.useSameAsShipping || false}
                                 onChange={(e) => {
-                                    onFieldChange("useSameAsShipping", e.target.checked);
+                                    onFieldChange(
+                                        "useSameAsShipping",
+                                        e.target.checked
+                                    )
                                 }}
-                                style={{ 
-                                    width: "18px", 
-                                    height: "18px", 
+                                style={{
+                                    width: "18px",
+                                    height: "18px",
                                     cursor: "pointer",
-                                    accentColor: "#007bff"
+                                    accentColor: "#007bff",
                                 }}
                             />
                             Same as shipping address
@@ -693,78 +703,169 @@ const PaymentForm = ({
                     {/* Conditional billing address fields */}
                     {!formData.useSameAsShipping && (
                         <div className="form-group">
-                        <AddressElement
-                            options={{
-                                mode: "billing",
-                                fields: {
-                                    phone: "auto",
-                                },
-                            }}
-                            onReady={() => {
-                                // AddressElement ready
-                            }}
-                            onChange={(event) => {
-                                if (event.complete) {
-                                    // Billing address is complete
-                                }
-                            }}
-                        />
+                            <AddressElement
+                                options={{
+                                    mode: "billing",
+                                    fields: {
+                                        phone: "auto",
+                                    },
+                                }}
+                                onReady={() => {
+                                    // AddressElement ready
+                                }}
+                                onChange={(event) => {
+                                    if (event.complete) {
+                                        // Billing address is complete
+                                    }
+                                }}
+                            />
                         </div>
                     )}
-                    
+
                     {/* Show shipping address summary when using same address */}
                     {formData.useSameAsShipping && (
-                        <div style={{
-                            padding: "16px",
-                            backgroundColor: "#f8f9fa",
-                            border: "1px solid #dee2e6",
-                            borderRadius: "8px",
-                            marginBottom: "20px"
-                        }}>
-                            <div style={{ 
-                                fontWeight: "500", 
-                                marginBottom: "8px", 
-                                color: "#495057",
-                                fontSize: "14px"
-                            }}>
+                        <div
+                            style={{
+                                padding: "16px",
+                                backgroundColor: "#f8f9fa",
+                                border: "1px solid #dee2e6",
+                                borderRadius: "8px",
+                                marginBottom: "20px",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    fontWeight: "500",
+                                    marginBottom: "8px",
+                                    color: "#495057",
+                                    fontSize: "14px",
+                                }}
+                            >
                                 Using shipping address for billing:
                             </div>
-                            <div style={{ 
-                                fontSize: "14px", 
-                                lineHeight: "1.4",
-                                color: "#6c757d"
-                            }}>
-                                {formData.shippingCategory === "international" ? (
+                            <div
+                                style={{
+                                    fontSize: "14px",
+                                    lineHeight: "1.4",
+                                    color: "#6c757d",
+                                }}
+                            >
+                                {formData.shippingCategory ===
+                                "international" ? (
                                     <div>
-                                        {formData.recipientName && <div><strong>Recipient:</strong> {formData.recipientName}</div>}
-                                        {formData.recipientPhone && <div><strong>Phone:</strong> {formData.recipientPhone}</div>}
-                                        {formData.shippingCountry && (() => {
-                                            try {
-                                                const selectedCountry = countries.find(c => c.code === formData.shippingCountry);
-                                                return selectedCountry ? (
-                                                    <div><strong>Country:</strong> {selectedCountry.flag} {selectedCountry.name}</div>
-                                                ) : (
-                                                    <div><strong>Country:</strong> {formData.shippingCountry}</div>
-                                                );
-                                            } catch (error) {
-                                                console.error('Error rendering country:', error);
-                                                return <div><strong>Country:</strong> {formData.shippingCountry}</div>;
-                                            }
-                                        })()}
-                                        {formData.pcccCode && <div><strong>PCCC Code:</strong> {formData.pcccCode}</div>}
-                                        <div><strong>Address:</strong> {formData.internationalFullAddress || "No international address provided"}</div>
+                                        {formData.recipientName && (
+                                            <div>
+                                                <strong>Recipient:</strong>{" "}
+                                                {formData.recipientName}
+                                            </div>
+                                        )}
+                                        {formData.recipientPhone && (
+                                            <div>
+                                                <strong>Phone:</strong>{" "}
+                                                {formData.recipientPhone}
+                                            </div>
+                                        )}
+                                        {formData.shippingCountry &&
+                                            (() => {
+                                                try {
+                                                    const selectedCountry =
+                                                        countries.find(
+                                                            (c) =>
+                                                                c.code ===
+                                                                formData.shippingCountry
+                                                        )
+                                                    return selectedCountry ? (
+                                                        <div>
+                                                            <strong>
+                                                                Country:
+                                                            </strong>{" "}
+                                                            {
+                                                                selectedCountry.flag
+                                                            }{" "}
+                                                            {
+                                                                selectedCountry.name
+                                                            }
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <strong>
+                                                                Country:
+                                                            </strong>{" "}
+                                                            {
+                                                                formData.shippingCountry
+                                                            }
+                                                        </div>
+                                                    )
+                                                } catch (error) {
+                                                    console.error(
+                                                        "Error rendering country:",
+                                                        error
+                                                    )
+                                                    return (
+                                                        <div>
+                                                            <strong>
+                                                                Country:
+                                                            </strong>{" "}
+                                                            {
+                                                                formData.shippingCountry
+                                                            }
+                                                        </div>
+                                                    )
+                                                }
+                                            })()}
+                                        {formData.pcccCode && (
+                                            <div>
+                                                <strong>PCCC Code:</strong>{" "}
+                                                {formData.pcccCode}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <strong>Address:</strong>{" "}
+                                            {formData.internationalFullAddress ||
+                                                "No international address provided"}
+                                        </div>
                                     </div>
                                 ) : formData.shippingStreetAddress ? (
                                     <div>
-                                        {formData.recipientName && <div><strong>Recipient:</strong> {formData.recipientName}</div>}
-                                        {formData.recipientPhone && <div><strong>Recipient Phone:</strong> {formData.recipientPhone}</div>}
-                                        <div>{formData.shippingStreetAddress}</div>
-                                        {formData.shippingStreetAddress2 && <div>{formData.shippingStreetAddress2}</div>}
-                                        <div>{formData.shippingCity}, {formData.shippingState} {formData.shippingPostalCode}</div>
+                                        {formData.recipientName && (
+                                            <div>
+                                                <strong>Recipient:</strong>{" "}
+                                                {formData.recipientName}
+                                            </div>
+                                        )}
+                                        {formData.recipientPhone && (
+                                            <div>
+                                                <strong>
+                                                    Recipient Phone:
+                                                </strong>{" "}
+                                                {formData.recipientPhone}
+                                            </div>
+                                        )}
+                                        <div>
+                                            {formData.shippingStreetAddress}
+                                        </div>
+                                        {formData.shippingStreetAddress2 && (
+                                            <div>
+                                                {
+                                                    formData.shippingStreetAddress2
+                                                }
+                                            </div>
+                                        )}
+                                        <div>
+                                            {formData.shippingCity},{" "}
+                                            {formData.shippingState}{" "}
+                                            {formData.shippingPostalCode}
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div style={{ color: "#dc3545", fontStyle: "italic" }}>
-                                        No shipping address found. Please complete Step 3 first.
+                                    <div
+                                        style={{
+                                            color: "#dc3545",
+                                            fontStyle: "italic",
+                                        }}
+                                    >
+                                        No shipping address found. Please
+                                        complete Step 3 first.
                                     </div>
                                 )}
                             </div>
@@ -787,39 +888,68 @@ const PaymentForm = ({
                                         // Pre-fill billing details from Step 3 data to reduce redundancy
                                         if (formData.useSameAsShipping) {
                                             // Use shipping address for billing
-                                            if (formData.shippingCategory === "international") {
+                                            if (
+                                                formData.shippingCategory ===
+                                                "international"
+                                            ) {
                                                 return {
-                                                    name: formData.recipientName || "",
+                                                    name:
+                                                        formData.recipientName ||
+                                                        "",
                                                     email: formData.email || "",
-                                                    phone: formData.recipientPhone || "",
+                                                    phone:
+                                                        formData.recipientPhone ||
+                                                        "",
                                                     address: {
-                                                        country: formData.shippingCountry || "",
-                                                        line1: formData.internationalFullAddress || "",
+                                                        country:
+                                                            formData.shippingCountry ||
+                                                            "",
+                                                        line1:
+                                                            formData.internationalFullAddress ||
+                                                            "",
                                                         line2: "",
                                                         city: "",
                                                         state: "",
-                                                        postal_code: formData.pcccCode || "",
+                                                        postal_code:
+                                                            formData.pcccCode ||
+                                                            "",
                                                     },
-                                                };
+                                                }
                                             } else {
                                                 // Domestic or military
                                                 return {
-                                                    name: formData.recipientName || formData.fullName || "",
+                                                    name:
+                                                        formData.recipientName ||
+                                                        formData.fullName ||
+                                                        "",
                                                     email: formData.email || "",
-                                                    phone: formData.recipientPhone || formData.phoneNumber || "",
+                                                    phone:
+                                                        formData.recipientPhone ||
+                                                        formData.phoneNumber ||
+                                                        "",
                                                     address: {
                                                         country: "US",
-                                                        line1: formData.shippingStreetAddress || "",
-                                                        line2: formData.shippingStreetAddress2 || "",
-                                                        city: formData.shippingCity || "",
-                                                        state: formData.shippingState || "",
-                                                        postal_code: formData.shippingPostalCode || "",
+                                                        line1:
+                                                            formData.shippingStreetAddress ||
+                                                            "",
+                                                        line2:
+                                                            formData.shippingStreetAddress2 ||
+                                                            "",
+                                                        city:
+                                                            formData.shippingCity ||
+                                                            "",
+                                                        state:
+                                                            formData.shippingState ||
+                                                            "",
+                                                        postal_code:
+                                                            formData.shippingPostalCode ||
+                                                            "",
                                                     },
-                                                };
+                                                }
                                             }
                                         }
                                         // If not using same as shipping, don't pre-fill (user entering different billing)
-                                        return {};
+                                        return {}
                                     })(),
                                 },
                                 fields: {
@@ -1025,7 +1155,7 @@ export default function MultistepForm() {
         // Step 3 - Processing & Shipping
         processingOption: "",
         shippingCategory: "",
-        
+
         // Shipping address fields
         shippingStreetAddress: "",
         shippingStreetAddress2: "",
@@ -1035,7 +1165,7 @@ export default function MultistepForm() {
         shippingCountry: "",
         shippingPhone: "",
         shippingDeliveryInstructions: "",
-        
+
         // International shipping address fields
         internationalFullAddress: "",
         internationalLocalAddress: "",
@@ -1044,10 +1174,10 @@ export default function MultistepForm() {
         pcccCode: "", // PCCC code for Korean customs
         recipientName: "", // Will auto-populate with applicant name
         recipientPhone: "", // International recipient phone number
-        
+
         // Billing address options
         useSameAsShipping: false, // Use shipping address as billing address
-        
+
         // Promo code for payment
         promoCode: "",
     })
@@ -1103,7 +1233,7 @@ export default function MultistepForm() {
     const [shippingAddress, setShippingAddress] = useState({
         country: null,
         isComplete: false,
-        address: null
+        address: null,
     })
 
     // Shipping address validation state
@@ -1113,17 +1243,17 @@ export default function MultistepForm() {
         suggestions: [],
         showSuggestions: false,
         validatedAddress: null,
-        canBypass: false
+        canBypass: false,
     })
 
     // Military address validation helpers
     const isValidMilitaryCity = (city) => {
-        const validMilitaryCities = ['APO', 'FPO', 'DPO']
+        const validMilitaryCities = ["APO", "FPO", "DPO"]
         return validMilitaryCities.includes(city.toUpperCase().trim())
     }
 
     const isValidMilitaryState = (state) => {
-        const validMilitaryStates = ['AA', 'AE', 'AP']
+        const validMilitaryStates = ["AA", "AE", "AP"]
         return validMilitaryStates.includes(state.toUpperCase().trim())
     }
 
@@ -1156,19 +1286,38 @@ export default function MultistepForm() {
                     if (!value) return false
                     const birthDate = new Date(value)
                     const today = new Date()
-                    const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
-                    const oneHundredYearsAgo = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate())
-                    
+                    const eighteenYearsAgo = new Date(
+                        today.getFullYear() - 18,
+                        today.getMonth(),
+                        today.getDate()
+                    )
+                    const oneHundredYearsAgo = new Date(
+                        today.getFullYear() - 100,
+                        today.getMonth(),
+                        today.getDate()
+                    )
+
                     // Must be at least 18 years old and not older than 100 years
-                    return birthDate <= eighteenYearsAgo && birthDate >= oneHundredYearsAgo
+                    return (
+                        birthDate <= eighteenYearsAgo &&
+                        birthDate >= oneHundredYearsAgo
+                    )
                 },
                 message: (value) => {
                     if (!value) return "Date of birth is required"
                     const birthDate = new Date(value)
                     const today = new Date()
-                    const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
-                    const oneHundredYearsAgo = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate())
-                    
+                    const eighteenYearsAgo = new Date(
+                        today.getFullYear() - 18,
+                        today.getMonth(),
+                        today.getDate()
+                    )
+                    const oneHundredYearsAgo = new Date(
+                        today.getFullYear() - 100,
+                        today.getMonth(),
+                        today.getDate()
+                    )
+
                     if (birthDate > eighteenYearsAgo) {
                         return "You must be at least 18 years old"
                     }
@@ -1195,12 +1344,13 @@ export default function MultistepForm() {
                     const selectedDate = new Date(value)
                     const today = new Date()
                     const year2070 = new Date(2070, 11, 31) // December 31, 2070
-                    
+
                     // License must not be expired (must be valid today or in the future)
                     // and cannot be beyond year 2070
                     return selectedDate >= today && selectedDate <= year2070
                 },
-                message: "License must not be expired and cannot exceed year 2070",
+                message:
+                    "License must not be expired and cannot exceed year 2070",
             },
             streetAddress: {
                 required: true,
@@ -1311,23 +1461,39 @@ export default function MultistepForm() {
                 required: true,
                 validate: (value) => {
                     if (!value) return false
-                    
+
                     // Parse the date string as local time to avoid timezone issues
-                    const dateParts = value.split('-') // "2025-11-08" -> ["2025", "11", "08"]
-                    const selectedDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]))
-                    
+                    const dateParts = value.split("-") // "2025-11-08" -> ["2025", "11", "08"]
+                    const selectedDate = new Date(
+                        parseInt(dateParts[0]),
+                        parseInt(dateParts[1]) - 1,
+                        parseInt(dateParts[2])
+                    )
+
                     const today = new Date()
                     const sixMonthsFromNow = new Date()
                     sixMonthsFromNow.setMonth(today.getMonth() + 6)
-                    
+
                     // Set time to start of day for accurate date comparison (ignore time)
-                    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-                    const sixMonthsEnd = new Date(sixMonthsFromNow.getFullYear(), sixMonthsFromNow.getMonth(), sixMonthsFromNow.getDate())
-                    
+                    const todayStart = new Date(
+                        today.getFullYear(),
+                        today.getMonth(),
+                        today.getDate()
+                    )
+                    const sixMonthsEnd = new Date(
+                        sixMonthsFromNow.getFullYear(),
+                        sixMonthsFromNow.getMonth(),
+                        sixMonthsFromNow.getDate()
+                    )
+
                     // Allow dates from today (inclusive) up to 6 months in the future
-                    return selectedDate >= todayStart && selectedDate <= sixMonthsEnd
+                    return (
+                        selectedDate >= todayStart &&
+                        selectedDate <= sixMonthsEnd
+                    )
                 },
-                message: "Permit effective date must be between today and 6 months from now",
+                message:
+                    "Permit effective date must be between today and 6 months from now",
             },
             signature: {
                 required: true,
@@ -1358,7 +1524,8 @@ export default function MultistepForm() {
             internationalFullAddress: {
                 required: true,
                 minLength: 10,
-                message: "Please provide a complete address including street, city, state/province, postal code, and country",
+                message:
+                    "Please provide a complete address including street, city, state/province, postal code, and country",
             },
             recipientName: {
                 required: true,
@@ -1379,39 +1546,39 @@ export default function MultistepForm() {
                 required: true,
                 validate: (value) => {
                     if (!value || value.trim().length < 2) return false
-                    
+
                     // If military shipping category, only allow military cities
-                    if (formData.shippingCategory === 'military') {
+                    if (formData.shippingCategory === "military") {
                         return isValidMilitaryCity(value)
                     }
-                    
+
                     return true
                 },
                 message: (value) => {
-                    if (formData.shippingCategory === 'military') {
+                    if (formData.shippingCategory === "military") {
                         return "Military addresses must use APO, FPO, or DPO as the city"
                     }
                     return "Please enter a valid city"
-                }
+                },
             },
             shippingState: {
                 required: true,
                 validate: (value) => {
                     if (!value || value.trim().length < 2) return false
-                    
+
                     // If military shipping category, only allow military states
-                    if (formData.shippingCategory === 'military') {
+                    if (formData.shippingCategory === "military") {
                         return isValidMilitaryState(value)
                     }
-                    
+
                     return true
                 },
                 message: (value) => {
-                    if (formData.shippingCategory === 'military') {
+                    if (formData.shippingCategory === "military") {
                         return "Military addresses must use AA, AE, or AP as the state"
                     }
                     return "Please enter a valid state/province"
-                }
+                },
             },
             shippingPostalCode: {
                 required: true,
@@ -1436,10 +1603,14 @@ export default function MultistepForm() {
             if (rule.required) {
                 if (typeof value === "boolean") {
                     if (!value) {
-                        return typeof rule.message === "function" ? rule.message(value) : (rule.message || `${name} is required`)
+                        return typeof rule.message === "function"
+                            ? rule.message(value)
+                            : rule.message || `${name} is required`
                     }
                 } else if (!value || value.toString().trim() === "") {
-                    return typeof rule.message === "function" ? rule.message(value) : (rule.message || `${name} is required`)
+                    return typeof rule.message === "function"
+                        ? rule.message(value)
+                        : rule.message || `${name} is required`
                 }
             }
 
@@ -1450,12 +1621,16 @@ export default function MultistepForm() {
             if (rule.validate) {
                 if (typeof value === "boolean") {
                     if (!rule.validate(value)) {
-                        return typeof rule.message === "function" ? rule.message(value) : rule.message
+                        return typeof rule.message === "function"
+                            ? rule.message(value)
+                            : rule.message
                     }
                 } else {
                     const trimmedValue = value.toString().trim()
                     if (!rule.validate(trimmedValue)) {
-                        return typeof rule.message === "function" ? rule.message(value) : rule.message
+                        return typeof rule.message === "function"
+                            ? rule.message(value)
+                            : rule.message
                     }
                 }
             }
@@ -1541,18 +1716,19 @@ export default function MultistepForm() {
         const setViewportMeta = () => {
             // Check if viewport meta tag already exists
             let viewport = document.querySelector('meta[name="viewport"]')
-            
+
             if (!viewport) {
                 // Create new viewport meta tag
-                viewport = document.createElement('meta')
-                viewport.name = 'viewport'
+                viewport = document.createElement("meta")
+                viewport.name = "viewport"
                 document.head.appendChild(viewport)
             }
-            
+
             // Set the content for mobile optimization
-            viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+            viewport.content =
+                "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         }
-        
+
         setViewportMeta()
     }, [])
 
@@ -1611,26 +1787,44 @@ export default function MultistepForm() {
         if (step === 3) {
             setFormData((prev) => {
                 const updates = {}
-                
+
                 // Auto-fill recipient name if empty, applicant name exists, AND user hasn't manually cleared it
-                if (!prev.recipientName && prev.firstName && prev.lastName && !recipientFieldsCleared.name) {
-                    updates.recipientName = `${prev.firstName} ${prev.lastName}`.trim()
+                if (
+                    !prev.recipientName &&
+                    prev.firstName &&
+                    prev.lastName &&
+                    !recipientFieldsCleared.name
+                ) {
+                    updates.recipientName =
+                        `${prev.firstName} ${prev.lastName}`.trim()
                 }
-                
+
                 // Auto-fill recipient phone if empty, applicant phone exists, AND user hasn't manually cleared it
-                if (!prev.recipientPhone && prev.phone && !recipientFieldsCleared.phone) {
+                if (
+                    !prev.recipientPhone &&
+                    prev.phone &&
+                    !recipientFieldsCleared.phone
+                ) {
                     updates.recipientPhone = prev.phone
                 }
-                
+
                 // Only update if there are changes to make
                 if (Object.keys(updates).length > 0) {
                     return { ...prev, ...updates }
                 }
-                
+
                 return prev
             })
         }
-    }, [step, formData.firstName, formData.lastName, formData.phone, formData.recipientName, formData.recipientPhone, recipientFieldsCleared])
+    }, [
+        step,
+        formData.firstName,
+        formData.lastName,
+        formData.phone,
+        formData.recipientName,
+        formData.recipientPhone,
+        recipientFieldsCleared,
+    ])
 
     // Reset recipient cleared flags if user changes their personal info in Step 1
     useEffect(() => {
@@ -1857,11 +2051,16 @@ export default function MultistepForm() {
             streetAddress: formData.shippingStreetAddress,
             city: formData.shippingCity,
             state: formData.shippingState,
-            zipCode: formData.shippingPostalCode
+            zipCode: formData.shippingPostalCode,
         }
 
         // Only validate if we have required fields and it's domestic/military
-        if (!shippingData.streetAddress || !shippingData.city || !shippingData.state || !shippingData.zipCode) {
+        if (
+            !shippingData.streetAddress ||
+            !shippingData.city ||
+            !shippingData.state ||
+            !shippingData.zipCode
+        ) {
             return
         }
 
@@ -1869,7 +2068,11 @@ export default function MultistepForm() {
             return
         }
 
-        setShippingValidation(prev => ({ ...prev, status: "validating", error: null }))
+        setShippingValidation((prev) => ({
+            ...prev,
+            status: "validating",
+            error: null,
+        }))
 
         try {
             const response = await fetch(
@@ -1897,36 +2100,53 @@ export default function MultistepForm() {
             const hasStandardization = result.suggestions?.length > 0
 
             // Check if there are significant differences between input and EasyPost's response
-            const hasSignificantChanges = result.suggestions?.some(suggestion => 
-                suggestion.street1?.toLowerCase() !== shippingData.streetAddress?.toLowerCase() ||
-                suggestion.city?.toLowerCase() !== shippingData.city?.toLowerCase() ||
-                suggestion.state?.toLowerCase() !== shippingData.state?.toLowerCase() ||
-                suggestion.zip !== shippingData.zipCode
-            ) || false
+            const hasSignificantChanges =
+                result.suggestions?.some(
+                    (suggestion) =>
+                        suggestion.street1?.toLowerCase() !==
+                            shippingData.streetAddress?.toLowerCase() ||
+                        suggestion.city?.toLowerCase() !==
+                            shippingData.city?.toLowerCase() ||
+                        suggestion.state?.toLowerCase() !==
+                            shippingData.state?.toLowerCase() ||
+                        suggestion.zip !== shippingData.zipCode
+                ) || false
 
             const isValid = isDeliverable && !hasSignificantChanges
             const needsCorrection = isDeliverable && hasSignificantChanges
             const shouldShowSuggestions = hasStandardization
 
             setShippingValidation({
-                status: isValid ? "valid" : needsCorrection ? "needs-correction" : "invalid",
-                error: !isDeliverable ? "Address could not be validated. You can still continue with your application." : null,
+                status: isValid
+                    ? "valid"
+                    : needsCorrection
+                      ? "needs-correction"
+                      : "invalid",
+                error: !isDeliverable
+                    ? "Address could not be validated. You can still continue with your application."
+                    : null,
                 suggestions: result.suggestions || [],
                 showSuggestions: shouldShowSuggestions,
                 validatedAddress: result.address,
-                canBypass: !isDeliverable
+                canBypass: !isDeliverable,
             })
-
         } catch (error) {
-            let errorMessage = "Address validation failed. You can still continue with your application."
+            let errorMessage =
+                "Address validation failed. You can still continue with your application."
             const canBypass = true
 
             if (error.message.includes("TIMEOUT")) {
-                errorMessage = "Address validation timed out. You can still continue with your application."
+                errorMessage =
+                    "Address validation timed out. You can still continue with your application."
             } else if (error.message.includes("INVALID_PARAMETER")) {
-                errorMessage = "Invalid address format. Please check your address and try again."
-            } else if (error.message.includes("404") || error.message.includes("Not Found")) {
-                errorMessage = "Address validation service temporarily unavailable."
+                errorMessage =
+                    "Invalid address format. Please check your address and try again."
+            } else if (
+                error.message.includes("404") ||
+                error.message.includes("Not Found")
+            ) {
+                errorMessage =
+                    "Address validation service temporarily unavailable."
             }
 
             setShippingValidation({
@@ -1935,18 +2155,27 @@ export default function MultistepForm() {
                 suggestions: [],
                 showSuggestions: false,
                 validatedAddress: null,
-                canBypass
+                canBypass,
             })
         }
-    }, [formData.shippingStreetAddress, formData.shippingCity, formData.shippingState, formData.shippingPostalCode, formData.shippingCategory])
+    }, [
+        formData.shippingStreetAddress,
+        formData.shippingCity,
+        formData.shippingState,
+        formData.shippingPostalCode,
+        formData.shippingCategory,
+    ])
 
     // Debounced shipping address validation
     useEffect(() => {
-        if (formData.shippingCategory && formData.shippingCategory !== "international") {
+        if (
+            formData.shippingCategory &&
+            formData.shippingCategory !== "international"
+        ) {
             const timer = setTimeout(() => {
                 validateShippingAddress()
             }, 800) // 800ms delay after user stops typing
-            
+
             return () => clearTimeout(timer)
         }
     }, [validateShippingAddress, formData.shippingCategory])
@@ -1984,11 +2213,22 @@ export default function MultistepForm() {
                     const newFormData = { ...prev, [name]: value }
 
                     // Track if user manually cleared recipient fields
-                    if (name === "recipientName" && value === "" && prev.recipientName !== "") {
+                    if (
+                        name === "recipientName" &&
+                        value === "" &&
+                        prev.recipientName !== ""
+                    ) {
                         setRecipientFieldsCleared((p) => ({ ...p, name: true }))
                     }
-                    if (name === "recipientPhone" && value === "" && prev.recipientPhone !== "") {
-                        setRecipientFieldsCleared((p) => ({ ...p, phone: true }))
+                    if (
+                        name === "recipientPhone" &&
+                        value === "" &&
+                        prev.recipientPhone !== ""
+                    ) {
+                        setRecipientFieldsCleared((p) => ({
+                            ...p,
+                            phone: true,
+                        }))
                     }
 
                     // Skip real-time validation for phone field to prevent red border while typing
@@ -2106,26 +2346,23 @@ export default function MultistepForm() {
     )
 
     // Accept shipping address suggestion
-    const acceptShippingSuggestion = useCallback(
-        (suggestion) => {
-            setFormData((prev) => ({
-                ...prev,
-                shippingStreetAddress: suggestion.street1,
-                shippingStreetAddress2: suggestion.street2 || "",
-                shippingCity: suggestion.city,
-                shippingState: suggestion.state,
-                shippingPostalCode: suggestion.zip,
-            }))
+    const acceptShippingSuggestion = useCallback((suggestion) => {
+        setFormData((prev) => ({
+            ...prev,
+            shippingStreetAddress: suggestion.street1,
+            shippingStreetAddress2: suggestion.street2 || "",
+            shippingCity: suggestion.city,
+            shippingState: suggestion.state,
+            shippingPostalCode: suggestion.zip,
+        }))
 
-            setShippingValidation((prev) => ({
-                ...prev,
-                status: "valid",
-                showSuggestions: false,
-                validatedAddress: suggestion,
-            }))
-        },
-        []
-    )
+        setShippingValidation((prev) => ({
+            ...prev,
+            status: "valid",
+            showSuggestions: false,
+            validatedAddress: suggestion,
+        }))
+    }, [])
 
     // Form validation for step progression
     const validateStep = useCallback(
@@ -2160,28 +2397,31 @@ export default function MultistepForm() {
             // Add conditional fields for Step 3
             if (stepNumber === 3) {
                 // Add shipping address fields (only for domestic and military, not international)
-                if (formData.shippingCategory && formData.shippingCategory !== "international") {
+                if (
+                    formData.shippingCategory &&
+                    formData.shippingCategory !== "international"
+                ) {
                     fieldsForStep[3] = [
-                        ...fieldsForStep[3], 
+                        ...fieldsForStep[3],
                         "recipientName",
                         "recipientPhone",
-                        "shippingStreetAddress", 
-                        "shippingCity", 
-                        "shippingState", 
-                        "shippingPostalCode"
+                        "shippingStreetAddress",
+                        "shippingCity",
+                        "shippingState",
+                        "shippingPostalCode",
                     ]
                 }
-                
+
                 // If international shipping is selected, add conditional fields
                 if (formData.shippingCategory === "international") {
                     fieldsForStep[3] = [
-                        ...fieldsForStep[3], 
+                        ...fieldsForStep[3],
                         "shippingCountry",
                         "internationalFullAddress",
                         "recipientName",
-                        "recipientPhone"
+                        "recipientPhone",
                     ]
-                    
+
                     // Add PCCC field if South Korea is selected
                     if (formData.shippingCountry === "KR") {
                         fieldsForStep[3].push("pcccCode")
@@ -2235,35 +2475,68 @@ export default function MultistepForm() {
 
     // File upload handlers
     const handleFileUpload = useCallback(async (files, uploadType) => {
-        // HEIC files will be handled and converted on the backend
-        const validFiles = Array.from(files).filter((file) => {
-            // Accept common image formats, HEIC (iPhone photos), and PDF
-            const validTypes = [
-                "image/jpeg",
-                "image/jpg",
-                "image/png",
-                "image/gif",
-                "image/webp",
-                "image/heic",
-                "image/heif",
-                "application/pdf",
-            ]
-            const maxSize = 10 * 1024 * 1024 // 10MB max
+        // Convert HEIC files to JPG for universal compatibility
+        const convertedFiles = await Promise.all(
+            Array.from(files).map(async (file) => {
+                if (
+                    file.type === "image/heic" ||
+                    file.type === "image/heif" ||
+                    file.name.toLowerCase().endsWith(".heic") ||
+                    file.name.toLowerCase().endsWith(".heif")
+                ) {
+                    try {
+                        const convertedBlob = await heic2any({
+                            blob: file,
+                            toType: "image/jpeg",
+                            quality: 0.9,
+                        })
+                        return new File(
+                            [convertedBlob],
+                            file.name.replace(/\.(heic|heif)$/i, ".jpg"),
+                            { type: "image/jpeg" }
+                        )
+                    } catch (error) {
+                        console.error("HEIC conversion failed:", error)
+                        alert(
+                            `Failed to convert ${file.name}. Please try a different file.`
+                        )
+                        return null
+                    }
+                }
+                return file
+            })
+        )
 
-            if (!validTypes.includes(file.type)) {
-                alert(
-                    `Invalid file type: ${file.name}. Please upload JPG, PNG, GIF, WebP, HEIC (iPhone photos), or PDF files.`
-                )
-                return false
-            }
+        const validFiles = convertedFiles
+            .filter((file) => file !== null)
+            .filter((file) => {
+                // Accept common image formats, HEIC (iPhone photos), and PDF
+                const validTypes = [
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/gif",
+                    "image/webp",
+                    "image/heic",
+                    "image/heif",
+                    "application/pdf",
+                ]
+                const maxSize = 10 * 1024 * 1024 // 10MB max
 
-            if (file.size > maxSize) {
-                alert(`File too large: ${file.name}. Maximum size is 10MB.`)
-                return false
-            }
+                if (!validTypes.includes(file.type)) {
+                    alert(
+                        `Invalid file type: ${file.name}. Please upload JPG, PNG, GIF, WebP, HEIC (iPhone photos), or PDF files.`
+                    )
+                    return false
+                }
 
-            return true
-        })
+                if (file.size > maxSize) {
+                    alert(`File too large: ${file.name}. Maximum size is 10MB.`)
+                    return false
+                }
+
+                return true
+            })
 
         if (validFiles.length > 0) {
             setUploadedFiles((prev) => ({
@@ -2304,15 +2577,17 @@ export default function MultistepForm() {
             // Validate required Step 3 fields before proceeding with payment
             const requiredStep3Fields = {
                 processingOption: "Please select a processing speed in Step 3",
-                shippingCategory: "Please select a shipping category in Step 3"
+                shippingCategory: "Please select a shipping category in Step 3",
             }
-            
-            for (const [field, errorMsg] of Object.entries(requiredStep3Fields)) {
+
+            for (const [field, errorMsg] of Object.entries(
+                requiredStep3Fields
+            )) {
                 if (!formData[field] || formData[field].trim() === "") {
-                    setPaymentState((prev) => ({ 
-                        ...prev, 
-                        isLoading: false, 
-                        error: errorMsg 
+                    setPaymentState((prev) => ({
+                        ...prev,
+                        isLoading: false,
+                        error: errorMsg,
                     }))
                     // Go back to Step 3 to fix the issue
                     setStep(3)
@@ -2322,7 +2597,7 @@ export default function MultistepForm() {
                     return
                 }
             }
-            
+
             console.log("Starting payment setup...")
             console.log("Form data:", formData)
             console.log("Uploaded files:", uploadedFiles)
@@ -2356,32 +2631,24 @@ export default function MultistepForm() {
             }
 
             console.log("Saving application...")
-            
+
             // Add shipping country to formData for fulfillment type determination
             const formDataWithShipping = {
                 ...formData,
                 // Use the shipping country from our custom fields, or fall back to shippingAddress state
-                shippingCountry: formData.shippingCountry || shippingAddress.country || null
+                shippingCountry:
+                    formData.shippingCountry || shippingAddress.country || null,
             }
-            
-            const payload = JSON.stringify({ formData: formDataWithShipping, fileData })
-            const payloadSizeMB = (new Blob([payload]).size / 1024 / 1024).toFixed(2)
-            console.log(`Request payload size: ${payloadSizeMB} MB`)
-            
-            if (payloadSizeMB > 4.5) {
-                throw new Error(`Request too large (${payloadSizeMB} MB). Vercel limit is 4.5MB. Please use smaller images.`)
-            }
-            
+
             const saveResponse = await fetch(
                 "https://easypost-api.vercel.app/api/save-application",
                 {
                     method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    credentials: "omit",
-                    body: payload,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        formData: formDataWithShipping,
+                        fileData,
+                    }),
                 }
             )
 
@@ -2478,7 +2745,9 @@ export default function MultistepForm() {
             try {
                 // Stripe webhook will handle the database update and Make.com trigger automatically
                 // No need for manual webhook call since Stripe webhooks are now working
-                console.log("Payment successful - Stripe webhook will handle automation")
+                console.log(
+                    "Payment successful - Stripe webhook will handle automation"
+                )
             } catch (error) {
                 console.error("Error in payment success handler:", error)
             }
@@ -2904,7 +3173,9 @@ export default function MultistepForm() {
 
                             {addressValidation.status === "error" && (
                                 <div className="alert alert-error">
-                                    ⚠️ {addressValidation.error || "Address validation encountered an error. You can still continue with your application."}
+                                    ⚠️{" "}
+                                    {addressValidation.error ||
+                                        "Address validation encountered an error. You can still continue with your application."}
                                     {addressValidation.canBypass && (
                                         <button
                                             type="button"
@@ -2930,7 +3201,9 @@ export default function MultistepForm() {
                             {addressValidation.status ===
                                 "needs-correction" && (
                                 <div className="alert alert-warning">
-                                    ⚠️ Address suggestion available. You can select the suggested address below or continue with your original address.
+                                    ⚠️ Address suggestion available. You can
+                                    select the suggested address below or
+                                    continue with your original address.
                                 </div>
                             )}
 
@@ -3067,7 +3340,10 @@ export default function MultistepForm() {
                                     value={formData.birthplaceCity}
                                     onChange={(name, value) => {
                                         // Only allow letters, spaces, hyphens, apostrophes, and periods
-                                        const textOnly = value.replace(/[^a-zA-Z\s\-'.]/g, '')
+                                        const textOnly = value.replace(
+                                            /[^a-zA-Z\s\-'.]/g,
+                                            ""
+                                        )
                                         handleFieldChange(name, textOnly)
                                     }}
                                     onBlur={handleBlur}
@@ -3080,9 +3356,14 @@ export default function MultistepForm() {
                                     <label className="form-label">
                                         <span className="label-content">
                                             Birthplace State
-                                            <span className="required-asterisk"> *</span>
+                                            <span className="required-asterisk">
+                                                {" "}
+                                                *
+                                            </span>
                                             <Tooltip content="If you were born within the United States, list your birth state. If you were born outside the United States, list your birth country.">
-                                                <span className="info-icon">ⓘ</span>
+                                                <span className="info-icon">
+                                                    ⓘ
+                                                </span>
                                             </Tooltip>
                                         </span>
                                     </label>
@@ -3091,7 +3372,11 @@ export default function MultistepForm() {
                                         value={formData.birthplaceState}
                                         onChange={(e) => {
                                             // Only allow letters, spaces, hyphens, apostrophes, and periods
-                                            const textOnly = e.target.value.replace(/[^a-zA-Z\s\-'.]/g, '')
+                                            const textOnly =
+                                                e.target.value.replace(
+                                                    /[^a-zA-Z\s\-'.]/g,
+                                                    ""
+                                                )
                                             handleFieldChange(
                                                 "birthplaceState",
                                                 textOnly
@@ -3107,7 +3392,9 @@ export default function MultistepForm() {
                                         {fieldErrors.birthplaceState &&
                                             touched.birthplaceState && (
                                                 <span className="field-error-message">
-                                                    {fieldErrors.birthplaceState}
+                                                    {
+                                                        fieldErrors.birthplaceState
+                                                    }
                                                 </span>
                                             )}
                                     </div>
@@ -3122,7 +3409,10 @@ export default function MultistepForm() {
                                     value={formData.driveAbroad}
                                     onChange={(name, value) => {
                                         // Only allow letters, spaces, hyphens, apostrophes, periods, and commas
-                                        const textOnly = value.replace(/[^a-zA-Z\s\-'.,]/g, '')
+                                        const textOnly = value.replace(
+                                            /[^a-zA-Z\s\-'.,]/g,
+                                            ""
+                                        )
                                         handleFieldChange(name, textOnly)
                                     }}
                                     onBlur={handleBlur}
@@ -3209,7 +3499,7 @@ export default function MultistepForm() {
                                 type="date"
                                 placeholder="MM/DD/YYYY"
                                 required
-                                tooltip="IDPs are valid for one year from the permit effective date and may be future-dated up to 6 months from the date of application."
+                                tooltip="In other words, when do you want your permit to start being valid? We recommend setting this date for when you expect to rent a vehicle or otherwise start driving abroad. IDPs are valid for one year from the permit effective date and may be future-dated up to 6 months from the date you’re applying (today)."
                                 value={formData.permitEffectiveDate}
                                 onChange={handleFieldChange}
                                 onBlur={handleBlur}
@@ -3282,17 +3572,19 @@ export default function MultistepForm() {
                         <h2 className="section-title">Document Upload</h2>
                         {[
                             {
-                                label: "Upload photos of license (front and back)",
+                                label: "Upload Photo of Front of Driver’s License",
                                 type: "driversLicense",
                             },
                             {
-                                label: "Upload Passport-Style Photo",
+                                label: "Upload Passport-Style Photo (See Guidelines Below)",
                                 type: "passportPhoto",
                             },
                         ].map(({ label, type }, index) => (
                             <div className="file-upload-section" key={index}>
-                                <h3 className="upload-section-title">{label}</h3>
-                                
+                                <h3 className="upload-section-title">
+                                    {label}
+                                </h3>
+
                                 <div
                                     className={`upload-box-redesigned ${uploadedFiles[type].length > 0 ? "has-files" : ""}`}
                                     onDragOver={handleDragOver}
@@ -3307,13 +3599,24 @@ export default function MultistepForm() {
                                 >
                                     <div className="upload-header">
                                         <div className="upload-icon-redesigned">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="#6b7280">
-                                                <path d="M12 12C14.21 12 16 10.21 16 8S14.21 4 12 4 8 5.79 8 8 9.79 12 12 12M12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"/>
+                                            <svg
+                                                width="24"
+                                                height="24"
+                                                viewBox="0 0 24 24"
+                                                fill="#6b7280"
+                                            >
+                                                <path d="M12 12C14.21 12 16 10.21 16 8S14.21 4 12 4 8 5.79 8 8 9.79 12 12 12M12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" />
                                             </svg>
                                         </div>
                                         <div className="upload-text-redesigned">
-                                            <strong>Click to upload or drag files here</strong>
-                                            <span>Supports multiple files (images & PDFs)</span>
+                                            <strong>
+                                                Click to upload or drag files
+                                                here
+                                            </strong>
+                                            <span>
+                                                Supports multiple files (images
+                                                & PDFs)
+                                            </span>
                                         </div>
                                     </div>
 
@@ -3321,7 +3624,13 @@ export default function MultistepForm() {
                                     {uploadedFiles[type].length > 0 && (
                                         <div className="files-preview-embedded">
                                             <div className="files-header">
-                                                {uploadedFiles[type].length} file{uploadedFiles[type].length !== 1 ? 's' : ''} ready to upload
+                                                {uploadedFiles[type].length}{" "}
+                                                file
+                                                {uploadedFiles[type].length !==
+                                                1
+                                                    ? "s"
+                                                    : ""}{" "}
+                                                ready to upload
                                             </div>
                                             <div className="files-grid-embedded">
                                                 {uploadedFiles[type].map(
@@ -3330,9 +3639,13 @@ export default function MultistepForm() {
                                                             key={fileIndex}
                                                             className="file-chip"
                                                         >
-                                                            {file.type.startsWith('image/') ? (
+                                                            {file.type.startsWith(
+                                                                "image/"
+                                                            ) ? (
                                                                 <img
-                                                                    src={URL.createObjectURL(file)}
+                                                                    src={URL.createObjectURL(
+                                                                        file
+                                                                    )}
                                                                     alt={`Preview ${fileIndex + 1}`}
                                                                     className="file-chip-thumb"
                                                                 />
@@ -3342,15 +3655,24 @@ export default function MultistepForm() {
                                                                 </div>
                                                             )}
                                                             <span className="file-chip-name">
-                                                                {file.name.length > 15 
-                                                                    ? file.name.substring(0, 15) + '...' 
+                                                                {file.name
+                                                                    .length > 15
+                                                                    ? file.name.substring(
+                                                                          0,
+                                                                          15
+                                                                      ) + "..."
                                                                     : file.name}
                                                             </span>
                                                             <button
                                                                 type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    removeFile(type, fileIndex);
+                                                                onClick={(
+                                                                    e
+                                                                ) => {
+                                                                    e.stopPropagation()
+                                                                    removeFile(
+                                                                        type,
+                                                                        fileIndex
+                                                                    )
                                                                 }}
                                                                 className="file-chip-remove"
                                                             >
@@ -3380,14 +3702,23 @@ export default function MultistepForm() {
                             </div>
                         ))}
 
-                        {/* Head Shot Guidelines */}
+                        {/* Passport-Style Photo Guidelines */}
                         <div className="guidelines-section">
                             <h3 className="guidelines-title">
-                                Head Shot Guidelines
+                                Passport-Style Photo Guidelines
                             </h3>
                             <ul className="guidelines-list">
                                 <li>
-                                    Take a photo facing directly toward the camera with shoulders in the frame, a solid background, no shadows, a neutral expression, and no glasses or hat.{" "}
+                                    A landscape-orientation selfie (wider than
+                                    it is tall) that captures your shoulders
+                                    works well. We’ll edit & crop your photo
+                                    into a square before printing.
+                                </li>
+                                <li>
+                                    Take a photo facing the camera directly with
+                                    shoulders in the frame, a solid background,
+                                    no shadows, a neutral expression, and no
+                                    glasses or hat.{" "}
                                     <a
                                         href="https://travel.state.gov/content/travel/en/passports/how-apply/photos.html"
                                         target="_blank"
@@ -3399,11 +3730,8 @@ export default function MultistepForm() {
                                     .
                                 </li>
                                 <li>
-                                    A landscape-orientation selfie works best; we'll crop your photo before submitting it.
-                                </li>
-                                <li>
-                                    Do not upload a photo of a printed photo or
-                                    passport.
+                                    Photos of printed photos or passports cannot
+                                    be accepted.
                                 </li>
                             </ul>
                             <div className="guidelines-image">
@@ -3421,11 +3749,20 @@ export default function MultistepForm() {
                     <div className="processing-shipping-classic">
                         <h2 className="section-title">
                             Processing & Shipping
-                            <p style={{ marginBottom: '0', color: '#666', fontSize: '14px', fontWeight: 'normal', marginTop: '8px' }}>
-                                The total cost includes the fee shown below, plus tax and a $20 IDP booklet fee paid to AAA.
+                            <p
+                                style={{
+                                    marginBottom: "0",
+                                    color: "#666",
+                                    fontSize: "14px",
+                                    fontWeight: "normal",
+                                    marginTop: "8px",
+                                }}
+                            >
+                                The total cost includes the fee shown below,
+                                plus tax and a $20 IDP booklet fee paid to AAA.
                             </p>
                         </h2>
-                        
+
                         {/* 1. SHIPPING CATEGORY - Always visible first */}
                         <div className="classic-field">
                             <label className="classic-label">
@@ -3453,7 +3790,8 @@ export default function MultistepForm() {
                                     <div
                                         key={option.value}
                                         className={`selectable-box ${
-                                            formData.shippingCategory === option.value
+                                            formData.shippingCategory ===
+                                            option.value
                                                 ? "selected"
                                                 : ""
                                         }`}
@@ -3497,7 +3835,7 @@ export default function MultistepForm() {
                                     </div>
                                 )}
                         </div>
-                        
+
                         {/* 2. PROCESSING SPEED - Only show after shipping category selected */}
                         {formData.shippingCategory && (
                             <div className="classic-field">
@@ -3505,129 +3843,149 @@ export default function MultistepForm() {
                                     How fast do you need your IDP?{" "}
                                     <span className="required-asterisk">*</span>
                                 </label>
-                                <div className="subtitle-note">Delivery times to US Territories may be longer</div>
+                                <div className="subtitle-note">
+                                    Delivery times to US Territories may be
+                                    longer
+                                </div>
                                 <div className="selectable-box-group">
                                     {(() => {
                                         const getProcessingOptions = () => {
-                                            const category = formData.shippingCategory
+                                            const category =
+                                                formData.shippingCategory
                                             if (category === "domestic") {
                                                 return [
                                                     {
                                                         value: "standard",
                                                         label: "Standard",
-                                                        price: "$58",
-                                                        sub: "Arrives in 6-8 business days - longer for US Territories",
-                                                        backendNote: "3-5 business days processing & standard shipping"
+                                                        price: "$58 + $20 AAA fee + tax",
+                                                        sub: "Arrives in 6-8 business days",
+                                                        backendNote:
+                                                            "3-5 business days processing & standard shipping",
                                                     },
                                                     {
                                                         value: "fast",
                                                         label: "Fast",
-                                                        price: "$108",
-                                                        sub: "Arrives in 3-4 business days - longer for US Territories",
-                                                        backendNote: "1-2 business days processing & expedited shipping"
+                                                        price: "$108 + $20 AAA fee + tax",
+                                                        sub: "Arrives in 3-4 business days",
+                                                        backendNote:
+                                                            "1-2 business days processing & expedited shipping",
                                                     },
                                                     {
                                                         value: "fastest",
                                                         label: "Fastest",
-                                                        price: "$168",
-                                                        sub: "Arrives the next business day (or in 2 bus. days if application is received after noon ET - longer for US territories",
-                                                        backendNote: "Same-day processing & overnight shipping"
-                                                    }
+                                                        price: "$168 + $20 AAA fee + tax",
+                                                        sub: "Arrives the next business day (or in 2 business days if application is received after noon ET)",
+                                                        backendNote:
+                                                            "Same-day processing & overnight shipping",
+                                                    },
                                                 ]
-                                            } else if (category === "international") {
+                                            } else if (
+                                                category === "international"
+                                            ) {
                                                 return [
                                                     {
                                                         value: "standard",
                                                         label: "Standard",
-                                                        price: "$98",
+                                                        price: "$98 + $20 AAA fee + tax",
                                                         sub: "Arrives in 7-10 business days",
-                                                        backendNote: "3-5 business days processing & standard shipping"
+                                                        backendNote:
+                                                            "3-5 business days processing & standard shipping",
                                                     },
                                                     {
                                                         value: "fast",
                                                         label: "Fast",
-                                                        price: "$148",
+                                                        price: "$148 + $20 AAA fee + tax",
                                                         sub: "Arrives in 4-7 business days",
-                                                        backendNote: "1-2 business days processing & expedited shipping"
+                                                        backendNote:
+                                                            "1-2 business days processing & expedited shipping",
                                                     },
                                                     {
                                                         value: "fastest",
                                                         label: "Fastest",
-                                                        price: "$198",
-                                                        sub: "Processing by noon ET. Arrives in 2-5 business days - contact us for your location's shipping timeline",
-                                                        backendNote: "Same-day processing & overnight shipping"
-                                                    }
+                                                        price: "$198 + $20 AAA fee + tax",
+                                                        sub: "Shipped same day if received by noon ET. Arrives in 2-5 business days. Ask us for your location’s specific timeline if needed.",
+                                                        backendNote:
+                                                            "Same-day processing & overnight shipping",
+                                                    },
                                                 ]
-                                            } else if (category === "military") {
+                                            } else if (
+                                                category === "military"
+                                            ) {
                                                 return [
                                                     {
                                                         value: "standard",
                                                         label: "Standard",
-                                                        price: "$49",
+                                                        price: "$49 + $20 AAA fee + tax",
                                                         sub: "Arrives in 8-15 business days",
-                                                        backendNote: "3-5 business days processing & standard shipping"
+                                                        backendNote:
+                                                            "3-5 business days processing & standard shipping",
                                                     },
                                                     {
                                                         value: "fast",
                                                         label: "Fast",
-                                                        price: "$89",
+                                                        price: "$89 + $20 AAA fee + tax",
                                                         sub: "Arrives in 6-12 business days",
-                                                        backendNote: "1-2 business days processing & expedited shipping"
+                                                        backendNote:
+                                                            "1-2 business days processing & expedited shipping",
                                                     },
                                                     {
                                                         value: "fastest",
                                                         label: "Fastest",
-                                                        price: "$119",
+                                                        price: "$119 + $20 AAA fee + tax",
                                                         sub: "Arrives in 5-11 business days",
-                                                        backendNote: "Same-day processing & overnight shipping"
-                                                    }
+                                                        backendNote:
+                                                            "Same-day processing & overnight shipping",
+                                                    },
                                                 ]
                                             }
                                             return []
                                         }
-                                        return getProcessingOptions().map((option) => (
-                                            <div
-                                                key={option.value}
-                                                className={`selectable-box ${
-                                                    formData.processingOption === option.value
-                                                        ? "selected"
-                                                        : ""
-                                                }`}
-                                                onClick={() =>
-                                                    handleFieldChange(
-                                                        "processingOption",
-                                                        option.value
-                                                    )
-                                                }
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="processingOption"
-                                                    value={option.value}
-                                                    checked={
+                                        return getProcessingOptions().map(
+                                            (option) => (
+                                                <div
+                                                    key={option.value}
+                                                    className={`selectable-box ${
                                                         formData.processingOption ===
                                                         option.value
-                                                    }
-                                                    onChange={(e) =>
+                                                            ? "selected"
+                                                            : ""
+                                                    }`}
+                                                    onClick={() =>
                                                         handleFieldChange(
                                                             "processingOption",
-                                                            e.target.value
+                                                            option.value
                                                         )
                                                     }
-                                                />
-                                                <div className="selectable-box-content">
-                                                    <div className="selectable-box-label">
-                                                        {option.label}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="processingOption"
+                                                        value={option.value}
+                                                        checked={
+                                                            formData.processingOption ===
+                                                            option.value
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleFieldChange(
+                                                                "processingOption",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                    />
+                                                    <div className="selectable-box-content">
+                                                        <div className="selectable-box-label">
+                                                            {option.label}
+                                                        </div>
+                                                        <div className="selectable-box-sub">
+                                                            {option.sub}
+                                                        </div>
                                                     </div>
-                                                    <div className="selectable-box-sub">
-                                                        {option.sub}
+                                                    <div className="selectable-box-price">
+                                                        {option.price}
                                                     </div>
                                                 </div>
-                                                <div className="selectable-box-price">
-                                                    {option.price}
-                                                </div>
-                                            </div>
-                                        ))
+                                            )
+                                        )
                                     })()}
                                 </div>
                                 {fieldErrors.processingOption &&
@@ -3638,7 +3996,7 @@ export default function MultistepForm() {
                                     )}
                             </div>
                         )}
-                        
+
                         {/* International Shipping Address Fields - Only show when International is selected */}
                         {formData.shippingCategory === "international" && (
                             <div className="classic-field">
@@ -3653,7 +4011,9 @@ export default function MultistepForm() {
                                         value={formData.recipientName || ""}
                                         onChange={handleFieldChange}
                                         onBlur={handleBlur}
-                                        fieldClass={getFieldClass("recipientName")}
+                                        fieldClass={getFieldClass(
+                                            "recipientName"
+                                        )}
                                         error={fieldErrors.recipientName}
                                         touched={touched.recipientName}
                                         tooltip="Enter the name of who will receive the shipment, if different than the applicant"
@@ -3667,54 +4027,103 @@ export default function MultistepForm() {
                                         value={formData.recipientPhone}
                                         onChange={handleFieldChange}
                                         onBlur={handleBlur}
-                                        fieldClass={getFieldClass("recipientPhone")}
+                                        fieldClass={getFieldClass(
+                                            "recipientPhone"
+                                        )}
                                         error={fieldErrors.recipientPhone}
                                         touched={touched.recipientPhone}
                                         tooltip="Enter the phone number, ideally from the destination country, of the shipment carrier should contact with delivery questions"
                                     />
 
                                     {/* Country Selection and PCCC Fields */}
-                                    <div className="form-row" style={{ display: "flex", alignItems: "flex-start", gap: "15px" }}>
-                                        <div className="form-group" style={{ flex: formData.shippingCountry === "KR" ? "1" : "2" }}>
+                                    <div
+                                        className="form-row"
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "flex-start",
+                                            gap: "15px",
+                                        }}
+                                    >
+                                        <div
+                                            className="form-group"
+                                            style={{
+                                                flex:
+                                                    formData.shippingCountry ===
+                                                    "KR"
+                                                        ? "1"
+                                                        : "2",
+                                            }}
+                                        >
                                             <label className="form-label">
-                                                Shipping Address: Country <span className="required-asterisk">*</span>
+                                                Shipping Address: Country{" "}
+                                                <span className="required-asterisk">
+                                                    *
+                                                </span>
                                             </label>
                                             <select
                                                 name="shippingCountry"
-                                                value={formData.shippingCountry || ""}
-                                                onChange={(e) => handleFieldChange("shippingCountry", e.target.value)}
+                                                value={
+                                                    formData.shippingCountry ||
+                                                    ""
+                                                }
+                                                onChange={(e) =>
+                                                    handleFieldChange(
+                                                        "shippingCountry",
+                                                        e.target.value
+                                                    )
+                                                }
                                                 onBlur={handleBlur}
                                                 className={`form-input ${getFieldClass("shippingCountry")}`}
                                                 required
                                             >
-                                                <option value="">Please Select</option>
+                                                <option value="">
+                                                    Please Select
+                                                </option>
                                                 {countries
-                                                    .filter(country => country.code !== "US") // Exclude US since it's not international
+                                                    .filter(
+                                                        (country) =>
+                                                            country.code !==
+                                                            "US"
+                                                    ) // Exclude US since it's not international
                                                     .map((country) => (
-                                                    <option key={country.code} value={country.code}>
-                                                        {country.flag} {country.name}
-                                                    </option>
-                                                ))}
+                                                        <option
+                                                            key={country.code}
+                                                            value={country.code}
+                                                        >
+                                                            {country.flag}{" "}
+                                                            {country.name}
+                                                        </option>
+                                                    ))}
                                             </select>
-                                            {fieldErrors.shippingCountry && touched.shippingCountry && (
-                                                <div className="error-message">
-                                                    {fieldErrors.shippingCountry}
-                                                </div>
-                                            )}
+                                            {fieldErrors.shippingCountry &&
+                                                touched.shippingCountry && (
+                                                    <div className="error-message">
+                                                        {
+                                                            fieldErrors.shippingCountry
+                                                        }
+                                                    </div>
+                                                )}
                                         </div>
 
                                         {/* PCCC Field - Only show when South Korea is selected */}
                                         {formData.shippingCountry === "KR" && (
-                                            <div className="form-group" style={{ flex: "1" }}>
+                                            <div
+                                                className="form-group"
+                                                style={{ flex: "1" }}
+                                            >
                                                 <FormField
                                                     label="PCCC for Korean Customs"
                                                     name="pcccCode"
                                                     placeholder="Enter PCCC code"
                                                     required
-                                                    value={formData.pcccCode || ""}
+                                                    value={
+                                                        formData.pcccCode || ""
+                                                    }
                                                     onChange={handleFieldChange}
                                                     onBlur={handleBlur}
-                                                    fieldClass={getFieldClass("pcccCode")}
+                                                    fieldClass={getFieldClass(
+                                                        "pcccCode"
+                                                    )}
                                                     error={fieldErrors.pcccCode}
                                                     touched={touched.pcccCode}
                                                     tooltip="Personal Customs Clearance Code required for shipments to South Korea"
@@ -3725,25 +4134,41 @@ export default function MultistepForm() {
 
                                     <div className="form-group">
                                         <label className="form-label">
-                                            Shipping Address - must be written in English characters <span className="required-asterisk">*</span>
+                                            Shipping Address - must be written
+                                            in English characters{" "}
+                                            <span className="required-asterisk">
+                                                *
+                                            </span>
                                         </label>
                                         <textarea
                                             name="internationalFullAddress"
                                             placeholder="Please provide your complete address including street, city, state/province, postal code, and country"
-                                            value={formData.internationalFullAddress}
-                                            onChange={(e) => handleFieldChange("internationalFullAddress", e.target.value)}
+                                            value={
+                                                formData.internationalFullAddress
+                                            }
+                                            onChange={(e) =>
+                                                handleFieldChange(
+                                                    "internationalFullAddress",
+                                                    e.target.value
+                                                )
+                                            }
                                             onBlur={handleBlur}
-                                            className={getFieldClass("internationalFullAddress")}
+                                            className={getFieldClass(
+                                                "internationalFullAddress"
+                                            )}
                                             rows="3"
                                             required
                                         />
-                                        {fieldErrors.internationalFullAddress && touched.internationalFullAddress && (
-                                            <div className="error-message">
-                                                {fieldErrors.internationalFullAddress}
-                                            </div>
-                                        )}
+                                        {fieldErrors.internationalFullAddress &&
+                                            touched.internationalFullAddress && (
+                                                <div className="error-message">
+                                                    {
+                                                        fieldErrors.internationalFullAddress
+                                                    }
+                                                </div>
+                                            )}
                                     </div>
-                                    
+
                                     <div className="form-group">
                                         <label className="form-label">
                                             Shipping Address - in local language
@@ -3751,336 +4176,573 @@ export default function MultistepForm() {
                                         <textarea
                                             name="internationalLocalAddress"
                                             placeholder="If applicable, please provide your address in the local language/script"
-                                            value={formData.internationalLocalAddress}
-                                            onChange={(e) => handleFieldChange("internationalLocalAddress", e.target.value)}
+                                            value={
+                                                formData.internationalLocalAddress
+                                            }
+                                            onChange={(e) =>
+                                                handleFieldChange(
+                                                    "internationalLocalAddress",
+                                                    e.target.value
+                                                )
+                                            }
                                             onBlur={handleBlur}
-                                            className={getFieldClass("internationalLocalAddress")}
+                                            className={getFieldClass(
+                                                "internationalLocalAddress"
+                                            )}
                                             rows="3"
                                         />
-                                        {fieldErrors.internationalLocalAddress && touched.internationalLocalAddress && (
-                                            <div className="error-message">
-                                                {fieldErrors.internationalLocalAddress}
-                                            </div>
-                                        )}
+                                        {fieldErrors.internationalLocalAddress &&
+                                            touched.internationalLocalAddress && (
+                                                <div className="error-message">
+                                                    {
+                                                        fieldErrors.internationalLocalAddress
+                                                    }
+                                                </div>
+                                            )}
                                     </div>
-                                    
+
                                     <TextareaField
                                         label="Delivery Instructions / Comments"
                                         name="internationalDeliveryInstructions"
                                         placeholder="(Optional) Any special delivery instructions or other comments"
-                                        value={formData.internationalDeliveryInstructions}
+                                        value={
+                                            formData.internationalDeliveryInstructions
+                                        }
                                         onChange={handleFieldChange}
                                         onBlur={handleBlur}
-                                        fieldClass={getFieldClass("internationalDeliveryInstructions")}
-                                        error={fieldErrors.internationalDeliveryInstructions}
-                                        touched={touched.internationalDeliveryInstructions}
+                                        fieldClass={getFieldClass(
+                                            "internationalDeliveryInstructions"
+                                        )}
+                                        error={
+                                            fieldErrors.internationalDeliveryInstructions
+                                        }
+                                        touched={
+                                            touched.internationalDeliveryInstructions
+                                        }
                                         rows={3}
                                     />
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Shipping Address Collection - Only for Domestic and Military (not International) */}
-                        {formData.shippingCategory && formData.shippingCategory !== "international" && (
-                            <div className="classic-field">
-                                <label className="classic-label">
-                                    Shipping Address <span className="required-asterisk">*</span>
-                                </label>
-                                <div className="form-subtext">
-                                    This will be used for delivery of your International Driving Permit
-                                </div>
-                            <div className="form-group">
-                                <div className="custom-address-fields">
-                                    <FormField
-                                        label="Recipient Name"
-                                        name="recipientName"
-                                        required
-                                        value={formData.recipientName || ""}
-                                        onChange={handleFieldChange}
-                                        onBlur={handleBlur}
-                                        fieldClass={getFieldClass("recipientName")}
-                                        error={fieldErrors.recipientName}
-                                        touched={touched.recipientName}
-                                        tooltip="Enter the name of who will receive the shipment, if different than the applicant"
-                                    />
+                        {formData.shippingCategory &&
+                            formData.shippingCategory !== "international" && (
+                                <div className="classic-field">
+                                    <label className="classic-label">
+                                        Shipping Address{" "}
+                                        <span className="required-asterisk">
+                                            *
+                                        </span>
+                                    </label>
+                                    <div className="form-subtext">
+                                        This will be used for delivery of your
+                                        International Driving Permit
+                                    </div>
+                                    <div className="form-group">
+                                        <div className="custom-address-fields">
+                                            <FormField
+                                                label="Recipient Name"
+                                                name="recipientName"
+                                                required
+                                                value={
+                                                    formData.recipientName || ""
+                                                }
+                                                onChange={handleFieldChange}
+                                                onBlur={handleBlur}
+                                                fieldClass={getFieldClass(
+                                                    "recipientName"
+                                                )}
+                                                error={
+                                                    fieldErrors.recipientName
+                                                }
+                                                touched={touched.recipientName}
+                                                tooltip="Enter the name of who will receive the shipment, if different than the applicant"
+                                            />
 
-                                    <FormField
-                                        label="Recipient Phone Number"
-                                        name="recipientPhone"
-                                        type="tel"
-                                        required
-                                        value={formData.recipientPhone || ""}
-                                        onChange={handleFieldChange}
-                                        onBlur={handleBlur}
-                                        fieldClass={getFieldClass("recipientPhone")}
-                                        error={fieldErrors.recipientPhone}
-                                        touched={touched.recipientPhone}
-                                        tooltip="Enter the phone number the shipment carrier should contact with delivery questions."
-                                    />
-                                    
-                                    <div className="form-group">
-                                        <label className="form-label">
-                                            Street Address <span className="required-asterisk">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="shippingStreetAddress"
-                                            placeholder="123 Main Street"
-                                            value={formData.shippingStreetAddress || ""}
-                                            onChange={(e) => {
-                                                handleFieldChange("shippingStreetAddress", e.target.value)
-                                            }}
-                                            onBlur={handleBlur}
-                                            className={getFieldClass("shippingStreetAddress")}
-                                            required
-                                        />
-                                        {fieldErrors.shippingStreetAddress && touched.shippingStreetAddress && (
-                                            <div className="error-message">
-                                                {fieldErrors.shippingStreetAddress}
-                                            </div>
-                                        )}
-                                    </div>
-                                    
-                                    <div className="form-group">
-                                        <label className="form-label">Street Address 2</label>
-                                        <input
-                                            type="text"
-                                            name="shippingStreetAddress2"
-                                            placeholder="Apt, Suite, Unit, etc."
-                                            value={formData.shippingStreetAddress2 || ""}
-                                            onChange={(e) => handleFieldChange("shippingStreetAddress2", e.target.value)}
-                                            onBlur={handleBlur}
-                                            className={getFieldClass("shippingStreetAddress2")}
-                                        />
-                                    </div>
-                                    
-                                    <div className="address-row">
-                                        <div className="form-group">
-                                            <label className="form-label">
-                                                City <span className="required-asterisk">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="shippingCity"
-                                                placeholder={formData.shippingCategory === "military" ? "APO/FPO/DPO only" : "City"}
-                                                value={formData.shippingCity || ""}
-                                                onChange={(e) => {
-                                                    handleFieldChange("shippingCity", e.target.value)
-                                                }}
-                                                onBlur={handleBlur}
-                                                className={getFieldClass("shippingCity")}
+                                            <FormField
+                                                label="Recipient Phone Number"
+                                                name="recipientPhone"
+                                                type="tel"
                                                 required
+                                                value={
+                                                    formData.recipientPhone ||
+                                                    ""
+                                                }
+                                                onChange={handleFieldChange}
+                                                onBlur={handleBlur}
+                                                fieldClass={getFieldClass(
+                                                    "recipientPhone"
+                                                )}
+                                                error={
+                                                    fieldErrors.recipientPhone
+                                                }
+                                                touched={touched.recipientPhone}
+                                                tooltip="Enter the phone number the shipment carrier should contact with delivery questions."
                                             />
-                                            {fieldErrors.shippingCity && touched.shippingCity && (
-                                                <div className="error-message">
-                                                    {fieldErrors.shippingCity}
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <div className="form-group">
-                                            <label className="form-label">
-                                                {formData.shippingCategory === "international" ? "State/Province (if applicable)" : "State"} <span className="required-asterisk">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="shippingState"
-                                                placeholder={formData.shippingCategory === "military" ? "AA/AE/AP only" : formData.shippingCategory === "international" ? "State/Province (if applicable)" : "State"}
-                                                value={formData.shippingState || ""}
-                                                onChange={(e) => handleFieldChange("shippingState", e.target.value)}
-                                                onBlur={handleBlur}
-                                                className={getFieldClass("shippingState")}
-                                                required
-                                            />
-                                            {fieldErrors.shippingState && touched.shippingState && (
-                                                <div className="error-message">
-                                                    {fieldErrors.shippingState}
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <div className="form-group">
-                                            <label className="form-label">
-                                                {formData.shippingCategory === "international" ? "Postal Code" : "ZIP Code"} <span className="required-asterisk">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="shippingPostalCode"
-                                                placeholder={formData.shippingCategory === "international" ? "Postal Code" : "12345"}
-                                                value={formData.shippingPostalCode || ""}
-                                                onChange={(e) => handleFieldChange("shippingPostalCode", e.target.value)}
-                                                onBlur={handleBlur}
-                                                className={getFieldClass("shippingPostalCode")}
-                                                required
-                                            />
-                                            {fieldErrors.shippingPostalCode && touched.shippingPostalCode && (
-                                                <div className="error-message">
-                                                    {fieldErrors.shippingPostalCode}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    
-                                    {formData.shippingCategory === "international" && (
-                                        <div className="form-group">
-                                            <label className="form-label">
-                                                Country <span className="required-asterisk">*</span>
-                                            </label>
-                                            <select
-                                                name="shippingCountry"
-                                                value={formData.shippingCountry || ""}
-                                                onChange={(e) => {
-                                                    handleFieldChange("shippingCountry", e.target.value)
-                                                    // Update our shipping address state for fulfillment type detection
-                                                    setShippingAddress(prev => ({
-                                                        ...prev,
-                                                        country: e.target.value
-                                                    }))
-                                                }}
-                                                onBlur={handleBlur}
-                                                className={getFieldClass("shippingCountry")}
-                                                required
-                                            >
-                                                <option value="">Select Country</option>
-                                                {/* ROLLBACK: Replace with old hardcoded list if needed */}
-                                                {/* Featured countries at top */}
-                                                <optgroup label="━━━ Most Common ━━━">
-                                                    <option value="IT">Italy</option>
-                                                    <option value="JP">Japan</option>
-                                                </optgroup>
-                                                {/* All countries alphabetically */}
-                                                <optgroup label="━━━ All Countries ━━━">
-                                                    {countries
-                                                        .filter(c => c.code !== 'US' && c.code !== 'IT' && c.code !== 'JP')
-                                                        .sort((a, b) => a.name.localeCompare(b.name))
-                                                        .map(country => (
-                                                            <option key={country.code} value={country.code}>
-                                                                {country.name}
-                                                            </option>
-                                                        ))
+
+                                            <div className="form-group">
+                                                <label className="form-label">
+                                                    Street Address{" "}
+                                                    <span className="required-asterisk">
+                                                        *
+                                                    </span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="shippingStreetAddress"
+                                                    placeholder="123 Main Street"
+                                                    value={
+                                                        formData.shippingStreetAddress ||
+                                                        ""
                                                     }
-                                                </optgroup>
-                                            </select>
-                                            {fieldErrors.shippingCountry && touched.shippingCountry && (
-                                                <div className="error-message">
-                                                    {fieldErrors.shippingCountry}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                    
-                                    <TextareaField
-                                        label="Delivery Instructions / Comments"
-                                        name="shippingDeliveryInstructions"
-                                        placeholder="(Optional) Any special delivery instructions or other comments"
-                                        value={formData.shippingDeliveryInstructions || ""}
-                                        onChange={handleFieldChange}
-                                        onBlur={handleBlur}
-                                        fieldClass={getFieldClass("shippingDeliveryInstructions")}
-                                        error={fieldErrors.shippingDeliveryInstructions}
-                                        touched={touched.shippingDeliveryInstructions}
-                                        rows={3}
-                                    />
-                                    
-                                    {/* Shipping Address Validation Status */}
-                                    {formData.shippingCategory && formData.shippingCategory !== "international" && (
-                                        <>
-                                            {shippingValidation.status === "validating" && (
-                                                <div className="validation-status validation-loading">
-                                                    <span className="loading-spinner"></span>
-                                                    🔄 Validating address...
-                                                </div>
-                                            )}
-
-                                            {shippingValidation.status === "error" && (
-                                                <div className="alert alert-error">
-                                                    ⚠️ {shippingValidation.error || "Address validation encountered an error. You can still continue with your application."}
-                                                    {shippingValidation.canBypass && (
-                                                        <button
-                                                            type="button"
-                                                            className="btn-link"
-                                                            onClick={() =>
-                                                                setShippingValidation(
-                                                                    (prev) => ({
-                                                                        ...prev,
-                                                                        status: "valid",
-                                                                        error: null,
-                                                                    })
-                                                                )
-                                                            }
-                                                        >
-                                                            Continue without validation
-                                                        </button>
+                                                    onChange={(e) => {
+                                                        handleFieldChange(
+                                                            "shippingStreetAddress",
+                                                            e.target.value
+                                                        )
+                                                    }}
+                                                    onBlur={handleBlur}
+                                                    className={getFieldClass(
+                                                        "shippingStreetAddress"
                                                     )}
-                                                </div>
-                                            )}
+                                                    required
+                                                />
+                                                {fieldErrors.shippingStreetAddress &&
+                                                    touched.shippingStreetAddress && (
+                                                        <div className="error-message">
+                                                            {
+                                                                fieldErrors.shippingStreetAddress
+                                                            }
+                                                        </div>
+                                                    )}
+                                            </div>
 
-                                            {shippingValidation.status === "needs-correction" && (
-                                                <div className="alert alert-warning">
-                                                    ⚠️ Address suggestion available. You can select the suggested address below or continue with your original address.
-                                                </div>
-                                            )}
+                                            <div className="form-group">
+                                                <label className="form-label">
+                                                    Street Address 2
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="shippingStreetAddress2"
+                                                    placeholder="Apt, Suite, Unit, etc."
+                                                    value={
+                                                        formData.shippingStreetAddress2 ||
+                                                        ""
+                                                    }
+                                                    onChange={(e) =>
+                                                        handleFieldChange(
+                                                            "shippingStreetAddress2",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    onBlur={handleBlur}
+                                                    className={getFieldClass(
+                                                        "shippingStreetAddress2"
+                                                    )}
+                                                />
+                                            </div>
 
-                                            {shippingValidation.status === "invalid" && (
-                                                <div className="alert alert-warning">
-                                                    ⚠️{" "}
-                                                    {shippingValidation.error ||
-                                                        "Address could not be validated. You can still continue with your application."}
-                                                </div>
-                                            )}
-
-                                            {/* Shipping Address Suggestions */}
-                                            {shippingValidation.showSuggestions && (
-                                                <div className="suggestions-dropdown">
-                                                    <div className="suggestions-header">
-                                                        {shippingValidation.status === "valid"
-                                                            ? "EasyPost standardized your address:"
-                                                            : "Select the correct address:"}
-                                                    </div>
-                                                    {shippingValidation.suggestions.map(
-                                                        (suggestion, index) => (
-                                                            <div
-                                                                key={index}
-                                                                className="suggestion-item"
-                                                                onClick={() =>
-                                                                    acceptShippingSuggestion(suggestion)
+                                            <div className="address-row">
+                                                <div className="form-group">
+                                                    <label className="form-label">
+                                                        City{" "}
+                                                        <span className="required-asterisk">
+                                                            *
+                                                        </span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="shippingCity"
+                                                        placeholder={
+                                                            formData.shippingCategory ===
+                                                            "military"
+                                                                ? "APO/FPO/DPO only"
+                                                                : "City"
+                                                        }
+                                                        value={
+                                                            formData.shippingCity ||
+                                                            ""
+                                                        }
+                                                        onChange={(e) => {
+                                                            handleFieldChange(
+                                                                "shippingCity",
+                                                                e.target.value
+                                                            )
+                                                        }}
+                                                        onBlur={handleBlur}
+                                                        className={getFieldClass(
+                                                            "shippingCity"
+                                                        )}
+                                                        required
+                                                    />
+                                                    {fieldErrors.shippingCity &&
+                                                        touched.shippingCity && (
+                                                            <div className="error-message">
+                                                                {
+                                                                    fieldErrors.shippingCity
                                                                 }
-                                                            >
-                                                                <div className="suggestion-address">
-                                                                    {suggestion.street1}
-                                                                    {suggestion.street2 &&
-                                                                        `, ${suggestion.street2}`}
+                                                            </div>
+                                                        )}
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label className="form-label">
+                                                        {formData.shippingCategory ===
+                                                        "international"
+                                                            ? "State/Province (if applicable)"
+                                                            : "State"}{" "}
+                                                        <span className="required-asterisk">
+                                                            *
+                                                        </span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="shippingState"
+                                                        placeholder={
+                                                            formData.shippingCategory ===
+                                                            "military"
+                                                                ? "AA/AE/AP only"
+                                                                : formData.shippingCategory ===
+                                                                    "international"
+                                                                  ? "State/Province (if applicable)"
+                                                                  : "State"
+                                                        }
+                                                        value={
+                                                            formData.shippingState ||
+                                                            ""
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleFieldChange(
+                                                                "shippingState",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        onBlur={handleBlur}
+                                                        className={getFieldClass(
+                                                            "shippingState"
+                                                        )}
+                                                        required
+                                                    />
+                                                    {fieldErrors.shippingState &&
+                                                        touched.shippingState && (
+                                                            <div className="error-message">
+                                                                {
+                                                                    fieldErrors.shippingState
+                                                                }
+                                                            </div>
+                                                        )}
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label className="form-label">
+                                                        {formData.shippingCategory ===
+                                                        "international"
+                                                            ? "Postal Code"
+                                                            : "ZIP Code"}{" "}
+                                                        <span className="required-asterisk">
+                                                            *
+                                                        </span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="shippingPostalCode"
+                                                        placeholder={
+                                                            formData.shippingCategory ===
+                                                            "international"
+                                                                ? "Postal Code"
+                                                                : "12345"
+                                                        }
+                                                        value={
+                                                            formData.shippingPostalCode ||
+                                                            ""
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleFieldChange(
+                                                                "shippingPostalCode",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        onBlur={handleBlur}
+                                                        className={getFieldClass(
+                                                            "shippingPostalCode"
+                                                        )}
+                                                        required
+                                                    />
+                                                    {fieldErrors.shippingPostalCode &&
+                                                        touched.shippingPostalCode && (
+                                                            <div className="error-message">
+                                                                {
+                                                                    fieldErrors.shippingPostalCode
+                                                                }
+                                                            </div>
+                                                        )}
+                                                </div>
+                                            </div>
+
+                                            {formData.shippingCategory ===
+                                                "international" && (
+                                                <div className="form-group">
+                                                    <label className="form-label">
+                                                        Country{" "}
+                                                        <span className="required-asterisk">
+                                                            *
+                                                        </span>
+                                                    </label>
+                                                    <select
+                                                        name="shippingCountry"
+                                                        value={
+                                                            formData.shippingCountry ||
+                                                            ""
+                                                        }
+                                                        onChange={(e) => {
+                                                            handleFieldChange(
+                                                                "shippingCountry",
+                                                                e.target.value
+                                                            )
+                                                            // Update our shipping address state for fulfillment type detection
+                                                            setShippingAddress(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    country:
+                                                                        e.target
+                                                                            .value,
+                                                                })
+                                                            )
+                                                        }}
+                                                        onBlur={handleBlur}
+                                                        className={getFieldClass(
+                                                            "shippingCountry"
+                                                        )}
+                                                        required
+                                                    >
+                                                        <option value="">
+                                                            Select Country
+                                                        </option>
+                                                        {/* ROLLBACK: Replace with old hardcoded list if needed */}
+                                                        {/* Featured countries at top */}
+                                                        <optgroup label="━━━ Most Common ━━━">
+                                                            <option value="IT">
+                                                                Italy
+                                                            </option>
+                                                            <option value="JP">
+                                                                Japan
+                                                            </option>
+                                                        </optgroup>
+                                                        {/* All countries alphabetically */}
+                                                        <optgroup label="━━━ All Countries ━━━">
+                                                            {countries
+                                                                .filter(
+                                                                    (c) =>
+                                                                        c.code !==
+                                                                            "US" &&
+                                                                        c.code !==
+                                                                            "IT" &&
+                                                                        c.code !==
+                                                                            "JP"
+                                                                )
+                                                                .sort((a, b) =>
+                                                                    a.name.localeCompare(
+                                                                        b.name
+                                                                    )
+                                                                )
+                                                                .map(
+                                                                    (
+                                                                        country
+                                                                    ) => (
+                                                                        <option
+                                                                            key={
+                                                                                country.code
+                                                                            }
+                                                                            value={
+                                                                                country.code
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                country.name
+                                                                            }
+                                                                        </option>
+                                                                    )
+                                                                )}
+                                                        </optgroup>
+                                                    </select>
+                                                    {fieldErrors.shippingCountry &&
+                                                        touched.shippingCountry && (
+                                                            <div className="error-message">
+                                                                {
+                                                                    fieldErrors.shippingCountry
+                                                                }
+                                                            </div>
+                                                        )}
+                                                </div>
+                                            )}
+
+                                            <TextareaField
+                                                label="Delivery Instructions / Comments"
+                                                name="shippingDeliveryInstructions"
+                                                placeholder="(Optional) Any special delivery instructions or other comments"
+                                                value={
+                                                    formData.shippingDeliveryInstructions ||
+                                                    ""
+                                                }
+                                                onChange={handleFieldChange}
+                                                onBlur={handleBlur}
+                                                fieldClass={getFieldClass(
+                                                    "shippingDeliveryInstructions"
+                                                )}
+                                                error={
+                                                    fieldErrors.shippingDeliveryInstructions
+                                                }
+                                                touched={
+                                                    touched.shippingDeliveryInstructions
+                                                }
+                                                rows={3}
+                                            />
+
+                                            {/* Shipping Address Validation Status */}
+                                            {formData.shippingCategory &&
+                                                formData.shippingCategory !==
+                                                    "international" && (
+                                                    <>
+                                                        {shippingValidation.status ===
+                                                            "validating" && (
+                                                            <div className="validation-status validation-loading">
+                                                                <span className="loading-spinner"></span>
+                                                                🔄 Validating
+                                                                address...
+                                                            </div>
+                                                        )}
+
+                                                        {shippingValidation.status ===
+                                                            "error" && (
+                                                            <div className="alert alert-error">
+                                                                ⚠️{" "}
+                                                                {shippingValidation.error ||
+                                                                    "Address validation encountered an error. You can still continue with your application."}
+                                                                {shippingValidation.canBypass && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn-link"
+                                                                        onClick={() =>
+                                                                            setShippingValidation(
+                                                                                (
+                                                                                    prev
+                                                                                ) => ({
+                                                                                    ...prev,
+                                                                                    status: "valid",
+                                                                                    error: null,
+                                                                                })
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Continue
+                                                                        without
+                                                                        validation
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {shippingValidation.status ===
+                                                            "needs-correction" && (
+                                                            <div className="alert alert-warning">
+                                                                ⚠️ Address
+                                                                suggestion
+                                                                available. You
+                                                                can select the
+                                                                suggested
+                                                                address below or
+                                                                continue with
+                                                                your original
+                                                                address.
+                                                            </div>
+                                                        )}
+
+                                                        {shippingValidation.status ===
+                                                            "invalid" && (
+                                                            <div className="alert alert-warning">
+                                                                ⚠️{" "}
+                                                                {shippingValidation.error ||
+                                                                    "Address could not be validated. You can still continue with your application."}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Shipping Address Suggestions */}
+                                                        {shippingValidation.showSuggestions && (
+                                                            <div className="suggestions-dropdown">
+                                                                <div className="suggestions-header">
+                                                                    {shippingValidation.status ===
+                                                                    "valid"
+                                                                        ? "EasyPost standardized your address:"
+                                                                        : "Select the correct address:"}
                                                                 </div>
-                                                                <div className="suggestion-location">
-                                                                    {suggestion.city},{" "}
-                                                                    {suggestion.state}{" "}
-                                                                    {suggestion.zip}
+                                                                {shippingValidation.suggestions.map(
+                                                                    (
+                                                                        suggestion,
+                                                                        index
+                                                                    ) => (
+                                                                        <div
+                                                                            key={
+                                                                                index
+                                                                            }
+                                                                            className="suggestion-item"
+                                                                            onClick={() =>
+                                                                                acceptShippingSuggestion(
+                                                                                    suggestion
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <div className="suggestion-address">
+                                                                                {
+                                                                                    suggestion.street1
+                                                                                }
+                                                                                {suggestion.street2 &&
+                                                                                    `, ${suggestion.street2}`}
+                                                                            </div>
+                                                                            <div className="suggestion-location">
+                                                                                {
+                                                                                    suggestion.city
+                                                                                }
+
+                                                                                ,{" "}
+                                                                                {
+                                                                                    suggestion.state
+                                                                                }{" "}
+                                                                                {
+                                                                                    suggestion.zip
+                                                                                }
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                )}
+                                                                <div
+                                                                    className="suggestion-item keep-original"
+                                                                    onClick={() =>
+                                                                        setShippingValidation(
+                                                                            (
+                                                                                prev
+                                                                            ) => ({
+                                                                                ...prev,
+                                                                                showSuggestions:
+                                                                                    false,
+                                                                                status: "valid",
+                                                                            })
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {shippingValidation.status ===
+                                                                    "valid"
+                                                                        ? "✓ Keep my format"
+                                                                        : "✓ Keep my original address"}
                                                                 </div>
                                                             </div>
-                                                        )
-                                                    )}
-                                                    <div
-                                                        className="suggestion-item keep-original"
-                                                        onClick={() =>
-                                                            setShippingValidation((prev) => ({
-                                                                ...prev,
-                                                                showSuggestions: false,
-                                                                status: "valid",
-                                                            }))
-                                                        }
-                                                    >
-                                                        {shippingValidation.status === "valid"
-                                                            ? "✓ Keep my format"
-                                                            : "✓ Keep my original address"}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
+                                                        )}
+                                                    </>
+                                                )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                        )}
+                            )}
                     </div>
                 )
             case 4:
