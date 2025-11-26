@@ -298,6 +298,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Form data is required' })
     }
 
+    // Extract application ID from request
+    const { applicationId } = req.body
+    if (!applicationId) {
+      return res.status(400).json({ error: 'Application ID is required' })
+    }
+
     // Debug: Check what we're receiving
     console.log('=== SAVE APPLICATION DEBUG ===')
     console.log('All formData keys:', Object.keys(formData))
@@ -332,59 +338,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'At least one file must be uploaded for each document type' })
     }
 
-    // Generate unique application ID
-    const applicationId = `IDP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    // Get application ID from request
+    const { applicationId } = req.body
+    
+    if (!applicationId) {
+      return res.status(400).json({ error: 'Application ID is required' })
+    }
 
-    // Upload files to Supabase Storage
-    let uploadedDriversLicense = []
-    let uploadedPassportPhoto = []
-    let uploadedSignature = null
+    // Files already uploaded from frontend, just store metadata
+    const fileMetadata = {
+      driversLicense: fileData.driversLicense,
+      passportPhoto: fileData.passportPhoto,
+    }
 
-    try {
-      // Upload driver's license files
-      uploadedDriversLicense = await uploadFilesToStorage(
-        fileData.driversLicense,
-        applicationId,
-        'drivers_license'
-      )
-
-      // Upload passport photo files
-      uploadedPassportPhoto = await uploadFilesToStorage(
-        fileData.passportPhoto,
-        applicationId,
-        'passport_photo'
-      )
-
-      // Upload signature if present
-      if (formData.signature) {
+    // Handle signature if present
+    if (formData.signature) {
+      try {
         const signatureFile = {
           data: formData.signature,
           name: 'signature.png',
           type: 'image/png',
           size: Math.round(formData.signature.length * 0.75)
         }
-        
-        const signatureResult = await uploadFilesToStorage(
-          [signatureFile],
-          applicationId,
-          'signature'
-        )
-        uploadedSignature = signatureResult[0]
+        const signatureResult = await uploadFilesToStorage([signatureFile], applicationId, 'signature')
+        fileMetadata.signature = signatureResult[0]
+      } catch (err) {
+        console.error('Signature upload failed:', err)
       }
-
-    } catch (uploadError) {
-      console.error('File upload failed:', uploadError)
-      return res.status(500).json({ 
-        error: 'Failed to upload files to storage',
-        details: uploadError.message
-      })
-    }
-
-    // Prepare file metadata for database
-    const fileMetadata = {
-      driversLicense: uploadedDriversLicense,
-      passportPhoto: uploadedPassportPhoto,
-      signature: uploadedSignature
     }
 
     // Clean form data - remove base64 signature since it's now in storage

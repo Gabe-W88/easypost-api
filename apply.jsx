@@ -7,10 +7,17 @@ import {
     useStripe,
     useElements,
 } from "@stripe/react-stripe-js"
+import { createClient } from "@supabase/supabase-js"
 
 // Initialize Stripe
 const stripePromise = loadStripe(
     "pk_test_51P8oMiRtjDxL2xZGzUyexo8wZKuOFmaNW59bMQ526nFjL6JZyDFkrzQXkWRIEkw9cw4eafRRtFLAYqTFwipOBKsx00y7zDiTOv"
+)
+
+// Initialize Supabase client
+const supabase = createClient(
+    "https://dkpsbqhzpxnziudimlex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcHNicWh6cHhueml1ZGltbGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NDAzMzQsImV4cCI6MjA3MDExNjMzNH0.55mJRm-4ImmJZO705bO6_R0B3jG-IMhmHDwpEGXhpzs"
 )
 
 // Tooltip component for form fields
@@ -2602,37 +2609,51 @@ export default function MultistepForm() {
             console.log("Form data:", formData)
             console.log("Uploaded files:", uploadedFiles)
 
-            // Convert files to base64 for backend upload
-            const convertFileToBase64 = (file) => {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader()
-                    reader.onload = () => resolve(reader.result)
-                    reader.onerror = reject
-                    reader.readAsDataURL(file)
-                })
+            // Generate application ID
+            const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+            // Upload files to Supabase
+            const uploadFileToSupabase = async (file, fileType, index) => {
+                const fileExtension = file.name.split('.').pop()
+                const fileName = `${applicationId}/${fileType}_${index + 1}.${fileExtension}`
+                
+                const { data, error } = await supabase.storage
+                    .from('application-files')
+                    .upload(fileName, file, {
+                        contentType: file.type,
+                        upsert: true
+                    })
+
+                if (error) throw error
+
+                const { data: urlData } = supabase.storage
+                    .from('application-files')
+                    .getPublicUrl(fileName)
+
+                return {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    path: data.path,
+                    publicUrl: urlData.publicUrl
+                }
             }
 
-            const driversLicenseData = await Promise.all(
-                uploadedFiles.driversLicense.map(async (file) => ({
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    data: await convertFileToBase64(file),
-                }))
+            const driversLicenseUploads = await Promise.all(
+                uploadedFiles.driversLicense.map((file, index) => 
+                    uploadFileToSupabase(file, 'driversLicense', index)
+                )
             )
 
-            const passportPhotoData = await Promise.all(
-                uploadedFiles.passportPhoto.map(async (file) => ({
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    data: await convertFileToBase64(file),
-                }))
+            const passportPhotoUploads = await Promise.all(
+                uploadedFiles.passportPhoto.map((file, index) => 
+                    uploadFileToSupabase(file, 'passportPhoto', index)
+                )
             )
 
             const fileData = {
-                driversLicense: driversLicenseData,
-                passportPhoto: passportPhotoData,
+                driversLicense: driversLicenseUploads,
+                passportPhoto: passportPhotoUploads,
             }
 
             // Add shipping country to formData
@@ -2648,6 +2669,7 @@ export default function MultistepForm() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        applicationId,
                         formData: formDataWithShipping,
                         fileData,
                     }),
@@ -2661,7 +2683,6 @@ export default function MultistepForm() {
             }
 
             const responseData = await saveResponse.json()
-            const applicationId = responseData.applicationId
             console.log("Application saved with ID:", applicationId)
 
             // Create payment intent
