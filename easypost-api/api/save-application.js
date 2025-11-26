@@ -335,18 +335,33 @@ export default async function handler(req, res) {
     // Generate unique application ID
     const applicationId = `IDP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-    // Files are already uploaded from frontend, just use the provided metadata
-    console.log('Received file metadata from frontend:', fileData)
-
-    // Handle signature upload if present (signature is still sent as base64 from frontend)
+    // Upload files to Supabase Storage
+    let uploadedDriversLicense = []
+    let uploadedPassportPhoto = []
     let uploadedSignature = null
-    if (formData.signature) {
-      try {
+
+    try {
+      // Upload driver's license files
+      uploadedDriversLicense = await uploadFilesToStorage(
+        fileData.driversLicense,
+        applicationId,
+        'drivers_license'
+      )
+
+      // Upload passport photo files
+      uploadedPassportPhoto = await uploadFilesToStorage(
+        fileData.passportPhoto,
+        applicationId,
+        'passport_photo'
+      )
+
+      // Upload signature if present
+      if (formData.signature) {
         const signatureFile = {
           data: formData.signature,
           name: 'signature.png',
           type: 'image/png',
-          size: Math.round(formData.signature.length * 0.75) // Estimate base64 size
+          size: Math.round(formData.signature.length * 0.75)
         }
         
         const signatureResult = await uploadFilesToStorage(
@@ -354,19 +369,22 @@ export default async function handler(req, res) {
           applicationId,
           'signature'
         )
-        uploadedSignature = signatureResult[0] // First (and only) signature file
-      } catch (uploadError) {
-        console.error('Signature upload failed:', uploadError)
-        // Don't fail the entire request if signature upload fails
-        console.warn('Continuing without signature upload')
+        uploadedSignature = signatureResult[0]
       }
+
+    } catch (uploadError) {
+      console.error('File upload failed:', uploadError)
+      return res.status(500).json({ 
+        error: 'Failed to upload files to storage',
+        details: uploadError.message
+      })
     }
 
-    // Prepare file metadata for database (using URLs from frontend uploads)
+    // Prepare file metadata for database
     const fileMetadata = {
-      driversLicense: fileData.driversLicense, // Already contains publicUrl, path, etc.
-      passportPhoto: fileData.passportPhoto,   // Already contains publicUrl, path, etc.
-      signature: uploadedSignature              // Uploaded from backend
+      driversLicense: uploadedDriversLicense,
+      passportPhoto: uploadedPassportPhoto,
+      signature: uploadedSignature
     }
 
     // Clean form data - remove base64 signature since it's now in storage
