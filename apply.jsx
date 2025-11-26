@@ -16,8 +16,8 @@ const stripePromise = loadStripe(
 
 // Initialize Supabase client (using anon key for frontend uploads)
 const supabase = createClient(
-    "https://yfzkuqzjggmnhjzvnnmb.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlmemt1cXpqZ2dtbmhqenZubm1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM3NDI2OTQsImV4cCI6MjAyOTMxODY5NH0.7LqGXwFfPQqQO-jH8yKXvK4XqRfB0dxB8P_DP3zqGqo"
+    "https://dkpsbqhzpxnziudimlex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcHNicWh6cHhueml1ZGltbGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NDAzMzQsImV4cCI6MjA3MDExNjMzNH0.55mJRm-4ImmJZO705bO6_R0B3jG-IMhmHDwpEGXhpzs"
 )
 
 // Tooltip component for form fields
