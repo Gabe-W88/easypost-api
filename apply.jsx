@@ -2364,6 +2364,14 @@ export default function MultistepForm() {
                 shippingCountry: formData.shippingCountry || shippingAddress.country || null
             }
             
+            const payload = JSON.stringify({ formData: formDataWithShipping, fileData })
+            const payloadSizeMB = (new Blob([payload]).size / 1024 / 1024).toFixed(2)
+            console.log(`Request payload size: ${payloadSizeMB} MB`)
+            
+            if (payloadSizeMB > 4.5) {
+                throw new Error(`Request too large (${payloadSizeMB} MB). Vercel limit is 4.5MB. Please use smaller images.`)
+            }
+            
             const saveResponse = await fetch(
                 "https://easypost-api.vercel.app/api/save-application",
                 {
@@ -2373,7 +2381,7 @@ export default function MultistepForm() {
                         "Accept": "application/json"
                     },
                     credentials: "omit",
-                    body: JSON.stringify({ formData: formDataWithShipping, fileData }),
+                    body: payload,
                 }
             )
 
