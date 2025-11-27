@@ -1,102 +1,358 @@
-# Fast IDP - Complete System Documentation
+# FastIDP System Documentation
+
+**Version:** 1.0  
 **Last Updated:** November 26, 2025  
-**Purpose:** Single source of truth for the entire system architecture, data flow, and configuration
+**Document Type:** Technical Reference  
+**Audience:** Software Engineers, DevOps, Technical Managers
 
 ---
 
-## 🚨 CRITICAL RULES - READ FIRST
+## Table of Contents
 
-### When Making Changes:
-1. **NEVER** modify code without understanding the complete data flow
-2. **ALWAYS** check if pricing, IDs, or URLs are hardcoded in multiple places
-3. **NEVER** create duplicate files or directories without explicit instruction
-4. **ALWAYS** clean up after yourself - commit deletions of unused code
-5. **NEVER** assume frontend/backend are synced - verify applicationId flow
-6. **ALWAYS** test the complete flow after changes: upload → save → payment → webhook → Make.com
-
-### Before Claiming "It Works":
-1. Test file uploads to Supabase
-2. Verify application saves to database with correct ID
-3. Confirm payment intent has applicationId in metadata
-4. Check webhook finds the application by applicationId
-5. Verify Make.com receives the payload
+1. [Introduction](#introduction)
+2. [System Architecture](#system-architecture)
+3. [Data Flow](#data-flow)
+4. [API Reference](#api-reference)
+5. [Database Schema](#database-schema)
+6. [Configuration Management](#configuration-management)
+7. [Integration Points](#integration-points)
+8. [Security](#security)
+9. [Error Handling](#error-handling)
+10. [Deployment](#deployment)
+11. [Troubleshooting](#troubleshooting)
+12. [Best Practices](#best-practices)
 
 ---
 
-## 📁 PROJECT STRUCTURE
+## Introduction
+
+### Purpose
+
+This document provides comprehensive technical documentation for the FastIDP application system. It serves as the authoritative reference for understanding system architecture, data flows, integration points, and operational procedures.
+
+### Scope
+
+This documentation covers:
+- Complete system architecture and component interactions
+- Detailed API endpoint specifications
+- Database schema and relationships
+- External service integrations
+- Deployment and operational procedures
+- Troubleshooting and maintenance guidelines
+
+### Critical Business Rules
+
+The following rules must be followed to ensure system integrity:
+
+1. **Application ID Management:**
+   - Frontend generates unique `applicationId` (`APP-${timestamp}-${random}`)
+   - Backend must extract and use frontend-provided ID
+   - Never regenerate `applicationId` in backend
+
+2. **Webhook Automation:**
+   - Stripe automatically triggers webhooks on payment events
+   - Never implement manual webhook triggers from frontend
+   - Make.com webhook URL is permanent (do not rotate)
+
+3. **Pricing Configuration:**
+   - All pricing data centralized in `config/pricing.js`
+   - Never hardcode prices in application code
+   - Import pricing functions for all calculations
+
+4. **File Upload Flow:**
+   - Files upload directly to Supabase Storage from frontend
+   - Backend receives pre-uploaded file metadata (URLs, not base64)
+   - Never send file data through API payload
+
+5. **Testing Requirements:**
+   - Test complete flow after any code changes
+   - Verify: upload → save → payment → webhook → automation
+   - Confirm database consistency and external service notifications
+
+---
+
+## System Architecture
+
+### Component Overview
+
+The FastIDP system follows a serverless architecture with clear separation between frontend, backend, and external services.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         User Interface                          │
+│                    (React/Framer Frontend)                      │
+└────────────┬────────────────────────────────────┬───────────────┘
+             │                                    │
+             │ Direct Upload                      │ API Calls
+             ▼                                    ▼
+    ┌────────────────┐                  ┌──────────────────┐
+    │    Supabase    │◄─────────────────│  Vercel API      │
+    │    Storage     │  Save Metadata   │  (Serverless)    │
+    └────────────────┘                  └────────┬─────────┘
+                                                 │
+                                    ┌────────────┼────────────┐
+                                    ▼            ▼            ▼
+                              ┌─────────┐  ┌─────────┐  ┌──────────┐
+                              │ Stripe  │  │Supabase │  │ EasyPost │
+                              │   API   │  │   DB    │  │   API    │
+                              └────┬────┘  └─────────┘  └──────────┘
+                                   │
+                                   │ Webhook
+                                   ▼
+                              ┌─────────┐
+                              │Make.com │
+                              │Automation│
+                              └─────────┘
+```
+
+### Directory Structure
 
 ```
 FastIDP/
-├── api/                          # Vercel serverless functions
-│   ├── save-application.js       # Saves form data & file metadata to DB
-│   ├── create-payment-intent.js  # Creates Stripe embedded payment
-│   ├── webhook.js                # Handles Stripe events & triggers Make.com
-│   └── validate-address.js       # EasyPost address validation
-├── config/
-│   └── pricing.js                # ⭐ SINGLE SOURCE OF TRUTH for all pricing
-├── apply.jsx                     # Main frontend form (copied to Framer)
-├── protectyourself.jsx           # Separate page component
-├── Pricing_Timeline_Calculator.jsx # Calculator component (uses pricing data)
-├── .env.example                  # Template for environment variables
-├── PROTOCOL.md                   # Workflow rules for AI assistance
-├── SYSTEM_DOCUMENTATION.md       # This file
-└── package.json                  # Dependencies (Stripe, Supabase, EasyPost)
+├── api/                              # Backend serverless functions
+│   ├── save-application.js           # Application data persistence
+│   ├── create-payment-intent.js      # Stripe payment initialization
+│   ├── webhook.js                    # Stripe event handler
+│   └── validate-address.js           # Address validation service
+│
+├── config/                           # Configuration files
+│   └── pricing.js                    # Centralized pricing configuration
+│
+├── apply.jsx                         # Main application form component
+├── protectyourself.jsx               # Additional page component
+├── Pricing_Timeline_Calculator.jsx   # Pricing calculator widget
+│
+├── .env.example                      # Environment variable template
+├── README.md                         # Project overview and quick start
+├── SYSTEM_DOCUMENTATION.md           # This file
+├── AUDIT_FINDINGS.md                 # Security and quality audit results
+├── PROTOCOL.md                       # Development workflow guidelines
+└── package.json                      # Node.js dependencies
+
 ```
 
-### ⚠️ DELETED/UNUSED FILES:
-- `easypost-api/` - Duplicate directory (deleted Nov 26, 2025)
-- `api/create-checkout.js` - Old redirect checkout (deleted Nov 26, 2025)
+### Technology Stack
+
+| Layer | Technology | Version | Purpose |
+|-------|-----------|---------|---------|
+| Frontend | React | 18.x | UI framework |
+| Frontend | Framer Motion | Latest | Animation and deployment |
+| Backend | Node.js | 18.x | Runtime environment |
+| Backend | Vercel Functions | - | Serverless hosting |
+| Database | Supabase PostgreSQL | - | Data persistence |
+| Storage | Supabase Storage | - | File storage (S3-compatible) |
+| Payment | Stripe API | Latest | Payment processing |
+| Automation | Make.com | - | Business workflow automation |
+| Address | EasyPost API | Latest | Address validation |
+
+### Removed Components
+
+The following components have been deprecated and removed:
+
+- **`easypost-api/` directory** (Removed: Nov 26, 2025)
+  - Reason: Duplicate directory causing deployment confusion
+  
+- **`api/create-checkout.js`** (Removed: Nov 26, 2025)
+  - Reason: Replaced by embedded payment flow (no redirect)
 
 ---
 
-## 🔄 COMPLETE DATA FLOW
+## Data Flow
 
-### 1. Form Submission (Frontend - apply.jsx)
+### Complete Application Flow
 
-**Location:** Lines 2610-2750
+The following diagram illustrates the end-to-end flow of an application submission:
+
+```
+1. User Form Entry
+   └─> Multi-step form (Personal Info → Documents → Shipping → Payment)
+
+2. Application ID Generation
+   └─> Frontend generates unique ID: APP-${timestamp}-${random}
+
+3. File Upload (Direct to Storage)
+   └─> Files uploaded to Supabase Storage
+   └─> Returns metadata: {name, type, size, path, publicUrl}
+
+4. Application Submission
+   └─> POST /api/save-application
+   └─> Payload includes: applicationId + formData + fileMetadata
+   └─> Saves to database with backend using frontend-provided ID
+
+5. Payment Intent Creation
+   └─> POST /api/create-payment-intent
+   └─> Creates Stripe PaymentIntent with applicationId in metadata
+   └─> Returns clientSecret to frontend
+
+6. Payment Processing
+   └─> User completes payment via Stripe Embedded Element
+   └─> Stripe automatically triggers webhook on success
+
+7. Webhook Processing
+   └─> POST /api/webhook (from Stripe)
+   └─> Verifies webhook signature
+   └─> Extracts applicationId from payment metadata
+   └─> Queries database for application record
+   └─> Updates payment status
+
+8. Business Automation
+   └─> Triggers Make.com webhook
+   └─> Sends comprehensive payload with all application data
+   └─> Make.com processes order fulfillment
+```
+
+### Frontend Flow (apply.jsx)
+
+**File:** `apply.jsx`  
+**Key Lines:** 2610-2750
+
+#### Step 1: Generate Application ID
 
 ```javascript
-// Step 1: Generate applicationId (CRITICAL - must be unique)
+// Location: Line 2613
 const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+```
 
-// Step 2: Upload files DIRECTLY to Supabase Storage
-// Returns: [{name, type, size, path, publicUrl}, ...]
-const driversLicenseUploads = await uploadFileToSupabase(files)
-const passportPhotoUploads = await uploadFileToSupabase(files)
+**Important:** This ID must be used consistently throughout the entire flow.
 
-// Step 3: Send to backend with PRE-UPLOADED file URLs
-await fetch('/api/save-application', {
+#### Step 2: Upload Files to Supabase
+
+```javascript
+// Location: Lines 2616-2640
+const uploadFileToSupabase = async (file) => {
+  const fileName = `${applicationId}/${file.name}`
+  
+  const { data, error } = await supabase.storage
+    .from('application-files')
+    .upload(fileName, file)
+  
+  const { data: urlData } = supabase.storage
+    .from('application-files')
+    .getPublicUrl(fileName)
+  
+  return {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    path: data.path,
+    publicUrl: urlData.publicUrl
+  }
+}
+
+// Upload all files and collect metadata
+const driversLicenseUploads = await Promise.all(
+  driversLicenseFiles.map(uploadFileToSupabase)
+)
+const passportPhotoUploads = await Promise.all(
+  passportPhotoFiles.map(uploadFileToSupabase)
+)
+```
+
+**Key Points:**
+- Files uploaded directly from browser to Supabase
+- Returns metadata objects (not base64 data)
+- Organized by applicationId in storage
+
+#### Step 3: Save Application Data
+
+```javascript
+// POST to /api/save-application
+const response = await fetch('/api/save-application', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    applicationId,        // Frontend-generated ID
-    formData,            // Form fields
-    fileData: {          // Pre-uploaded file metadata (NOT base64)
-      driversLicense: [{publicUrl, path, name, type, size}, ...],
-      passportPhoto: [{publicUrl, path, name, type, size}, ...]
+    applicationId,              // Frontend-generated ID
+    formData: {                 // All form fields
+      firstName: "John",
+      lastName: "Doe",
+      // ... all form fields
+    },
+    fileData: {                 // Pre-uploaded file metadata
+      driversLicense: driversLicenseUploads,
+      passportPhoto: passportPhotoUploads,
+      signature: signatureUpload
     }
   })
 })
-
-// Step 4: Create payment intent with SAME applicationId
-await fetch('/api/create-payment-intent', {
-  body: JSON.stringify({ applicationId, formData })
-})
-
-// Step 5: Stripe embedded payment (NO manual webhook trigger)
-// Stripe automatically calls webhook when payment succeeds
 ```
 
-**Key State Variables:**
-- `paymentState.applicationId` - Must match backend saved ID
-- `uploadedFiles` - File objects before upload
-- `step` - Current form step (1-4)
+#### Step 4: Create Payment Intent
+
+```javascript
+// POST to /api/create-payment-intent
+const response = await fetch('/api/create-payment-intent', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    applicationId,    // Same ID used in save-application
+    formData          // Form data for price calculation
+  })
+})
+
+const { clientSecret, paymentIntentId } = await response.json()
+
+// Update state for Stripe Elements
+setPaymentState({
+  applicationId,
+  clientSecret,
+  isComplete: false
+})
+```
+
+#### Step 5: Stripe Payment (No Manual Webhook)
+
+```javascript
+// Stripe Elements handles payment
+// On success, Stripe AUTOMATICALLY calls /api/webhook
+// Do NOT manually trigger webhook from frontend
+
+const handlePaymentSuccess = () => {
+  // Only update UI state
+  setPaymentState(prev => ({ ...prev, isComplete: true }))
+  // Webhook handles all backend updates
+}
+```
+
+**Critical:** Never implement manual webhook calls from frontend.
 
 ---
 
-### 2. Backend Save (api/save-application.js)
+### Backend Flow
 
-**Purpose:** Save application to database with file metadata
+#### API Endpoint: /api/save-application
 
-**CRITICAL:** Backend MUST use the applicationId from request body (line 317), NOT generate a new one.
+**File:** `api/save-application.js`  
+**Method:** POST  
+**Timeout:** 60 seconds
+
+**Purpose:** Persist application data and file metadata to database.
+
+**Request Payload:**
+
+```json
+{
+  "applicationId": "APP-1732661234567-abc123def",
+  "formData": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    // ... all form fields
+  },
+  "fileData": {
+    "driversLicense": [
+      {
+        "name": "license-front.jpg",
+        "type": "image/jpeg",
+        "size": 1234567,
+        "path": "APP-xxx/drivers_license_1.jpg",
+        "publicUrl": "https://dkpsbqhzpxnziudimlex.supabase.co/storage/v1/object/public/..."
+      }
+    ],
+    "passportPhoto": [...],
+    "signature": {...}
+  }
+}
 
 ```javascript
 // Line 317: Extract applicationId from request
