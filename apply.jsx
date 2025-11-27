@@ -700,7 +700,7 @@ const PaymentForm = ({
                                     width: "18px",
                                     height: "18px",
                                     cursor: "pointer",
-                                    accentColor: "#007bff",
+                                    accentColor: "#02569D",
                                 }}
                             />
                             Same as shipping address
@@ -3559,7 +3559,7 @@ export default function MultistepForm() {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 style={{
-                                                    color: "#007bff",
+                                                    color: "#02569D",
                                                     textDecoration: "underline",
                                                 }}
                                             >
@@ -4936,7 +4936,7 @@ export default function MultistepForm() {
             }
             
             .circle.active {
-                background-color: #3b82f6;
+                background-color: #02569D;
                 color: white;
                 box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
             }
@@ -5147,7 +5147,7 @@ export default function MultistepForm() {
                 justify-content: center;
                 width: 16px;
                 height: 16px;
-                background: #3b82f6;
+                background: #02569D;
                 color: white;
                 border-radius: 50%;
                 font-size: 12px;
@@ -5163,7 +5163,7 @@ export default function MultistepForm() {
                 justify-content: center;
                 width: 16px;
                 height: 16px;
-                background: #3b82f6;
+                background: #02569D;
                 color: white;
                 border-radius: 50%;
                 font-size: 12px;
@@ -5215,7 +5215,7 @@ export default function MultistepForm() {
             
             .form-input:focus {
                 outline: none;
-                border-color: #3b82f6;
+                border-color: #02569D;
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             }
             
@@ -5289,7 +5289,7 @@ export default function MultistepForm() {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                color: #3b82f6;
+                color: #02569D;
             }
 
             /* International Phone Styles */
@@ -5305,7 +5305,7 @@ export default function MultistepForm() {
             }
 
             .international-phone-container:focus-within {
-                border-color: #007bff;
+                border-color: #02569D;
                 box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
             }
 
@@ -5353,7 +5353,7 @@ export default function MultistepForm() {
                 left: 0;
                 width: 300px; /* Fixed width instead of right: 0 */
                 background: white;
-                border: 2px solid #007bff; /* Make it more visible for testing */
+                border: 2px solid #02569D; /* Make it more visible for testing */
                 border-radius: 8px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 max-height: 250px;
@@ -5424,7 +5424,7 @@ export default function MultistepForm() {
                 width: 12px;
                 height: 12px;
                 border: 2px solid #e5e7eb;
-                border-top: 2px solid #3b82f6;
+                border-top: 2px solid #02569D;
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
             }
@@ -5492,7 +5492,7 @@ export default function MultistepForm() {
             .btn-link {
                 background: none;
                 border: none;
-                color: #3b82f6;
+                color: #02569D;
                 text-decoration: underline;
                 cursor: pointer;
                 font-size: 12px;
@@ -5579,7 +5579,7 @@ export default function MultistepForm() {
             }
             
             .upload-box-redesigned:hover {
-                border-color: #3b82f6;
+                border-color: #02569D;
                 background-color: #f8fafc;
             }
             
@@ -5600,7 +5600,7 @@ export default function MultistepForm() {
             }
             
             .upload-text-redesigned {
-                color: #3b82f6;
+                color: #02569D;
                 font-size: 14px;
                 line-height: 1.4;
             }
@@ -5720,7 +5720,7 @@ export default function MultistepForm() {
             }
             
             .upload-box-compact:hover {
-                border-color: #3b82f6;
+                border-color: #02569D;
                 background-color: #f8fafc;
             }
             
@@ -5737,7 +5737,7 @@ export default function MultistepForm() {
             }
             
             .upload-text-compact {
-                color: #3b82f6;
+                color: #02569D;
                 font-size: 14px;
                 line-height: 1.4;
             }
@@ -5849,7 +5849,7 @@ export default function MultistepForm() {
             }
             
             .upload-box:hover {
-                border-color: #3b82f6;
+                border-color: #02569D;
                 background-color: #f8fafc;
             }
             
@@ -5884,7 +5884,7 @@ export default function MultistepForm() {
             
             .upload-note {
                 font-size: 14px;
-                color: #3b82f6;
+                color: #02569D;
                 margin: 0;
                 line-height: 1.5;
             }
@@ -5892,7 +5892,7 @@ export default function MultistepForm() {
             .upload-note strong {
                 display: block;
                 margin-bottom: 8px;
-                color: #3b82f6;
+                color: #02569D;
                 font-weight: 600;
             }
             
@@ -6018,7 +6018,7 @@ export default function MultistepForm() {
             }
             
             .guidelines-link {
-                color: #3b82f6;
+                color: #02569D;
                 text-decoration: underline;
             }
             
@@ -6056,7 +6056,7 @@ export default function MultistepForm() {
             }
             
             .radio-label:hover {
-                border-color: #3b82f6;
+                border-color: #02569D;
                 background-color: #f8fafc;
             }
             
@@ -6141,7 +6141,7 @@ export default function MultistepForm() {
             }
             
             .btn.primary {
-                background-color: #3b82f6;
+                background-color: #02569D;
                 color: white;
             }
             
@@ -6189,7 +6189,7 @@ export default function MultistepForm() {
             .checkbox-label input[type="checkbox"] {
                 width: 18px;
                 height: 18px;
-                accent-color: #3b82f6;
+                accent-color: #02569D;
                 cursor: pointer;
             }
             
@@ -6828,7 +6828,7 @@ export default function MultistepForm() {
             
             .international-address-fields textarea:focus {
                 outline: none;
-                border-color: #3b82f6;
+                border-color: #02569D;
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             }
             
@@ -6871,7 +6871,7 @@ export default function MultistepForm() {
             .custom-address-fields input:focus,
             .custom-address-fields select:focus {
                 outline: none;
-                border-color: #3b82f6;
+                border-color: #02569D;
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             }
             
@@ -6913,7 +6913,7 @@ export default function MultistepForm() {
                 position: relative;
             }
             .classic-radio:hover {
-                border-color: #3b82f6;
+                border-color: #02569D;
                 background-color: #f8faff;
                 box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
                 transform: translateY(-1px);
@@ -6924,17 +6924,17 @@ export default function MultistepForm() {
                 margin-right: 16px;
                 flex-shrink: 0;
                 cursor: pointer;
-                accent-color: #3b82f6;
+                accent-color: #02569D;
             }
             .classic-radio input[type="radio"]:checked {
-                border-color: #3b82f6;
+                border-color: #02569D;
             }
             .classic-radio input[type="radio"]:checked + .classic-radio-content .classic-radio-label {
                 color: #1f2937;
                 font-weight: 600;
             }
             .classic-radio input[type="radio"]:checked ~ .classic-radio-price {
-                color: #3b82f6;
+                color: #02569D;
                 font-weight: 700;
             }
             .classic-radio-content {
@@ -6967,7 +6967,7 @@ export default function MultistepForm() {
                 min-width: 80px;
             }
             .classic-radio input[type="radio"]:focus {
-                outline: 2px solid #3b82f6;
+                outline: 2px solid #02569D;
                 outline-offset: 2px;
             }
             
@@ -7064,14 +7064,14 @@ export default function MultistepForm() {
             }
             
             .selectable-box:hover {
-                border-color: #3b82f6;
+                border-color: #02569D;
                 background-color: #f8fafc;
             }
             
             .selectable-box.selected {
-                border-color: #3b82f6;
+                border-color: #02569D;
                 background-color: #eff6ff;
-                box-shadow: 0 0 0 1px #3b82f6;
+                box-shadow: 0 0 0 1px #02569D;
             }
             
             .selectable-box-content {
@@ -7236,7 +7236,7 @@ export default function MultistepForm() {
                 gap: 4px;
             }
             .sleek-radio.selected {
-                border: 2px solid #007bff;
+                border: 2px solid #02569D;
                 background: #f3f8ff;
             }
             .sleek-radio input[type="radio"] {
@@ -7249,7 +7249,7 @@ export default function MultistepForm() {
             }
             .sleek-radio-price {
                 font-size: 14px;
-                color: #007bff;
+                color: #02569D;
                 font-weight: 600;
                 margin-left: 2px;
             }
@@ -7323,7 +7323,7 @@ export default function MultistepForm() {
                 gap: 6px;
             }
             .condensed-radio.selected {
-                border: 2px solid #007bff;
+                border: 2px solid #02569D;
                 background: #eaf4ff;
             }
             .condensed-radio input[type="radio"] {
@@ -7335,7 +7335,7 @@ export default function MultistepForm() {
             }
             .condensed-radio-price {
                 font-size: 14px;
-                color: #007bff;
+                color: #02569D;
                 font-weight: 600;
                 margin-left: 2px;
             }
@@ -7491,7 +7491,7 @@ export default function MultistepForm() {
             }
 
             .step-number {
-                background: linear-gradient(135deg, #007bff, #02569D);
+                background: linear-gradient(135deg, #02569D, #02569D);
                 color: white;
                 border-radius: 50%;
                 width: 32px;
@@ -7530,14 +7530,14 @@ export default function MultistepForm() {
             }
 
             .option-card:hover {
-                border-color: #007bff;
+                border-color: #02569D;
                 background: #f0f8ff;
                 transform: translateY(-2px);
                 box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
             }
 
             .option-card.selected {
-                border-color: #007bff;
+                border-color: #02569D;
                 background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
                 box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
             }
@@ -7569,12 +7569,12 @@ export default function MultistepForm() {
             .option-price {
                 font-size: 24px;
                 font-weight: 700;
-                color: #007bff;
+                color: #02569D;
             }
 
             .option-duration {
                 font-size: 16px;
-                color: #007bff;
+                color: #02569D;
                 font-weight: 500;
                 margin: 4px 0 8px 0;
             }
@@ -7602,7 +7602,7 @@ export default function MultistepForm() {
             }
 
             .checkmark {
-                background: #007bff;
+                background: #02569D;
                 color: white;
                 border-radius: 50%;
                 width: 24px;
@@ -7634,13 +7634,13 @@ export default function MultistepForm() {
             }
 
             .category-card:hover {
-                border-color: #007bff;
+                border-color: #02569D;
                 background: #f0f8ff;
                 transform: translateX(4px);
             }
 
             .category-card.selected {
-                border-color: #007bff;
+                border-color: #02569D;
                 background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
                 box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15);
             }
@@ -7681,7 +7681,7 @@ export default function MultistepForm() {
 
             .category-subtitle {
                 font-size: 16px;
-                color: #007bff;
+                color: #02569D;
                 font-weight: 500;
                 margin: 0 0 4px 0;
             }
@@ -7728,14 +7728,14 @@ export default function MultistepForm() {
             }
 
             .shipping-option-card:hover {
-                border-color: #007bff;
+                border-color: #02569D;
                 background: #f0f8ff;
                 transform: translateY(-2px);
                 box-shadow: 0 6px 20px rgba(0, 123, 255, 0.15);
             }
 
             .shipping-option-card.selected {
-                border-color: #007bff;
+                border-color: #02569D;
                 background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
                 box-shadow: 0 6px 20px rgba(0, 123, 255, 0.2);
             }
@@ -7767,7 +7767,7 @@ export default function MultistepForm() {
             .shipping-price {
                 font-size: 20px;
                 font-weight: 700;
-                color: #007bff;
+                color: #02569D;
             }
 
             .savings-badge {
