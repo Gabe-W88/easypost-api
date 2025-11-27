@@ -1039,7 +1039,7 @@ const StripePaymentWrapper = ({
                 appearance: {
                     theme: "stripe",
                     variables: {
-                        colorPrimary: "#0066cc",
+                        colorPrimary: "#02569D",
                         borderRadius: "8px",
                         fontFamily: "system-ui, sans-serif",
                     },
@@ -4897,7 +4897,7 @@ export default function MultistepForm() {
                 display: flex;
                 justify-content: space-between;
                 margin-bottom: 32px;
-                padding: 0 20px;
+                padding: 20px 20px 0 20px;
             }
             
             .step {
@@ -5174,7 +5174,7 @@ export default function MultistepForm() {
             }
             
             .tooltip-content {
-                background: #1f2937;
+                background: #02569D;
                 color: white;
                 padding: 8px 12px;
                 border-radius: 6px;
@@ -5198,7 +5198,7 @@ export default function MultistepForm() {
                 height: 0;
                 border-style: solid;
                 border-width: 5px 5px 5px 0;
-                border-color: transparent #1f2937 transparent transparent;
+                border-color: transparent #02569D transparent transparent;
             }
             
             .form-input {
@@ -5501,7 +5501,7 @@ export default function MultistepForm() {
             }
             
             .btn-link:hover {
-                color: #1d4ed8;
+                color: #02569D;
             }
             
             /* Suggestions Dropdown */
@@ -6023,7 +6023,7 @@ export default function MultistepForm() {
             }
             
             .guidelines-link:hover {
-                color: #1d4ed8;
+                color: #02569D;
             }
             
             .guidelines-image {
@@ -6146,7 +6146,7 @@ export default function MultistepForm() {
             }
             
             .btn.primary:hover:not(:disabled) {
-                background-color: #2563eb;
+                background-color: #02569D;
                 transform: translateY(-1px);
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             }
@@ -7402,7 +7402,7 @@ export default function MultistepForm() {
                 width: 40px;
                 height: 40px;
                 border: 4px solid #f3f3f3;
-                border-top: 4px solid #0066cc;
+                border-top: 4px solid #02569D;
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
                 margin: 0 auto 20px;
@@ -7425,7 +7425,7 @@ export default function MultistepForm() {
             .payment-submit-button {
                 width: 100%;
                 padding: 16px;
-                background: #0066cc;
+                background: #02569D;
                 color: white;
                 border: none;
                 border-radius: 8px;
@@ -7437,7 +7437,7 @@ export default function MultistepForm() {
             }
 
             .payment-submit-button:hover:not(:disabled) {
-                background: #0056b3;
+                background: #02569D;
                 transform: translateY(-1px);
             }
 
@@ -7491,7 +7491,7 @@ export default function MultistepForm() {
             }
 
             .step-number {
-                background: linear-gradient(135deg, #007bff, #0056b3);
+                background: linear-gradient(135deg, #007bff, #02569D);
                 color: white;
                 border-radius: 50%;
                 width: 32px;
