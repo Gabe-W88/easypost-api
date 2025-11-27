@@ -1,29 +1,10 @@
 import Stripe from 'stripe'
+import { PERMIT_PRICES, getCombinedPriceCents, getSpeedDisplayName, TAX } from '../config/pricing.js'
 
 // Use environment variable for the secret key
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
 
 const stripe = new Stripe(stripeSecretKey)
-
-// Product mapping
-const STRIPE_PRODUCTS = {
-  // Permits ($20 each)
-  idp_international: 'prod_StLB80b39cwGwe',
-  idp_brazil_uruguay: 'prod_StL0mfYEghMQd7',
-  
-  // Processing Options
-  processing_standard: 'prod_StLCI6MmfjwY8u',    // $69
-  processing_express: 'prod_StLCgdjyMxHEkX',     // $109
-  processing_same_day: 'prod_StLCyJMauosNpo',    // $169
-  
-  // Shipping Options
-  shipping_international_standard: 'prod_StLCXINozg6poK',      // $49
-  shipping_international_express: 'prod_StLDaMbeIjAQ5K',       // $79
-  shipping_domestic_standard: 'prod_StLD5UEXiEVuKH',           // $9
-  shipping_domestic_express: 'prod_StLD5UEXiEVuKI',            // $19
-  shipping_domestic_overnight: 'prod_StLD5UEXiEVuKJ',          // $49
-  shipping_military_free: 'prod_StLD5UEXiEVuKK',              // $0
-}
 
 export default async function handler(req, res) {
   // Enable CORS for Framer and main domain
@@ -93,15 +74,16 @@ export default async function handler(req, res) {
                 quantity: 1,
               })
             } else {
-              // Fallback to hardcoded price if no prices found
-              totalAmount += 2000
+              // Fallback to pricing config if no Stripe prices found
+              const permitPrice = PERMIT_PRICES.idp * 100 // Convert to cents
+              totalAmount += permitPrice
               lineItems.push({
                 price_data: {
                   currency: 'usd',
                   product_data: {
                     name: shortPermitName,
                   },
-                  unit_amount: 2000, // $20.00
+                  unit_amount: permitPrice,
                 },
                 quantity: 1,
               })
@@ -113,58 +95,12 @@ export default async function handler(req, res) {
       }
     }
     
-    // Add combined processing & shipping fee
+    // Add combined processing & shipping fee (from centralized pricing config)
     if (formData.processingOption && formData.shippingCategory) {
       const speed = formData.processingOption
       const category = formData.shippingCategory
-      let amount = 0
-      let displayName = ''
-      let backendNote = ''
-      
-      // Calculate combined pricing based on category and speed
-      if (category === 'domestic') {
-        if (speed === 'standard') {
-          amount = 5800 // $58.00
-          displayName = 'Standard Processing & Shipping'
-          backendNote = '3-5 business days processing & standard shipping'
-        } else if (speed === 'fast') {
-          amount = 10800 // $108.00
-          displayName = 'Fast Processing & Shipping'
-          backendNote = '1-2 business days processing & expedited shipping'
-        } else if (speed === 'fastest') {
-          amount = 16800 // $168.00
-          displayName = 'Fastest Processing & Shipping'
-          backendNote = 'Same-day processing & overnight shipping'
-        }
-      } else if (category === 'international') {
-        if (speed === 'standard') {
-          amount = 9800 // $98.00
-          displayName = 'Standard Processing & Shipping'
-          backendNote = '3-5 business days processing & standard shipping'
-        } else if (speed === 'fast') {
-          amount = 14800 // $148.00
-          displayName = 'Fast Processing & Shipping'
-          backendNote = '1-2 business days processing & expedited shipping'
-        } else if (speed === 'fastest') {
-          amount = 19800 // $198.00
-          displayName = 'Fastest Processing & Shipping'
-          backendNote = 'Same-day processing & overnight shipping'
-        }
-      } else if (category === 'military') {
-        if (speed === 'standard') {
-          amount = 4900 // $49.00
-          displayName = 'Standard Processing & Shipping'
-          backendNote = '3-5 business days processing & standard shipping'
-        } else if (speed === 'fast') {
-          amount = 8900 // $89.00
-          displayName = 'Fast Processing & Shipping'
-          backendNote = '1-2 business days processing & expedited shipping'
-        } else if (speed === 'fastest') {
-          amount = 11900 // $119.00
-          displayName = 'Fastest Processing & Shipping'
-          backendNote = 'Same-day processing & overnight shipping'
-        }
-      }
+      const amount = getCombinedPriceCents(category, speed)
+      const displayName = getSpeedDisplayName(speed)
       
       if (amount > 0) {
         totalAmount += amount
@@ -173,7 +109,6 @@ export default async function handler(req, res) {
             currency: 'usd',
             product_data: {
               name: displayName,
-              description: backendNote
             },
             unit_amount: amount,
           },
@@ -183,10 +118,9 @@ export default async function handler(req, res) {
     }
 
 
-    // Add tax (7.75% for Bellefontaine, OH)
+    // Add tax from centralized config
     const subtotalAmount = totalAmount
-    const taxRate = 0.0775
-    const taxAmount = Math.round(subtotalAmount * taxRate)
+    const taxAmount = Math.round(subtotalAmount * TAX.rate)
     totalAmount += taxAmount
 
     // Add tax as separate line item

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
+import { PERMIT_PRICES, getCombinedPrice, getSpeedDisplayName, STRIPE_PRODUCTS } from '../config/pricing.js'
 
-// TEST: This is a test comment to verify file editing works
 // Initialize Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -108,25 +108,7 @@ async function uploadFilesToStorage(files, applicationId, fileType) {
   return uploadedFiles
 }
 
-// Stripe product mapping for form selections
-const STRIPE_PRODUCTS = {
-  // Permits ($20 each)
-  idp_international: 'prod_StLB80b39cwGwe',
-  idp_brazil_uruguay: 'prod_StL0mfYEghMQd7',
-  
-  // Processing Options
-  processing_standard: 'prod_StLCI6MmfjwY8u',    // $69
-  processing_express: 'prod_StLCgdjyMxHEkX',     // $109
-  processing_same_day: 'prod_StLCyJMauosNpo',    // $169
-  
-  // Shipping Options
-  shipping_international_standard: 'prod_StLCXINozg6poK',      // $49
-  shipping_international_express: 'prod_StLDaMbeIjAQ5K',       // $79
-  shipping_domestic_standard: 'prod_StLD5UEXiEVuKH',           // $9
-  shipping_domestic_express: 'prod_StLD5UEXiEVuKI',            // $19
-  shipping_domestic_overnight: 'prod_StLD5UEXiEVuKJ',          // $49
-  shipping_military_free: 'prod_StLD5UEXiEVuKK',              // $0
-}
+// Stripe product mapping imported from config/pricing.js
 
 // Countries that can be processed automatically through EasyPost
 const AUTOMATED_COUNTRIES = [
@@ -516,101 +498,36 @@ function calculatePricing(formData) {
   let total = 0
   const lineItems = []
 
-  // Add permit costs ($20 each)
+  // Add permit costs
   if (formData.selectedPermits && formData.selectedPermits.length > 0) {
     formData.selectedPermits.forEach(permit => {
       if (permit === 'International Driving Permit') {
         lineItems.push({
           productId: STRIPE_PRODUCTS.idp_international,
           name: 'International Driving Permit',
-          price: 20,
+          price: PERMIT_PRICES.idp,
           quantity: 1
         })
-        total += 20
+        total += PERMIT_PRICES.idp
       } else if (permit === 'IAPD (Brazil / Uruguay only)') {
         lineItems.push({
           productId: STRIPE_PRODUCTS.idp_brazil_uruguay,
           name: 'IAPD (Brazil / Uruguay only)',
-          price: 20,
+          price: PERMIT_PRICES.iapd,
           quantity: 1
         })
-        total += 20
+        total += PERMIT_PRICES.iapd
       }
     })
   }
 
-  // Add processing cost
-  if (formData.processingOption) {
-    const processing = formData.processingOption
-    if (processing === 'standard') {
-      lineItems.push({
-        productId: STRIPE_PRODUCTS.processing_standard,
-        name: '3-5 Business Days Processing',
-        price: 69,
-        quantity: 1
-      })
-      total += 69
-    } else if (processing === 'express') {
-      lineItems.push({
-        productId: STRIPE_PRODUCTS.processing_express,
-        name: '2 Business Days Processing',
-        price: 109,
-        quantity: 1
-      })
-      total += 109
-    } else if (processing === 'same_day') {
-      lineItems.push({
-        productId: STRIPE_PRODUCTS.processing_same_day,
-        name: 'Same-Day/Next-Day Processing',
-        price: 169,
-        quantity: 1
-      })
-      total += 169
-    }
-  }
-
+  // NOTE: Processing costs are combined with shipping below
   // Add combined processing & shipping cost
   if (formData.shippingCategory && formData.processingOption) {
     const category = formData.shippingCategory
     const speed = formData.processingOption
-    let combinedPrice = 0
-    let combinedName = ''
-
-    // Calculate combined price based on category and speed
-    if (category === 'domestic') {
-      if (speed === 'standard') {
-        combinedPrice = 58
-        combinedName = 'Standard Processing & Shipping'
-      } else if (speed === 'fast') {
-        combinedPrice = 108
-        combinedName = 'Fast Processing & Shipping'
-      } else if (speed === 'fastest') {
-        combinedPrice = 168
-        combinedName = 'Fastest Processing & Shipping'
-      }
-    } else if (category === 'international') {
-      if (speed === 'standard') {
-        combinedPrice = 98
-        combinedName = 'Standard Processing & Shipping'
-      } else if (speed === 'fast') {
-        combinedPrice = 148
-        combinedName = 'Fast Processing & Shipping'
-      } else if (speed === 'fastest') {
-        combinedPrice = 198
-        combinedName = 'Fastest Processing & Shipping'
-      }
-    } else if (category === 'military') {
-      if (speed === 'standard') {
-        combinedPrice = 49
-        combinedName = 'Standard Processing & Shipping'
-      } else if (speed === 'fast') {
-        combinedPrice = 89
-        combinedName = 'Fast Processing & Shipping'
-      } else if (speed === 'fastest') {
-        combinedPrice = 119
-        combinedName = 'Fastest Processing & Shipping'
-      }
-    }
+    const combinedPrice = getCombinedPrice(category, speed)
+    const combinedName = getSpeedDisplayName(speed)
     
     if (combinedPrice > 0) {
       lineItems.push({
