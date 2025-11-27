@@ -2766,31 +2766,9 @@ export default function MultistepForm() {
                 return
             }
 
-            try {
-                // Manually trigger webhook for Make automation
-                console.log("Triggering webhook for payment:", paymentIntentId)
-                
-                await fetch("https://easypost-api.vercel.app/api/webhook", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        type: "payment_intent.succeeded",
-                        data: {
-                            object: {
-                                id: paymentIntentId,
-                                metadata: {
-                                    applicationId: paymentState.applicationId
-                                }
-                            }
-                        }
-                    }),
-                })
-                
-                console.log("Webhook triggered successfully")
-            } catch (error) {
-                console.error("Error triggering webhook:", error)
-            }
-
+            // Stripe will automatically trigger the webhook when payment succeeds
+            // No need for manual webhook call - it causes duplicates
+            
             setPaymentState((prev) => ({
                 ...prev,
                 paymentIntentId,
