@@ -111,19 +111,7 @@ This project maintains comprehensive documentation across multiple files:
 - Prioritizing technical debt
 - Preparing for scale
 
-### 📕 PROTOCOL.md
-**Purpose:** Development workflow and AI guidelines  
-**Audience:** All developers, AI assistants  
-**Contents:**
-- Code review procedures
-- Commit message format
-- Development workflow rules
-- AI assistant guidelines
 
-**Use this when:**
-- Starting new work
-- Reviewing pull requests
-- Following team standards
 
 ---
 
@@ -340,62 +328,47 @@ See **SYSTEM_DOCUMENTATION.md** section "Common Issues & Solutions" for detailed
 
 ---
 
-## Project Handoff Guide
+## Developer Reference
 
-### For New Developers
+### Getting Started
 
-Welcome to the FastIDP project. Follow this onboarding sequence:
+**Clone and Setup:**
+```bash
+git clone https://github.com/Gabe-W88/easypost-api.git
+cd FastIDP
+npm install
+cp .env.example .env
+# Add your credentials to .env
+vercel dev
+```
 
-#### Day 1: Understanding
-1. **Read this README** - Get high-level overview
-2. **Review TECHNICAL_REFERENCE.md** - Understand architecture and data flow
-3. **Study AUDIT_FINDINGS.md** - Know system health and technical debt
-4. **Explore codebase** - Familiarize yourself with file structure
+**Test the System:**
+- Submit form with test data
+- Upload sample files
+- Complete payment with test card `4242 4242 4242 4242`
+- Verify webhook triggers and Make.com receives payload
 
-#### Day 2: Environment Setup
-1. **Clone repository**
-   ```bash
-   git clone https://github.com/Gabe-W88/easypost-api.git
-   cd FastIDP
-   npm install
-   ```
+### Critical System Rules
 
-2. **Configure environment variables**
-   - Copy `.env.example` to `.env`
-   - Request credentials from project lead
-   - Test connection to Supabase and Stripe
+**Application ID Flow:**
+- Frontend generates ID: `APP-${timestamp}-${random}` (`apply.jsx:2613`)
+- Backend extracts and uses frontend's ID (`api/save-application.js:317`)
+- Never regenerate applicationId in backend
 
-3. **Run locally**
-   ```bash
-   vercel dev
-   ```
+**File Upload Flow:**
+- Files upload directly to Supabase Storage from browser
+- Backend receives only metadata (URLs, not base64)
+- Bypasses Vercel 4.5MB payload limit
 
-4. **Test end-to-end flow**
-   - Submit form with test data
-   - Upload sample files
-   - Complete payment with test card `4242 4242 4242 4242`
-   - Verify webhook triggers
+**Payment & Webhook Flow:**
+- Stripe automatically triggers webhooks on payment events
+- Never manually trigger webhooks from frontend
+- ApplicationId must be in Stripe metadata for webhook to find record
 
-#### Day 3: First Changes
-1. **Make a small change** (e.g., update text or styling)
-2. **Test locally** to ensure no breakage
-3. **Create pull request** following commit message format
-4. **Deploy to preview** and verify
-
-### Critical Onboarding Knowledge
-
-**Must Know:**
-- Application ID generated in frontend (`apply.jsx:2613`)
-- Backend MUST use frontend's ID (`api/save-application.js:317`)
-- Files upload directly to Supabase (not through API)
-- Stripe automatically triggers webhooks (no manual calls)
-- All pricing comes from `config/pricing.js`
-
-**Never Do:**
-- Generate new applicationId in backend
-- Manually trigger webhooks from frontend
-- Hardcode prices outside pricing config
-- Change Make.com webhook URL without code update
+**Pricing Management:**
+- All pricing in `config/pricing.js` (single source of truth)
+- Never hardcode prices in application code
+- Import helper functions for calculations
 
 ### Quick Reference
 
@@ -435,39 +408,47 @@ Welcome to the FastIDP project. Follow this onboarding sequence:
 | **AUDIT_FINDINGS.md** | Security audit, code quality | Understanding system health, planning improvements |
 | **PROTOCOL.md** | Development workflow, AI guidelines | Day-to-day development, code reviews |
 
-### Common First Tasks
+### Common Development Tasks
 
 **Add New Form Field:**
-1. Add to `apply.jsx` form state
+1. Add field to `apply.jsx` form state
 2. Update `formData` object in submit handler
-3. Modify database schema if needed (Supabase dashboard)
-4. Update `config/pricing.js` if price-related
-5. Test complete flow
+3. Modify database schema in Supabase if needed
+4. Update `config/pricing.js` if affects pricing
+5. Test complete flow: form → save → payment → webhook
 
 **Modify Pricing:**
 1. Edit `config/pricing.js` only
-2. Update relevant objects (PERMIT_PRICES, COMBINED_PRICING, etc.)
-3. No other files need changes
-4. Test payment amount calculation
+2. Update PERMIT_PRICES, COMBINED_PRICING, or helper functions
+3. No other file changes needed
+4. Test payment calculations end-to-end
 
 **Change Webhook Payload:**
-1. Modify `api/webhook.js` automationData object (line ~420)
+1. Modify `api/webhook.js` automationData object (~line 420)
 2. Update Make.com scenario to handle new fields
 3. Test webhook delivery
 
-### Troubleshooting Resources
+**Add New API Endpoint:**
+1. Create file in `/api/` directory
+2. Set CORS headers for production domain
+3. Add error handling with try-catch
+4. Test locally with `vercel dev`
+5. Deploy and monitor Vercel logs
+
+### Troubleshooting
 
 **Common Issues:**
-- "Application not found" → See TECHNICAL_REFERENCE.md § Troubleshooting
-- File upload fails → Check Supabase RLS policies
+- "Application not found" (PGRST116) → ApplicationId mismatch, check TECHNICAL_REFERENCE.md
+- File upload fails → Check Supabase RLS policies and CORS
 - Webhook not triggering → Verify Stripe webhook configuration
-- CORS errors → Check API CORS headers
+- CORS errors → Ensure all API files set correct origin headers
+- Payment amount wrong → Verify pricing.js imports
 
-**Where to Get Help:**
-1. Search TECHNICAL_REFERENCE.md troubleshooting section
-2. Check Vercel function logs
-3. Review Stripe webhook logs
-4. Contact project lead
+**Debugging Resources:**
+1. Vercel function logs (real-time errors)
+2. Stripe webhook logs (delivery status)
+3. Supabase logs (database queries)
+4. TECHNICAL_REFERENCE.md troubleshooting section
 
 ### Project Information
 
