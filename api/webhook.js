@@ -174,11 +174,16 @@ async function handlePaymentSucceeded(paymentIntentData) {
   
   // If this is a simplified object from frontend, fetch the full PaymentIntent
   let paymentIntent = paymentIntentData
+  console.log('=== PAYMENT INTENT DEBUG ===')
+  console.log('Initial paymentIntentData:', JSON.stringify(paymentIntentData, null, 2))
+  
   if (!paymentIntent.amount || !paymentIntent.payment_method) {
+    console.log('Fetching full PaymentIntent from Stripe...')
     try {
       paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentData.id, {
         expand: ['payment_method']
       })
+      console.log('Retrieved PaymentIntent metadata:', JSON.stringify(paymentIntent.metadata, null, 2))
     } catch (error) {
       console.error('Failed to retrieve PaymentIntent:', error)
       return
@@ -186,6 +191,8 @@ async function handlePaymentSucceeded(paymentIntentData) {
   }
   
   const applicationId = paymentIntent.metadata?.applicationId || paymentIntent.metadata?.application_id
+  console.log('Extracted applicationId:', applicationId)
+  console.log('=== END PAYMENT INTENT DEBUG ===')
   
   if (!applicationId) {
     console.error('No application ID in payment intent metadata')
