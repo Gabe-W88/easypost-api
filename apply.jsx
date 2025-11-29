@@ -87,7 +87,7 @@ const FormField = ({
                 {required && <span className="required-asterisk"> *</span>}
                 {tooltip && (
                     <Tooltip content={tooltip}>
-                        <span className="info-icon">ⓘ</span>
+                        <span className="info-icon">i</span>
                     </Tooltip>
                 )}
             </span>
@@ -145,7 +145,7 @@ const TextareaField = ({
                 {required && <span className="required-asterisk"> *</span>}
                 {tooltip && (
                     <Tooltip content={tooltip}>
-                        <span className="info-icon">ⓘ</span>
+                        <span className="info-icon">i</span>
                     </Tooltip>
                 )}
             </span>
@@ -406,7 +406,7 @@ const SignatureField = ({
                 {required && <span className="required-asterisk"> *</span>}
                 {tooltip && (
                     <Tooltip content={tooltip}>
-                        <span className="tooltip-icon">ⓘ</span>
+                        <span className="tooltip-icon">i</span>
                     </Tooltip>
                 )}
             </label>
@@ -3291,7 +3291,7 @@ export default function MultistepForm() {
                                         <Tooltip
                                             content={`Most people will select "Passenger Car" which is equivalent to a standard Class D license in most states.\n\nNote: Motorcycle license/endorsement must be indicated on your US driver's license for AAA to issue a motorcycle endorsement on your IDP.`}
                                         >
-                                            <span className="info-icon">ⓘ</span>
+                                            <span className="info-icon">i</span>
                                         </Tooltip>
                                     </span>
                                 </label>
@@ -3379,7 +3379,7 @@ export default function MultistepForm() {
                                             </span>
                                             <Tooltip content="If you were born within the United States, list your birth state. If you were born outside the United States, list your birth country.">
                                                 <span className="info-icon">
-                                                    ⓘ
+                                                    i
                                                 </span>
                                             </Tooltip>
                                         </span>
@@ -3463,7 +3463,7 @@ export default function MultistepForm() {
                                             *
                                         </span>
                                         <Tooltip content="Most people should only select International Driving Permit (first option).\n\nBrazil and Uruguay do not recognize IDPs. Instead, they recognize the Inter-American Driving Permit (IADP). If you plan on driving in Brazil / Uruguay AND additional countries, select both permits. AAA charges $20 for each permit (i.e., $40 if both are selected).">
-                                            <span className="info-icon">ⓘ</span>
+                                            <span className="info-icon">i</span>
                                         </Tooltip>
                                     </span>
                                 </label>
