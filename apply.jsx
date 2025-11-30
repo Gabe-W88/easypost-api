@@ -5143,13 +5143,14 @@ export default function MultistepForm() {
             
             .info-icon {
                 display: inline-block;
-                width: 16px;
-                height: 16px;
+                width: 20px;
+                height: 20px;
                 cursor: help;
                 user-select: none;
                 margin-left: 6px;
                 vertical-align: middle;
                 line-height: 1;
+                overflow: visible;
             }
             
             .info-icon svg {
@@ -5160,13 +5161,14 @@ export default function MultistepForm() {
             
             .tooltip-icon {
                 display: inline-block;
-                width: 16px;
-                height: 16px;
+                width: 20px;
+                height: 20px;
                 cursor: help;
                 user-select: none;
                 margin-left: 12px;
                 vertical-align: middle;
                 line-height: 1;
+                overflow: visible;
             }
             
             .tooltip-icon svg {
