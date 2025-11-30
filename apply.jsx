@@ -3636,15 +3636,6 @@ export default function MultistepForm() {
                                     {/* Show uploaded files inside the upload area */}
                                     {uploadedFiles[type].length > 0 && (
                                         <div className="files-preview-embedded">
-                                            <div className="files-header">
-                                                {uploadedFiles[type].length}{" "}
-                                                file
-                                                {uploadedFiles[type].length !==
-                                                1
-                                                    ? "s"
-                                                    : ""}{" "}
-                                                ready to upload
-                                            </div>
                                             <div className="files-grid-embedded">
                                                 {uploadedFiles[type].map(
                                                     (file, fileIndex) => (
