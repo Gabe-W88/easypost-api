@@ -3630,10 +3630,6 @@ export default function MultistepForm() {
                                                 Click to upload or drag files
                                                 here
                                             </strong>
-                                            <span>
-                                                Supports multiple files (images
-                                                & PDFs)
-                                            </span>
                                         </div>
                                     </div>
 
