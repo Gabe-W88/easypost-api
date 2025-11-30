@@ -3762,8 +3762,6 @@ export default function MultistepForm() {
                                     marginTop: "8px",
                                 }}
                             >
-                                The total cost includes the fee shown below,
-                                plus tax and a $20 IDP booklet fee paid to AAA.
                             </p>
                         </h2>
 
