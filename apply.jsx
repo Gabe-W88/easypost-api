@@ -6119,7 +6119,7 @@ export default function MultistepForm() {
             /* Buttons */
             .button-row {
                 display: flex;
-                justify-content: space-between;
+                justify-content: flex-end;
                 gap: 16px;
                 margin-top: 32px;
                 padding-top: 24px;
