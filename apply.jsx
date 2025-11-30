@@ -3856,10 +3856,12 @@ export default function MultistepForm() {
                                     How fast do you need your IDP?{" "}
                                     <span className="required-asterisk">*</span>
                                 </label>
-                                <div className="subtitle-note">
-                                    Delivery times to US Territories may be
-                                    longer
-                                </div>
+                                {formData.shippingCategory === "domestic" && (
+                                    <div className="subtitle-note">
+                                        Delivery times to US Territories may be
+                                        longer
+                                    </div>
+                                )}
                                 <div className="selectable-box-group">
                                     {(() => {
                                         const getProcessingOptions = () => {
