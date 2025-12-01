@@ -3694,11 +3694,134 @@ export default function MultistepForm() {
                 return (
                     <div>
                         <h2 className="section-title">Document Upload</h2>
+                        
+                        {/* Driver's License Uploads */}
+                        <div className="driver-license-uploads">
+                            {[
+                                {
+                                    label: "Driver's License (Front)",
+                                    type: "driversLicenseFront",
+                                },
+                                {
+                                    label: "Driver's License (Back)",
+                                    type: "driversLicenseBack",
+                                },
+                            ].map(({ label, type }, index) => (
+                                <div className="file-upload-section license-upload" key={index}>
+                                    <h3 className="upload-section-title">
+                                        {label}
+                                    </h3>
+
+                                    <div
+                                        className={`upload-box-redesigned ${uploadedFiles[type]?.length > 0 ? "has-files" : ""}`}
+                                        onDragOver={handleDragOver}
+                                        onDrop={(e) => handleDrop(e, type)}
+                                        onClick={() =>
+                                            document
+                                                .getElementById(
+                                                    `file-input-${type}`
+                                                )
+                                                .click()
+                                        }
+                                    >
+                                        <div className="upload-header">
+                                            <div className="upload-icon-redesigned">
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="#6b7280"
+                                                >
+                                                    <path d="M12 12C14.21 12 16 10.21 16 8S14.21 4 12 4 8 5.79 8 8 9.79 12 12 12M12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" />
+                                                </svg>
+                                            </div>
+                                            <div className="upload-text-redesigned">
+                                                <strong>
+                                                    Click to upload or drag files
+                                                    here
+                                                </strong>
+                                            </div>
+                                        </div>
+
+                                        {/* Show uploaded files inside the upload area */}
+                                        {uploadedFiles[type]?.length > 0 && (
+                                            <div className="files-preview-embedded">
+                                                <div className="files-grid-embedded">
+                                                    {uploadedFiles[type].map(
+                                                        (file, fileIndex) => (
+                                                            <div
+                                                                key={fileIndex}
+                                                                className="file-chip"
+                                                            >
+                                                                {file.type.startsWith(
+                                                                    "image/"
+                                                                ) ? (
+                                                                    <img
+                                                                        src={URL.createObjectURL(
+                                                                            file
+                                                                        )}
+                                                                        alt={`Preview ${fileIndex + 1}`}
+                                                                        className="file-chip-thumb"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="file-chip-thumb pdf-icon">
+                                                                        📄
+                                                                    </div>
+                                                                )}
+                                                                <span className="file-chip-name">
+                                                                    {file.name
+                                                                        .length > 15
+                                                                        ? file.name.substring(
+                                                                              0,
+                                                                              15
+                                                                          ) + "..."
+                                                                        : file.name}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(
+                                                                        e
+                                                                    ) => {
+                                                                        e.stopPropagation()
+                                                                        removeFile(
+                                                                            type,
+                                                                            fileIndex
+                                                                        )
+                                                                    }}
+                                                                    className="file-chip-remove"
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <input
+                                            id={`file-input-${type}`}
+                                            type="file"
+                                            className="upload-input"
+                                            multiple
+                                            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/heic,image/heif,application/pdf"
+                                            onChange={(e) =>
+                                                handleFileUpload(
+                                                    e.target.files,
+                                                    type
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    {fieldErrors[type] && (
+                                        <span className="error-message">{fieldErrors[type]}</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Passport Photo Upload */}
                         {[
-                            {
-                                label: "Upload Photo of Front of Driver’s License",
-                                type: "driversLicense",
-                            },
                             {
                                 label: "Upload Passport-Style Photo (See Guidelines Below)",
                                 type: "passportPhoto",
@@ -3710,7 +3833,7 @@ export default function MultistepForm() {
                                 </h3>
 
                                 <div
-                                    className={`upload-box-redesigned ${uploadedFiles[type].length > 0 ? "has-files" : ""}`}
+                                    className={`upload-box-redesigned ${uploadedFiles[type]?.length > 0 ? "has-files" : ""}`}
                                     onDragOver={handleDragOver}
                                     onDrop={(e) => handleDrop(e, type)}
                                     onClick={() =>
@@ -3741,7 +3864,7 @@ export default function MultistepForm() {
                                     </div>
 
                                     {/* Show uploaded files inside the upload area */}
-                                    {uploadedFiles[type].length > 0 && (
+                                    {uploadedFiles[type]?.length > 0 && (
                                         <div className="files-preview-embedded">
                                             <div className="files-grid-embedded">
                                                 {uploadedFiles[type].map(
@@ -3810,6 +3933,9 @@ export default function MultistepForm() {
                                         }
                                     />
                                 </div>
+                                {fieldErrors[type] && (
+                                    <span className="error-message">{fieldErrors[type]}</span>
+                                )}
                             </div>
                         ))}
 
@@ -5663,6 +5789,25 @@ export default function MultistepForm() {
             /* Upload Styles */
             .file-upload-section {
                 margin-bottom: 32px;
+            }
+            
+            /* Driver's License Side-by-Side Layout */
+            .driver-license-uploads {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+                margin-bottom: 32px;
+            }
+            
+            @media (max-width: 768px) {
+                .driver-license-uploads {
+                    grid-template-columns: 1fr;
+                    gap: 24px;
+                }
+            }
+            
+            .license-upload {
+                margin-bottom: 0;
             }
             
             /* Redesigned Upload Structure */
