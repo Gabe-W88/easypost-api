@@ -5067,6 +5067,65 @@ export default function MultistepForm() {
             </div>
 
             <style>{`
+            /* ================================
+               DESIGN SYSTEM TOKENS
+               Added: December 1, 2025
+               Purpose: Systematic spacing & typography
+               ================================ */
+            
+            :root {
+                /* Spacing Scale (4px base, 8px grid) */
+                --space-0: 0;
+                --space-1: 4px;
+                --space-2: 8px;
+                --space-3: 12px;
+                --space-4: 16px;
+                --space-5: 20px;
+                --space-6: 24px;
+                --space-8: 32px;
+                --space-10: 40px;
+                --space-12: 48px;
+                --space-16: 64px;
+                
+                /* Typography Scale */
+                --text-xs: 12px;
+                --text-sm: 14px;
+                --text-base: 16px;
+                --text-lg: 18px;
+                --text-xl: 20px;
+                --text-2xl: 24px;
+                --text-3xl: 28px;
+                --text-4xl: 32px;
+                
+                /* Line Heights */
+                --leading-none: 1;
+                --leading-tight: 1.25;
+                --leading-snug: 1.375;
+                --leading-normal: 1.5;
+                --leading-relaxed: 1.625;
+                --leading-loose: 2;
+                
+                /* Font Weights */
+                --font-normal: 400;
+                --font-medium: 500;
+                --font-semibold: 600;
+                --font-bold: 700;
+                --font-extrabold: 800;
+                
+                /* Border Radius */
+                --radius-none: 0;
+                --radius-sm: 4px;
+                --radius-base: 8px;
+                --radius-md: 12px;
+                --radius-lg: 16px;
+                --radius-xl: 24px;
+                --radius-full: 9999px;
+            }
+            
+            /* ================================
+               BASE STYLES
+               ================================ */
+            
             * {
                 box-sizing: border-box;
                 -webkit-font-smoothing: antialiased;
