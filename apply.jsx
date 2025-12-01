@@ -4371,9 +4371,9 @@ export default function MultistepForm() {
                                                 )
                                             }
                                             onBlur={handleBlur}
-                                            className={getFieldClass(
+                                            className={`form-input ${getFieldClass(
                                                 "internationalFullAddress"
-                                            )}
+                                            )}`}
                                             rows="3"
                                             required
                                         />
@@ -4729,9 +4729,9 @@ export default function MultistepForm() {
                                                             )
                                                         }}
                                                         onBlur={handleBlur}
-                                                        className={getFieldClass(
+                                                        className={`form-select ${getFieldClass(
                                                             "shippingCountry"
-                                                        )}
+                                                        )}`}
                                                         required
                                                     >
                                                         <option value="">
