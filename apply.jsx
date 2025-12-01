@@ -1943,6 +1943,28 @@ export default function MultistepForm() {
                             suggestion.street1
                         )
 
+                        // OPTION 4: Detect if only difference is apartment removal
+                        const apartmentPattern = /\b(apt|apartment|unit|ste|suite|#|bldg|building|floor|fl)\b/i
+                        const originalHadApartment = apartmentPattern.test(addressData.streetAddress)
+                        
+                        // Remove apartment notation from original for comparison
+                        const originalWithoutApt = addressData.streetAddress
+                            .replace(/\b(apt|apartment|unit|ste|suite|#|bldg|building|floor|fl)[.\s]*[a-z0-9\-]+\b/gi, '')
+                            .replace(/\s+/g, ' ')
+                            .trim()
+                        
+                        const normalizedOriginalWithoutApt = normalizeForComparison(originalWithoutApt)
+                        
+                        // If user had apartment and suggestion matches base address, don't show correction
+                        const onlyApartmentDifference = 
+                            originalHadApartment && 
+                            normalizedOriginalWithoutApt === suggestedStreet
+                        
+                        if (onlyApartmentDifference) {
+                            // EasyPost only removed apartment notation - not a significant change
+                            return false
+                        }
+
                         // Check for ZIP code differences (these are always significant)
                         const originalZip = addressData.zipCode.trim()
                         const suggestedZip = suggestion.zip.split("-")[0] // Compare base ZIP only
@@ -2113,16 +2135,37 @@ export default function MultistepForm() {
 
             // Check if there are significant differences between input and EasyPost's response
             const hasSignificantChanges =
-                result.suggestions?.some(
-                    (suggestion) =>
-                        suggestion.street1?.toLowerCase() !==
-                            shippingData.streetAddress?.toLowerCase() ||
-                        suggestion.city?.toLowerCase() !==
-                            shippingData.city?.toLowerCase() ||
-                        suggestion.state?.toLowerCase() !==
-                            shippingData.state?.toLowerCase() ||
+                result.suggestions?.some((suggestion) => {
+                    // OPTION 4: Detect if only difference is apartment removal
+                    const apartmentPattern = /\b(apt|apartment|unit|ste|suite|#|bldg|building|floor|fl)\b/i
+                    const originalHadApartment = apartmentPattern.test(shippingData.streetAddress)
+                    
+                    // Remove apartment notation from original for comparison
+                    const originalWithoutApt = shippingData.streetAddress
+                        .replace(/\b(apt|apartment|unit|ste|suite|#|bldg|building|floor|fl)[.\s]*[a-z0-9\-]+\b/gi, '')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .toLowerCase()
+                    
+                    const suggestedStreet = suggestion.street1?.toLowerCase()
+                    
+                    // If user had apartment and suggestion matches base address, don't show correction
+                    const onlyApartmentDifference = 
+                        originalHadApartment && 
+                        originalWithoutApt === suggestedStreet
+                    
+                    if (onlyApartmentDifference) {
+                        return false
+                    }
+                    
+                    // Check for real differences
+                    return (
+                        suggestion.street1?.toLowerCase() !== shippingData.streetAddress?.toLowerCase() ||
+                        suggestion.city?.toLowerCase() !== shippingData.city?.toLowerCase() ||
+                        suggestion.state?.toLowerCase() !== shippingData.state?.toLowerCase() ||
                         suggestion.zip !== shippingData.zipCode
-                ) || false
+                    )
+                }) || false
 
             const isValid = isDeliverable && !hasSignificantChanges
             const needsCorrection = isDeliverable && hasSignificantChanges
@@ -2192,6 +2235,31 @@ export default function MultistepForm() {
         }
     }, [validateShippingAddress, formData.shippingCategory])
 
+    // Helper function to parse apartment/unit numbers from address
+    const parseApartmentFromAddress = useCallback((address) => {
+        if (!address || typeof address !== 'string') return { street: address || '', apartment: '' }
+        
+        // Common apartment patterns (middle ground - require keywords)
+        const patterns = [
+            { regex: /\b(apt|apartment)\s*\.?\s*([a-z0-9\-]+)\b/i, prefix: 'Apt' },
+            { regex: /\b(unit|ste|suite)\s*\.?\s*([a-z0-9\-]+)\b/i, prefix: 'Unit' },
+            { regex: /#\s*([a-z0-9\-]+)\b/i, prefix: '#' },
+            { regex: /\b(bldg|building)\s*\.?\s*([a-z0-9\-]+)\b/i, prefix: 'Bldg' },
+            { regex: /\b(floor|fl)\s*\.?\s*([a-z0-9\-]+)\b/i, prefix: 'Floor' },
+        ]
+        
+        for (const pattern of patterns) {
+            const match = address.match(pattern.regex)
+            if (match) {
+                const apartmentPart = match[0].trim()
+                const street = address.replace(match[0], '').replace(/\s+/g, ' ').trim()
+                return { street, apartment: apartmentPart }
+            }
+        }
+        
+        return { street: address, apartment: '' }
+    }, [])
+
     // Handle form field changes
     const handleFieldChange = useCallback(
         (name, value, event) => {
@@ -2220,6 +2288,40 @@ export default function MultistepForm() {
                     return newFormData
                 })
             } else {
+                // Parse apartment from streetAddress or shippingStreetAddress
+                if (name === "streetAddress" || name === "shippingStreetAddress") {
+                    const parsed = parseApartmentFromAddress(value)
+                    
+                    if (parsed.apartment) {
+                        // Apartment detected - split silently
+                        const aptFieldName = name === "streetAddress" ? "streetAddress2" : "shippingStreetAddress2"
+                        
+                        setFormData((prev) => {
+                            // Combine with existing apartment field if present
+                            const existingApt = prev[aptFieldName]?.trim() || ''
+                            const combinedApt = existingApt 
+                                ? `${existingApt} ${parsed.apartment}`.trim()
+                                : parsed.apartment
+                            
+                            const newFormData = {
+                                ...prev,
+                                [name]: parsed.street,
+                                [aptFieldName]: combinedApt,
+                            }
+                            
+                            // Validate the street field (without apartment)
+                            const error = validateField(name, parsed.street, newFormData)
+                            setFieldErrors((prevErrors) => ({
+                                ...prevErrors,
+                                [name]: error,
+                            }))
+                            
+                            return newFormData
+                        })
+                        return // Exit early, already handled
+                    }
+                }
+                
                 // Handle regular fields
                 setFormData((prev) => {
                     const newFormData = { ...prev, [name]: value }
