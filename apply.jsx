@@ -2945,7 +2945,7 @@ export default function MultistepForm() {
                                     label="Phone Number"
                                     name="phone"
                                     type="tel"
-                                    placeholder="Enter your phone number with country code (e.g., +1 555-123-4567)"
+                                    placeholder="Country Code & Phone Number"
                                     required
                                     value={formData.phone}
                                     onChange={handleFieldChange}
@@ -3596,6 +3596,7 @@ export default function MultistepForm() {
                                 )}
                             </div>
 
+                            <div className="form-field full-width">
                             <FormField
                                 label="Permit Effective Date"
                                 name="permitEffectiveDate"
@@ -3612,6 +3613,7 @@ export default function MultistepForm() {
                                 error={fieldErrors.permitEffectiveDate}
                                 touched={touched.permitEffectiveDate}
                             />
+                            </div>
 
                             <SignatureField
                                 label="Digital Signature"
@@ -5239,7 +5241,7 @@ export default function MultistepForm() {
             .form-subtitle {
                 font-size: var(--text-lg);
                 font-weight: var(--font-semibold);
-                margin-bottom: var(--space-6);
+                margin-bottom: var(--space-4);
                 color: #374151;
             }
             
@@ -5250,7 +5252,7 @@ export default function MultistepForm() {
             .form-subtext {
                 font-size: var(--text-sm);
                 color: #6b7280;
-                margin-bottom: var(--space-6);
+                margin-bottom: var(--space-5);
                 font-style: italic;
             }
             
@@ -5258,7 +5260,7 @@ export default function MultistepForm() {
             .form-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: var(--space-5) var(--space-4);
+                gap: var(--space-4);
                 margin-bottom: var(--space-8);
             }
             
@@ -5276,7 +5278,6 @@ export default function MultistepForm() {
             
             .signature-field {
                 grid-column: span 2;
-                margin-top: var(--space-5);
             }
             
             .signature-container {
@@ -5349,21 +5350,21 @@ export default function MultistepForm() {
             .name-row {
                 display: grid;
                 grid-template-columns: 1fr 1fr 1fr;
-                gap: var(--space-6);
+                gap: var(--space-4);
                 grid-column: span 2;
             }
             
             .state-zip-row {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: var(--space-6);
+                gap: var(--space-4);
                 grid-column: span 2;
             }
             
             .city-state-zip-row {
                 display: grid;
                 grid-template-columns: 2fr 1fr 1fr;
-                gap: 24px;
+                gap: var(--space-4);
                 grid-column: span 2;
             }
             
@@ -5371,13 +5372,13 @@ export default function MultistepForm() {
                 font-size: 1.25rem;
                 font-weight: 600;
                 color: #1a1a1a;
-                margin-bottom: 0.5rem;
+                margin-bottom: var(--space-2);
             }
             
             .form-subtext {
                 color: #666;
                 font-size: 0.875rem;
-                margin-bottom: 1.5rem;
+                margin-bottom: var(--space-6);
             }
             
             /* Form Fields */
@@ -6396,7 +6397,7 @@ export default function MultistepForm() {
             /* Buttons */
             .button-row {
                 display: flex;
-                justify-content: flex-end;
+                justify-content: space-between;
                 gap: var(--space-4);
                 margin-top: var(--space-8);
                 padding-top: var(--space-6);
@@ -6484,12 +6485,16 @@ export default function MultistepForm() {
             .form-field {
                 display: flex;
                 flex-direction: column;
-                margin-bottom: 0; /* Remove margin, let error space handle it */
+                margin-bottom: var(--space-4);
+            }
+            
+            .form-field.full-width {
+                width: 100%;
             }
             
             .error-space {
-                height: 12px; /* Fixed height - always takes same space */
-                margin-top: 4px;
+                min-height: 0;
+                margin-top: var(--space-1);
                 display: flex;
                 align-items: flex-start;
             }
