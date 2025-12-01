@@ -2439,7 +2439,7 @@ export default function MultistepForm() {
                 const newFormData = {
                     ...prev,
                     streetAddress: suggestion.street1,
-                    streetAddress2: suggestion.street2 || "", // Use what EasyPost provides
+                    streetAddress2: prev.streetAddress2 || suggestion.street2 || "", // PRESERVE user's apartment
                     city: suggestion.city,
                     state: suggestion.state,
                     zipCode: suggestion.zip,
@@ -2464,7 +2464,7 @@ export default function MultistepForm() {
         setFormData((prev) => ({
             ...prev,
             shippingStreetAddress: suggestion.street1,
-            shippingStreetAddress2: suggestion.street2 || "",
+            shippingStreetAddress2: prev.shippingStreetAddress2 || suggestion.street2 || "", // PRESERVE user's apartment
             shippingCity: suggestion.city,
             shippingState: suggestion.state,
             shippingPostalCode: suggestion.zip,
