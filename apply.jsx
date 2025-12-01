@@ -2573,9 +2573,13 @@ export default function MultistepForm() {
 
             // Check file uploads for step 2
             if (stepNumber === 2) {
-                if (uploadedFiles.driversLicense.length === 0) {
-                    errors.driversLicense =
-                        "Please upload at least one driver's license image"
+                if (uploadedFiles.driversLicenseFront.length === 0) {
+                    errors.driversLicenseFront =
+                        "Please upload at least one photo of the front of your driver's license"
+                }
+                if (uploadedFiles.driversLicenseBack.length === 0) {
+                    errors.driversLicenseBack =
+                        "Please upload at least one photo of the back of your driver's license"
                 }
                 if (uploadedFiles.passportPhoto.length === 0) {
                     errors.passportPhoto =
@@ -2747,8 +2751,13 @@ export default function MultistepForm() {
                 }
             }
 
+            // Combine front and back license photos into one array for upload
+            const allLicensePhotos = [
+                ...uploadedFiles.driversLicenseFront,
+                ...uploadedFiles.driversLicenseBack
+            ]
             const driversLicenseUploads = await Promise.all(
-                uploadedFiles.driversLicense.map((file, index) =>
+                allLicensePhotos.map((file, index) =>
                     uploadFileToSupabase(file, "driversLicense", index)
                 )
             )
