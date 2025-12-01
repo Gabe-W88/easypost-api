@@ -5212,15 +5212,15 @@ export default function MultistepForm() {
             /* Form Container */
             .form-container {
                 background: #ffffff;
-                padding: 32px;
-                border-radius: 16px;
+                padding: var(--space-8);
+                border-radius: var(--radius-lg);
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
                 border: 1px solid #f3f4f6;
             }
             
             /* Form Sections */
             .form-section {
-                margin-bottom: 32px;
+                margin-bottom: var(--space-8);
             }
             
             .form-section:last-child {
@@ -5228,29 +5228,29 @@ export default function MultistepForm() {
             }
             
             .section-title {
-                font-size: 24px;
-                font-weight: 700;
-                margin-bottom: 32px;
+                font-size: var(--text-2xl);
+                font-weight: var(--font-bold);
+                margin-bottom: var(--space-8);
                 color: #111827;
                 border-bottom: 2px solid #f3f4f6;
-                padding-bottom: 16px;
+                padding-bottom: var(--space-4);
             }
             
             .form-subtitle {
-                font-size: 18px;
-                font-weight: 600;
-                margin-bottom: 24px;
+                font-size: var(--text-lg);
+                font-weight: var(--font-semibold);
+                margin-bottom: var(--space-6);
                 color: #374151;
             }
             
             .form-subtitle.no-subtext {
-                margin-bottom: 20px;
+                margin-bottom: var(--space-5);
             }
             
             .form-subtext {
-                font-size: 14px;
+                font-size: var(--text-sm);
                 color: #6b7280;
-                margin-bottom: 24px;
+                margin-bottom: var(--space-6);
                 font-style: italic;
             }
             
@@ -5258,8 +5258,8 @@ export default function MultistepForm() {
             .form-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 20px 16px; /* vertical gap 20px, horizontal gap 16px */
-                margin-bottom: 32px;
+                gap: var(--space-5) var(--space-4);
+                margin-bottom: var(--space-8);
             }
             
             .form-group {
@@ -5276,7 +5276,7 @@ export default function MultistepForm() {
             
             .signature-field {
                 grid-column: span 2;
-                margin-top: 20px;
+                margin-top: var(--space-5);
             }
             
             .signature-container {
@@ -5382,9 +5382,9 @@ export default function MultistepForm() {
             
             /* Form Fields */
             .form-label {
-                font-size: 14px;
-                font-weight: 500;
-                margin-bottom: 8px;
+                font-size: var(--text-sm);
+                font-weight: var(--font-medium);
+                margin-bottom: var(--space-2);
                 color: #374151;
             }
             
@@ -5397,7 +5397,7 @@ export default function MultistepForm() {
             .label-with-tooltip {
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
+                gap: var(--space-2);
                 cursor: help;
             }
             
@@ -5405,16 +5405,16 @@ export default function MultistepForm() {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                width: 16px;
-                height: 16px;
+                width: var(--space-4);
+                height: var(--space-4);
                 background: #02569D;
                 color: white;
-                border-radius: 50%;
+                border-radius: var(--radius-full);
                 cursor: help;
                 user-select: none;
-                margin-left: 6px;
-                font-size: 11px;
-                font-weight: bold;
+                margin-left: var(--space-2);
+                font-size: var(--text-xs);
+                font-weight: var(--font-bold);
                 font-family: Arial, sans-serif;
                 vertical-align: middle;
             }
@@ -5423,16 +5423,16 @@ export default function MultistepForm() {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                width: 16px;
-                height: 16px;
+                width: var(--space-4);
+                height: var(--space-4);
                 background: #02569D;
                 color: white;
-                border-radius: 50%;
+                border-radius: var(--radius-full);
                 cursor: help;
                 user-select: none;
-                margin-left: 12px;
-                font-size: 11px;
-                font-weight: bold;
+                margin-left: var(--space-3);
+                font-size: var(--text-xs);
+                font-weight: var(--font-bold);
                 font-family: Arial, sans-serif;
                 vertical-align: middle;
             }
@@ -5440,10 +5440,10 @@ export default function MultistepForm() {
             .tooltip-content {
                 background: #02569D;
                 color: white;
-                padding: 8px 12px;
-                border-radius: 6px;
-                font-size: 13px;
-                line-height: 1.4;
+                padding: var(--space-2) var(--space-3);
+                border-radius: var(--radius-sm);
+                font-size: var(--text-sm);
+                line-height: var(--leading-snug);
                 max-width: 250px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 position: fixed;
@@ -6406,17 +6406,17 @@ export default function MultistepForm() {
             }
             
             .btn {
-                padding: 12px 24px;
+                padding: var(--space-3) var(--space-6);
                 border: 2px solid transparent;
-                border-radius: 8px;
+                border-radius: var(--radius-base);
                 cursor: pointer;
-                font-weight: 600;
-                font-size: 16px;
+                font-weight: var(--font-semibold);
+                font-size: var(--text-base);
                 transition: all 0.2s ease;
                 text-decoration: none;
                 display: inline-flex;
                 align-items: center;
-                gap: 8px;
+                gap: var(--space-2);
             }
             
             .btn:disabled {
@@ -6452,17 +6452,17 @@ export default function MultistepForm() {
                 display: flex;
                 flex-direction: row;
                 flex-wrap: wrap;
-                gap: 24px;
-                margin-top: 8px;
+                gap: var(--space-6);
+                margin-top: var(--space-2);
             }
             
             .checkbox-label {
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                gap: var(--space-3);
                 cursor: pointer;
-                padding: 8px;
-                border-radius: 6px;
+                padding: var(--space-2);
+                border-radius: var(--radius-sm);
                 transition: background-color 0.2s ease;
             }
             
@@ -6478,9 +6478,9 @@ export default function MultistepForm() {
             }
             
             .checkbox-text {
-                font-size: 14px;
+                font-size: var(--text-sm);
                 color: #374151;
-                font-weight: 500;
+                font-weight: var(--font-medium);
             }
             
             .form-field {
