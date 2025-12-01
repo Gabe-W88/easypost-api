@@ -1557,18 +1557,18 @@ export default function MultistepForm() {
             },
             shippingCity: {
                 required: true,
-                validate: (value, allData) => {
+                validate: (value) => {
                     if (!value || value.trim().length < 2) return false
 
                     // If military shipping category, only allow military cities
-                    if (allData?.shippingCategory === "military") {
+                    if (formData.shippingCategory === "military") {
                         return isValidMilitaryCity(value)
                     }
 
                     return true
                 },
-                message: (value, allData) => {
-                    if (allData?.shippingCategory === "military") {
+                message: (value) => {
+                    if (formData.shippingCategory === "military") {
                         return "Military addresses must use APO, FPO, or DPO as the city"
                     }
                     return "Please enter a valid city"
@@ -1576,18 +1576,18 @@ export default function MultistepForm() {
             },
             shippingState: {
                 required: true,
-                validate: (value, allData) => {
+                validate: (value) => {
                     if (!value || value.trim().length < 2) return false
 
                     // If military shipping category, only allow military states
-                    if (allData?.shippingCategory === "military") {
+                    if (formData.shippingCategory === "military") {
                         return isValidMilitaryState(value)
                     }
 
                     return true
                 },
-                message: (value, allData) => {
-                    if (allData?.shippingCategory === "military") {
+                message: (value) => {
+                    if (formData.shippingCategory === "military") {
                         return "Military addresses must use AA, AE, or AP as the state"
                     }
                     return "Please enter a valid state/province"
@@ -1633,16 +1633,16 @@ export default function MultistepForm() {
             // Custom validation - pass the original value for booleans
             if (rule.validate) {
                 if (typeof value === "boolean") {
-                    if (!rule.validate(value, allData)) {
+                    if (!rule.validate(value)) {
                         return typeof rule.message === "function"
-                            ? rule.message(value, allData)
+                            ? rule.message(value)
                             : rule.message
                     }
                 } else {
                     const trimmedValue = value.toString().trim()
-                    if (!rule.validate(trimmedValue, allData)) {
+                    if (!rule.validate(trimmedValue)) {
                         return typeof rule.message === "function"
-                            ? rule.message(value, allData)
+                            ? rule.message(value)
                             : rule.message
                     }
                 }
@@ -4371,9 +4371,9 @@ export default function MultistepForm() {
                                                 )
                                             }
                                             onBlur={handleBlur}
-                                            className={`form-input ${getFieldClass(
+                                            className={getFieldClass(
                                                 "internationalFullAddress"
-                                            )}`}
+                                            )}
                                             rows="3"
                                             required
                                         />
@@ -4404,9 +4404,9 @@ export default function MultistepForm() {
                                                 )
                                             }
                                             onBlur={handleBlur}
-                                            className={`form-input ${getFieldClass(
+                                            className={getFieldClass(
                                                 "internationalLocalAddress"
-                                            )}`}
+                                            )}
                                             rows="3"
                                         />
                                         {fieldErrors.internationalLocalAddress &&
@@ -4521,9 +4521,9 @@ export default function MultistepForm() {
                                                         )
                                                     }}
                                                     onBlur={handleBlur}
-                                                    className={`form-input ${getFieldClass(
+                                                    className={getFieldClass(
                                                         "shippingStreetAddress"
-                                                    )}`}
+                                                    )}
                                                     required
                                                 />
                                                 {fieldErrors.shippingStreetAddress &&
@@ -4555,9 +4555,9 @@ export default function MultistepForm() {
                                                         )
                                                     }
                                                     onBlur={handleBlur}
-                                                    className={`form-input ${getFieldClass(
+                                                    className={getFieldClass(
                                                         "shippingStreetAddress2"
-                                                    )}`}
+                                                    )}
                                                 />
                                             </div>
 
@@ -4589,9 +4589,9 @@ export default function MultistepForm() {
                                                             )
                                                         }}
                                                         onBlur={handleBlur}
-                                                        className={`form-input ${getFieldClass(
+                                                        className={getFieldClass(
                                                             "shippingCity"
-                                                        )}`}
+                                                        )}
                                                         required
                                                     />
                                                     {fieldErrors.shippingCity &&
@@ -4637,9 +4637,9 @@ export default function MultistepForm() {
                                                             )
                                                         }
                                                         onBlur={handleBlur}
-                                                        className={`form-input ${getFieldClass(
+                                                        className={getFieldClass(
                                                             "shippingState"
-                                                        )}`}
+                                                        )}
                                                         required
                                                     />
                                                     {fieldErrors.shippingState &&
@@ -4682,9 +4682,9 @@ export default function MultistepForm() {
                                                             )
                                                         }
                                                         onBlur={handleBlur}
-                                                        className={`form-input ${getFieldClass(
+                                                        className={getFieldClass(
                                                             "shippingPostalCode"
-                                                        )}`}
+                                                        )}
                                                         required
                                                     />
                                                     {fieldErrors.shippingPostalCode &&
@@ -7645,6 +7645,14 @@ export default function MultistepForm() {
                 border-radius: 8px;
                 margin: 20px 0;
                 text-align: center;
+            }
+
+            .payment-error p {
+                margin-bottom: 20px;
+            }
+
+            .payment-error .btn {
+                margin-top: 8px;
             }
 
             .payment-submit-button {
