@@ -31,7 +31,7 @@ const Tooltip = ({ content, children }) => {
         const rect = e.currentTarget.getBoundingClientRect()
         setPosition({
             x: rect.right + 8,
-            y: rect.top + (rect.height / 2),
+            y: rect.top + rect.height / 2,
         })
     }
 
@@ -628,14 +628,19 @@ const PaymentForm = ({
                     {/* Processing & Shipping (Combined) */}
                     <div className="summary-row">
                         <span>
-                            Processing & Shipping:{" "}
                             {formData.processingOption === "standard"
                                 ? "Standard"
                                 : formData.processingOption === "fast"
                                   ? "Fast"
                                   : formData.processingOption === "fastest"
                                     ? "Fastest"
-                                    : "Standard"}
+                                    : "Standard"}{" "}
+                            {formData.shippingCategory === "international"
+                                ? "International"
+                                : formData.shippingCategory === "military"
+                                  ? "Military"
+                                  : "Domestic"}{" "}
+                            Processing & Shipping
                         </span>
                         <span className="summary-amount">
                             ${totals.processingPrice}.00
@@ -2614,20 +2619,20 @@ export default function MultistepForm() {
 
             // Upload files to Supabase
             const uploadFileToSupabase = async (file, fileType, index) => {
-                const fileExtension = file.name.split('.').pop()
+                const fileExtension = file.name.split(".").pop()
                 const fileName = `${applicationId}/${fileType}_${index + 1}.${fileExtension}`
-                
+
                 const { data, error } = await supabase.storage
-                    .from('application-files')
+                    .from("application-files")
                     .upload(fileName, file, {
                         contentType: file.type,
-                        upsert: true
+                        upsert: true,
                     })
 
                 if (error) throw error
 
                 const { data: urlData } = supabase.storage
-                    .from('application-files')
+                    .from("application-files")
                     .getPublicUrl(fileName)
 
                 return {
@@ -2635,19 +2640,19 @@ export default function MultistepForm() {
                     type: file.type,
                     size: file.size,
                     path: data.path,
-                    publicUrl: urlData.publicUrl
+                    publicUrl: urlData.publicUrl,
                 }
             }
 
             const driversLicenseUploads = await Promise.all(
-                uploadedFiles.driversLicense.map((file, index) => 
-                    uploadFileToSupabase(file, 'driversLicense', index)
+                uploadedFiles.driversLicense.map((file, index) =>
+                    uploadFileToSupabase(file, "driversLicense", index)
                 )
             )
 
             const passportPhotoUploads = await Promise.all(
-                uploadedFiles.passportPhoto.map((file, index) => 
-                    uploadFileToSupabase(file, 'passportPhoto', index)
+                uploadedFiles.passportPhoto.map((file, index) =>
+                    uploadFileToSupabase(file, "passportPhoto", index)
                 )
             )
 
@@ -2768,7 +2773,7 @@ export default function MultistepForm() {
 
             // Stripe will automatically trigger the webhook when payment succeeds
             // No need for manual webhook call - it causes duplicates
-            
+
             setPaymentState((prev) => ({
                 ...prev,
                 paymentIntentId,
@@ -3762,6 +3767,8 @@ export default function MultistepForm() {
                                     marginTop: "8px",
                                 }}
                             >
+                                The total cost includes the fee shown below,
+                                plus tax and a $20 IDP booklet fee paid to AAA.
                             </p>
                         </h2>
 
