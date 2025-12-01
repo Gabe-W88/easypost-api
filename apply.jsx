@@ -2423,7 +2423,14 @@ export default function MultistepForm() {
 
     // Handle field blur for validation
     const handleBlur = useCallback(
-        (name) => {
+        (nameOrEvent) => {
+            // Handle both direct name string and event object
+            const name = typeof nameOrEvent === 'string' 
+                ? nameOrEvent 
+                : nameOrEvent?.target?.name
+            
+            if (!name) return
+            
             setTouched((prev) => ({ ...prev, [name]: true }))
 
             // Validate field on blur if not already validated
