@@ -2547,25 +2547,21 @@ export default function MultistepForm() {
             const fields = fieldsForStep[stepNumber] || []
             const errors = {}
 
-            // Get current form data
-            setFormData((currentFormData) => {
-                fields.forEach((field) => {
-                    const error = validateField(
-                        field,
-                        currentFormData[field],
-                        currentFormData
-                    )
-                    if (error) errors[field] = error
-                })
-
-                // Mark all fields as touched for this step
-                const touchedFields = {}
-                fields.forEach((field) => (touchedFields[field] = true))
-                setTouched((prev) => ({ ...prev, ...touchedFields }))
-                setFieldErrors((prev) => ({ ...prev, ...errors }))
-
-                return currentFormData
+            // Validate all fields for this step using current formData
+            fields.forEach((field) => {
+                const error = validateField(
+                    field,
+                    formData[field],
+                    formData
+                )
+                if (error) errors[field] = error
             })
+
+            // Mark all fields as touched for this step
+            const touchedFields = {}
+            fields.forEach((field) => (touchedFields[field] = true))
+            setTouched((prev) => ({ ...prev, ...touchedFields }))
+            setFieldErrors((prev) => ({ ...prev, ...errors }))
 
             // Check address validation for step 1 - now informational only
             // Address validation no longer blocks progression
