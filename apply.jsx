@@ -1196,7 +1196,8 @@ export default function MultistepForm() {
 
     // File upload state for Step 2
     const [uploadedFiles, setUploadedFiles] = useState({
-        driversLicense: [],
+        driversLicenseFront: [],
+        driversLicenseBack: [],
         passportPhoto: [],
     })
 
@@ -2655,7 +2656,7 @@ export default function MultistepForm() {
         if (validFiles.length > 0) {
             setUploadedFiles((prev) => ({
                 ...prev,
-                [uploadType]: [...prev[uploadType], ...validFiles],
+                [uploadType]: [...(prev[uploadType] || []), ...validFiles],
             }))
         }
     }, [])
@@ -2663,7 +2664,7 @@ export default function MultistepForm() {
     const removeFile = useCallback((uploadType, index) => {
         setUploadedFiles((prev) => ({
             ...prev,
-            [uploadType]: prev[uploadType].filter((_, i) => i !== index),
+            [uploadType]: (prev[uploadType] || []).filter((_, i) => i !== index),
         }))
     }, [])
 
