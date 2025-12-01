@@ -5595,15 +5595,15 @@ export default function MultistepForm() {
             }
 
             .country-selector .flag {
-                font-size: 16px;
-                margin-right: 6px;
+                font-size: var(--text-base);
+                margin-right: var(--space-1-5);
             }
 
             .country-selector .dial-code {
-                font-size: 14px;
-                font-weight: 500;
+                font-size: var(--text-sm);
+                font-weight: var(--font-medium);
                 color: #333;
-                margin-right: 6px;
+                margin-right: var(--space-1-5);
             }
 
             .country-selector .dropdown-arrow {
@@ -5619,12 +5619,12 @@ export default function MultistepForm() {
                 width: 300px; /* Fixed width instead of right: 0 */
                 background: white;
                 border: 2px solid #02569D; /* Make it more visible for testing */
-                border-radius: 8px;
+                border-radius: var(--radius-md);
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 max-height: 250px;
                 overflow-y: auto;
                 z-index: 9999;
-                margin-top: 4px;
+                margin-top: var(--space-1);
             }
 
             .country-option {
@@ -6358,14 +6358,14 @@ export default function MultistepForm() {
                 background-color: #f8fafc;
                 padding: var(--space-6);
                 border-radius: var(--radius-lg);
-                margin-bottom: 32px;
+                margin-bottom: var(--space-8);
                 border: 2px solid #e2e8f0;
             }
             
             .summary-title {
-                font-size: 18px;
-                font-weight: 600;
-                margin-bottom: 16px;
+                font-size: var(--text-lg);
+                font-weight: var(--font-semibold);
+                margin-bottom: var(--space-4);
                 color: #374151;
             }
             
@@ -6373,15 +6373,15 @@ export default function MultistepForm() {
                 display: flex;
                 justify-content: space-between;
                 font-size: 15px;
-                margin-bottom: 8px;
+                margin-bottom: var(--space-2);
                 color: #4b5563;
             }
             
             .summary-row.subtotal {
-                font-weight: 600;
-                padding-top: 12px;
+                font-weight: var(--font-semibold);
+                padding-top: var(--space-3);
                 border-top: 1px solid #e5e7eb;
-                margin-top: 12px;
+                margin-top: var(--space-3);
             }
             
             .summary-row.total {
@@ -6397,9 +6397,9 @@ export default function MultistepForm() {
             .button-row {
                 display: flex;
                 justify-content: flex-end;
-                gap: 16px;
-                margin-top: 32px;
-                padding-top: 24px;
+                gap: var(--space-4);
+                margin-top: var(--space-8);
+                padding-top: var(--space-6);
                 border-top: 2px solid #f3f4f6;
             }
             
@@ -6588,27 +6588,27 @@ export default function MultistepForm() {
                     grid-template-columns: 1fr !important;
                     display: flex !important;
                     flex-direction: column !important;
-                    gap: 16px !important;
+                    gap: var(--space-4) !important;
                 }
                 
                 .container {
-                    padding: 0 12px;
+                    padding: 0 var(--space-3);
                 }
                 
                 .form-container {
-                    padding: 20px 16px;
-                    border-radius: 12px;
-                    margin: 16px 0;
+                    padding: var(--space-5) var(--space-4);
+                    border-radius: var(--radius-lg);
+                    margin: var(--space-4) 0;
                 }
                 
                 .form-grid {
                     grid-template-columns: 1fr;
-                    gap: 16px;
+                    gap: var(--space-4);
                 }
                 
                 .name-row {
                     grid-template-columns: 1fr;
-                    gap: 16px;
+                    gap: var(--space-4);
                 }
                 
                 .form-group.full-width {
@@ -6616,13 +6616,13 @@ export default function MultistepForm() {
                 }
                 
                 .stepper {
-                    padding: 0 8px;
-                    margin-bottom: 24px;
+                    padding: 0 var(--space-2);
+                    margin-bottom: var(--space-6);
                     flex-wrap: wrap;
                 }
                 
                 .step {
-                    margin-bottom: 8px;
+                    margin-bottom: var(--space-2);
                 }
                 
                 .step .label {
@@ -6635,55 +6635,55 @@ export default function MultistepForm() {
                 .circle {
                     width: 28px;
                     height: 28px;
-                    font-size: 12px;
+                    font-size: var(--text-xs);
                 }
                 
                 .button-row {
                     flex-direction: row;
-                    gap: 12px;
-                    margin-top: 24px;
-                    padding-top: 20px;
+                    gap: var(--space-3);
+                    margin-top: var(--space-6);
+                    padding-top: var(--space-5);
                     justify-content: space-between;
                 }
                 
                 .btn {
                     flex: 1;
                     max-width: calc(50% - 6px);
-                    padding: 14px 20px;
-                    font-size: 16px;
+                    padding: var(--space-3-5) var(--space-5);
+                    font-size: var(--text-base);
                 }
                 
                 .form-input, .form-select {
-                    padding: 14px 16px;
-                    font-size: 16px;
+                    padding: var(--space-3-5) var(--space-4);
+                    font-size: var(--text-base);
                 }
                 
                 .form-group {
-                    margin-bottom: 20px;
+                    margin-bottom: var(--space-5);
                     width: 100%;
                 }
                 
                 .form-grid {
                     grid-template-columns: 1fr !important;
-                    gap: 16px;
+                    gap: var(--space-4);
                     width: 100%;
                 }
                 
                 .name-row {
                     grid-template-columns: 1fr !important;
-                    gap: 16px;
+                    gap: var(--space-4);
                     width: 100%;
                 }
                 
                 .state-zip-row {
                     grid-template-columns: 1fr !important;
-                    gap: 16px;
+                    gap: var(--space-4);
                     width: 100%;
                 }
                 
                 .city-state-zip-row {
                     grid-template-columns: 1fr !important;
-                    gap: 16px;
+                    gap: var(--space-4);
                     width: 100%;
                 }
                 
@@ -6691,7 +6691,7 @@ export default function MultistepForm() {
                 .form-section [class*="grid"],
                 .form-section [class*="row"] {
                     grid-template-columns: 1fr !important;
-                    gap: 16px !important;
+                    gap: var(--space-4) !important;
                 }
                 
                 /* Ensure proper field width on mobile */
@@ -6737,51 +6737,51 @@ export default function MultistepForm() {
                 
                 .signature-container button {
                     width: 100%;
-                    padding: 12px 16px;
-                    margin-top: 12px;
+                    padding: var(--space-3) var(--space-4);
+                    margin-top: var(--space-3);
                 }
                 
                 .tooltip-content {
                     max-width: 280px;
-                    font-size: 12px;
-                    padding: 6px 10px;
+                    font-size: var(--text-xs);
+                    padding: var(--space-1-5) var(--space-2-5);
                 }
             }
             
             @media (max-width: 480px) {
                 .container {
-                    padding: 0 8px;
+                    padding: 0 var(--space-2);
                 }
                 
                 .form-container {
-                    padding: 16px 12px;
-                    border-radius: 8px;
-                    margin: 12px 0;
+                    padding: var(--space-4) var(--space-3);
+                    border-radius: var(--radius-md);
+                    margin: var(--space-3) 0;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                 }
                 
                 .section-title {
-                    font-size: 18px;
-                    margin-bottom: 20px;
-                    padding-bottom: 12px;
+                    font-size: var(--text-lg);
+                    margin-bottom: var(--space-5);
+                    padding-bottom: var(--space-3);
                 }
                 
                 .form-subtitle {
                     font-size: 15px;
-                    margin-bottom: 16px;
+                    margin-bottom: var(--space-4);
                 }
                 
                 .form-input, .form-select {
-                    font-size: 16px; /* Prevents zoom on iOS */
-                    padding: 16px 14px;
-                    border-radius: 8px;
+                    font-size: var(--text-base); /* Prevents zoom on iOS */
+                    padding: var(--space-4) var(--space-3-5);
+                    border-radius: var(--radius-md);
                     width: 100% !important;
                     max-width: 100% !important;
                 }
                 
                 .form-label {
-                    font-size: 14px;
-                    margin-bottom: 6px;
+                    font-size: var(--text-sm);
+                    margin-bottom: var(--space-1-5);
                 }
                 
                 /* Force ALL grid layouts to single column on small mobile */
@@ -6792,20 +6792,20 @@ export default function MultistepForm() {
                 .form-section [class*="grid"],
                 .form-section [class*="row"] {
                     grid-template-columns: 1fr !important;
-                    gap: 16px !important;
+                    gap: var(--space-4) !important;
                     display: block !important;
                 }
                 
                 .form-section [class*="grid"] > *,
                 .form-section [class*="row"] > * {
-                    margin-bottom: 16px !important;
+                    margin-bottom: var(--space-4) !important;
                     width: 100% !important;
                     max-width: 100% !important;
                 }
                 
                 .stepper {
-                    margin-bottom: 20px;
-                    padding: 0 4px;
+                    margin-bottom: var(--space-5);
+                    padding: 0 var(--space-1);
                 }
                 
                 .step {
@@ -6819,21 +6819,21 @@ export default function MultistepForm() {
                 
                 .step .label {
                     font-size: 9px;
-                    margin-top: 4px;
+                    margin-top: var(--space-1);
                     overflow-wrap: break-word;
                     hyphens: auto;
                 }
                 
                 .circle {
-                    width: 24px;
-                    height: 24px;
+                    width: var(--space-6);
+                    height: var(--space-6);
                     font-size: 11px;
                 }
                 
                 .btn {
-                    padding: 16px 20px;
-                    font-size: 16px;
-                    border-radius: 8px;
+                    padding: var(--space-4) var(--space-5);
+                    font-size: var(--text-base);
+                    border-radius: var(--radius-md);
                     min-height: 48px;
                 }
                 
@@ -6842,12 +6842,12 @@ export default function MultistepForm() {
                 }
                 
                 .checkbox-label {
-                    padding: 12px 8px;
-                    gap: 8px;
+                    padding: var(--space-3) var(--space-2);
+                    gap: var(--space-2);
                 }
                 
                 .checkbox-text {
-                    font-size: 13px;
+                    font-size: var(--text-sm);
                     line-height: 1.4;
                 }
                 
@@ -6855,13 +6855,13 @@ export default function MultistepForm() {
                     width: 14px;
                     height: 14px;
                     font-size: 10px;
-                    margin-left: 8px;
+                    margin-left: var(--space-2);
                 }
                 
                 .signature-container canvas,
                 .signature-canvas {
                     height: 100px !important;
-                    border-radius: 6px !important;
+                    border-radius: var(--radius-md) !important;
                     width: 100% !important;
                     max-width: 100% !important;
                     touch-action: none !important;
@@ -6869,18 +6869,18 @@ export default function MultistepForm() {
                 
                 .signature-container button {
                     width: 100%;
-                    padding: 14px 16px;
-                    margin-top: 12px;
-                    font-size: 14px;
+                    padding: var(--space-3-5) var(--space-4);
+                    margin-top: var(--space-3);
+                    font-size: var(--text-sm);
                 }
                 
                 .file-upload-area {
-                    padding: 16px 12px;
-                    border-radius: 6px;
+                    padding: var(--space-4) var(--space-3);
+                    border-radius: var(--radius-md);
                 }
                 
                 .file-upload-text {
-                    font-size: 13px;
+                    font-size: var(--text-sm);
                 }
                 
                 .upload-hint {
@@ -6891,29 +6891,29 @@ export default function MultistepForm() {
             /* Extra small mobile devices */
             @media (max-width: 360px) {
                 .container {
-                    padding: 0 8px;
+                    padding: 0 var(--space-2);
                     width: 100%;
                     max-width: 100%;
                     overflow-x: hidden;
                 }
                 
                 .form-container {
-                    padding: 12px 8px;
-                    margin: 8px 0;
+                    padding: var(--space-3) var(--space-2);
+                    margin: var(--space-2) 0;
                     width: 100%;
                     max-width: 100%;
                     box-sizing: border-box;
                 }
                 
                 .section-title {
-                    font-size: 16px;
-                    margin-bottom: 16px;
-                    padding-bottom: 8px;
+                    font-size: var(--text-base);
+                    margin-bottom: var(--space-4);
+                    padding-bottom: var(--space-2);
                 }
                 
                 .form-input, .form-select {
-                    padding: 14px 12px;
-                    font-size: 16px;
+                    padding: var(--space-3-5) var(--space-3);
+                    font-size: var(--text-base);
                     width: 100% !important;
                     max-width: 100% !important;
                 }
@@ -6928,7 +6928,7 @@ export default function MultistepForm() {
                 [class*="grid"],
                 [class*="row"] {
                     grid-template-columns: 1fr !important;
-                    gap: 12px !important;
+                    gap: var(--space-3) !important;
                     display: block !important;
                 }
                 
@@ -6936,14 +6936,14 @@ export default function MultistepForm() {
                 .form-group,
                 [class*="grid"] > *,
                 [class*="row"] > * {
-                    margin-bottom: 12px !important;
+                    margin-bottom: var(--space-3) !important;
                     width: 100% !important;
                     max-width: 100% !important;
                     display: block !important;
                 }
                 
                 .btn {
-                    padding: 14px 16px;
+                    padding: var(--space-3-5) var(--space-4);
                     font-size: 15px;
                 }
                 
@@ -6958,15 +6958,15 @@ export default function MultistepForm() {
                 }
                 
                 .stepper {
-                    padding: 0 2px;
-                    margin-bottom: 16px;
+                    padding: 0 var(--space-0-5);
+                    margin-bottom: var(--space-4);
                 }
                 
                 .info-icon, .tooltip-icon {
-                    width: 12px;
-                    height: 12px;
+                    width: var(--space-3);
+                    height: var(--space-3);
                     font-size: 9px;
-                    margin-left: 6px;
+                    margin-left: var(--space-1-5);
                 }
                 
                 .tooltip-content {
