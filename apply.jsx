@@ -2594,68 +2594,34 @@ export default function MultistepForm() {
 
     // File upload handlers
     const handleFileUpload = useCallback(async (files, uploadType) => {
-        // Convert HEIC files to JPG for universal compatibility
-        const convertedFiles = await Promise.all(
-            Array.from(files).map(async (file) => {
-                if (
-                    file.type === "image/heic" ||
-                    file.type === "image/heif" ||
-                    file.name.toLowerCase().endsWith(".heic") ||
-                    file.name.toLowerCase().endsWith(".heif")
-                ) {
-                    try {
-                        const convertedBlob = await heic2any({
-                            blob: file,
-                            toType: "image/jpeg",
-                            quality: 0.9,
-                        })
-                        return new File(
-                            [convertedBlob],
-                            file.name.replace(/\.(heic|heif)$/i, ".jpg"),
-                            { type: "image/jpeg" }
-                        )
-                    } catch (error) {
-                        console.error("HEIC conversion failed:", error)
-                        alert(
-                            `Failed to convert ${file.name}. Please try a different file.`
-                        )
-                        return null
-                    }
-                }
-                return file
-            })
-        )
+        const validFiles = Array.from(files).filter((file) => {
+            // Accept common image formats, HEIC (iPhone photos), and PDF
+            const validTypes = [
+                "image/jpeg",
+                "image/jpg",
+                "image/png",
+                "image/gif",
+                "image/webp",
+                "image/heic",
+                "image/heif",
+                "application/pdf",
+            ]
+            const maxSize = 10 * 1024 * 1024 // 10MB max
 
-        const validFiles = convertedFiles
-            .filter((file) => file !== null)
-            .filter((file) => {
-                // Accept common image formats, HEIC (iPhone photos), and PDF
-                const validTypes = [
-                    "image/jpeg",
-                    "image/jpg",
-                    "image/png",
-                    "image/gif",
-                    "image/webp",
-                    "image/heic",
-                    "image/heif",
-                    "application/pdf",
-                ]
-                const maxSize = 10 * 1024 * 1024 // 10MB max
+            if (!validTypes.includes(file.type)) {
+                alert(
+                    `Invalid file type: ${file.name}. Please upload JPG, PNG, GIF, WebP, HEIC (iPhone photos), or PDF files.`
+                )
+                return false
+            }
 
-                if (!validTypes.includes(file.type)) {
-                    alert(
-                        `Invalid file type: ${file.name}. Please upload JPG, PNG, GIF, WebP, HEIC (iPhone photos), or PDF files.`
-                    )
-                    return false
-                }
+            if (file.size > maxSize) {
+                alert(`File too large: ${file.name}. Maximum size is 10MB.`)
+                return false
+            }
 
-                if (file.size > maxSize) {
-                    alert(`File too large: ${file.name}. Maximum size is 10MB.`)
-                    return false
-                }
-
-                return true
-            })
+            return true
+        })
 
         if (validFiles.length > 0) {
             setUploadedFiles((prev) => ({
