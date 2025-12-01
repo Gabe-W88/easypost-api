@@ -2585,7 +2585,7 @@ export default function MultistepForm() {
 
             return errors
         },
-        [validateField, addressValidation.status, uploadedFiles]
+        [validateField, formData, uploadedFiles]
     )
 
     // File upload handlers
