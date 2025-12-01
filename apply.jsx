@@ -5467,10 +5467,10 @@ export default function MultistepForm() {
             }
             
             .form-input {
-                padding: 12px 16px;
+                padding: var(--space-3) var(--space-4);
                 border: 2px solid #e5e7eb;
-                border-radius: 8px;
-                font-size: 14px;
+                border-radius: var(--radius-base);
+                font-size: var(--text-sm);
                 transition: all 0.2s ease;
                 background-color: #ffffff;
                 width: 100%;
@@ -5504,7 +5504,7 @@ export default function MultistepForm() {
             
             /* Textarea specific styling */
             textarea.form-input {
-                font-size: 14px;
+                font-size: var(--text-sm);
             }
             
             /* Field Validation States */
