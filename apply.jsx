@@ -5630,7 +5630,7 @@ export default function MultistepForm() {
             .country-option {
                 display: flex;
                 align-items: center;
-                padding: 8px 12px;
+                padding: var(--space-2) var(--space-3);
                 cursor: pointer;
                 transition: background-color 0.2s ease;
                 border-bottom: 1px solid #f1f3f4;
@@ -5645,21 +5645,21 @@ export default function MultistepForm() {
             }
 
             .country-option .flag {
-                font-size: 16px;
-                margin-right: 8px;
-                width: 20px;
+                font-size: var(--text-base);
+                margin-right: var(--space-2);
+                width: var(--space-5);
             }
 
             .country-option .country-name {
                 flex: 1;
-                font-size: 14px;
+                font-size: var(--text-sm);
                 color: #333;
             }
 
             .country-option .dial-code {
-                font-size: 14px;
+                font-size: var(--text-sm);
                 color: #666;
-                margin-left: 8px;
+                margin-left: var(--space-2);
             }
 
             .phone-input {
@@ -5669,8 +5669,8 @@ export default function MultistepForm() {
                 background: transparent !important;
                 box-shadow: none !important;
                 outline: none !important;
-                padding: 0 16px;
-                font-size: 16px;
+                padding: 0 var(--space-4);
+                font-size: var(--text-base);
                 height: 100%;
                 box-sizing: border-box;
             }
@@ -5682,12 +5682,12 @@ export default function MultistepForm() {
             
             .validation-loading.full-width {
                 grid-column: span 2;
-                margin-top: 12px;
+                margin-top: var(--space-3);
             }
             
             .loading-spinner {
-                width: 12px;
-                height: 12px;
+                width: var(--space-3);
+                height: var(--space-3);
                 border: 2px solid #e5e7eb;
                 border-top: 2px solid #02569D;
                 border-radius: 50%;
@@ -5708,13 +5708,13 @@ export default function MultistepForm() {
             
             /* Alert Components */
             .alert {
-                padding: 12px 16px;
-                border-radius: 8px;
-                font-size: 14px;
-                margin-top: 16px;
+                padding: var(--space-3) var(--space-4);
+                border-radius: var(--radius-md);
+                font-size: var(--text-sm);
+                margin-top: var(--space-4);
                 display: flex;
                 align-items: flex-start;
-                gap: 8px;
+                gap: var(--space-2);
             }
             
             .alert-success {
@@ -5748,9 +5748,9 @@ export default function MultistepForm() {
             }
             
             .standardization-note {
-                font-size: 12px;
+                font-size: var(--text-xs);
                 color: #059669;
-                margin-top: 4px;
+                margin-top: var(--space-1);
                 font-style: italic;
             }
             
@@ -5760,8 +5760,8 @@ export default function MultistepForm() {
                 color: #02569D;
                 text-decoration: underline;
                 cursor: pointer;
-                font-size: 12px;
-                margin-left: 8px;
+                font-size: var(--text-xs);
+                margin-left: var(--space-2);
                 padding: 0;
             }
             
@@ -5780,16 +5780,16 @@ export default function MultistepForm() {
             }
             
             .suggestions-header {
-                padding: 16px 20px;
-                font-weight: 600;
+                padding: var(--space-4) var(--space-5);
+                font-weight: var(--font-semibold);
                 color: #374151;
                 border-bottom: 1px solid #e5e7eb;
                 background-color: #f9fafb;
-                font-size: 14px;
+                font-size: var(--text-sm);
             }
             
             .suggestion-item {
-                padding: 16px 20px;
+                padding: var(--space-4) var(--space-5);
                 cursor: pointer;
                 border-bottom: 1px solid #f3f4f6;
                 transition: background-color 0.2s ease;
@@ -5804,13 +5804,13 @@ export default function MultistepForm() {
             }
             
             .suggestion-address {
-                font-weight: 500;
+                font-weight: var(--font-medium);
                 color: #111827;
-                margin-bottom: 4px;
+                margin-bottom: var(--space-1);
             }
             
             .suggestion-location {
-                font-size: 13px;
+                font-size: var(--text-sm);
                 color: #6b7280;
             }
             
@@ -5826,21 +5826,21 @@ export default function MultistepForm() {
             
             /* Upload Styles */
             .file-upload-section {
-                margin-bottom: 32px;
+                margin-bottom: var(--space-8);
             }
             
             /* Driver's License Side-by-Side Layout */
             .driver-license-uploads {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 24px;
-                margin-bottom: 32px;
+                gap: var(--space-6);
+                margin-bottom: var(--space-8);
             }
             
             @media (max-width: 768px) {
                 .driver-license-uploads {
                     grid-template-columns: 1fr;
-                    gap: 24px;
+                    gap: var(--space-6);
                 }
             }
             
@@ -5851,7 +5851,7 @@ export default function MultistepForm() {
             /* Redesigned Upload Structure */
             .upload-box-redesigned {
                 border: 2px dashed #d1d5db;
-                border-radius: 8px;
+                border-radius: var(--radius-md);
                 padding: var(--space-5);
                 text-align: center;
                 transition: all 0.2s ease;
@@ -6187,27 +6187,27 @@ export default function MultistepForm() {
             
             .uploaded-files {
                 background: #f9fafb;
-                border-radius: 8px;
-                padding: 20px;
-                margin-top: 16px;
+                border-radius: var(--radius-md);
+                padding: var(--space-5);
+                margin-top: var(--space-4);
             }
             
             .uploaded-files h4 {
-                margin: 0 0 16px 0;
+                margin: 0 0 var(--space-4) 0;
                 color: #374151;
-                font-size: 14px;
-                font-weight: 600;
+                font-size: var(--text-sm);
+                font-weight: var(--font-semibold);
             }
             
             .file-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 16px;
+                gap: var(--space-4);
             }
             
             .file-preview {
                 background: white;
-                border-radius: 8px;
+                border-radius: var(--radius-md);
                 overflow: hidden;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                 position: relative;
@@ -6224,44 +6224,44 @@ export default function MultistepForm() {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 32px;
+                font-size: var(--space-8);
                 background-color: #f3f4f6;
                 color: #6b7280;
                 border: 2px dashed #d1d5db;
             }
             
             .file-info {
-                padding: 12px;
+                padding: var(--space-3);
                 position: relative;
             }
             
             .file-name {
                 display: block;
-                font-weight: 500;
-                font-size: 12px;
+                font-weight: var(--font-medium);
+                font-size: var(--text-xs);
                 color: #374151;
-                margin-bottom: 4px;
+                margin-bottom: var(--space-1);
                 word-break: break-word;
             }
             
             .file-size {
                 display: block;
-                font-size: 11px;
+                font-size: var(--text-xs);
                 color: #6b7280;
             }
             
             .remove-file-btn {
                 position: absolute;
-                bottom: 8px;
-                right: 8px;
-                width: 24px;
-                height: 24px;
+                bottom: var(--space-2);
+                right: var(--space-2);
+                width: var(--space-6);
+                height: var(--space-6);
                 border-radius: 0;
                 background: transparent;
                 color: #374151;
                 border: none;
                 cursor: pointer;
-                font-size: 18px;
+                font-size: var(--text-lg);
                 font-weight: bold;
                 display: flex;
                 align-items: center;
@@ -6276,27 +6276,27 @@ export default function MultistepForm() {
             
             /* Guidelines Section */
             .guidelines-section {
-                padding: 24px 0;
-                margin-top: 32px;
+                padding: var(--space-6) 0;
+                margin-top: var(--space-8);
             }
             
             .guidelines-title {
                 color: #374151;
-                font-size: 18px;
-                font-weight: 600;
-                margin: 0 0 16px 0;
+                font-size: var(--text-lg);
+                font-weight: var(--font-semibold);
+                margin: 0 0 var(--space-4) 0;
             }
             
             .guidelines-list {
-                margin: 0 0 24px 0;
-                padding: 0 0 0 20px;
+                margin: 0 0 var(--space-6) 0;
+                padding: 0 0 0 var(--space-5);
                 color: #4b5563;
                 line-height: 1.6;
             }
             
             .guidelines-list li {
-                margin-bottom: 12px;
-                font-size: 14px;
+                margin-bottom: var(--space-3);
+                font-size: var(--text-sm);
             }
             
             .guidelines-link {
@@ -6317,22 +6317,22 @@ export default function MultistepForm() {
             .example-photos {
                 max-width: 100%;
                 height: auto;
-                border-radius: 8px;
+                border-radius: var(--radius-md);
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             }
             
             /* Radio Groups */
             .radio-group {
-                margin-bottom: 32px;
+                margin-bottom: var(--space-8);
             }
             
             .radio-label {
                 display: flex;
                 align-items: flex-start;
-                margin-bottom: 16px;
-                padding: 16px;
+                margin-bottom: var(--space-4);
+                padding: var(--space-4);
                 border: 2px solid #e5e7eb;
-                border-radius: 8px;
+                border-radius: var(--radius-md);
                 cursor: pointer;
                 transition: all 0.2s ease;
             }
@@ -6343,21 +6343,21 @@ export default function MultistepForm() {
             }
             
             .radio-label input[type="radio"] {
-                margin-right: 12px;
-                margin-top: 2px;
+                margin-right: var(--space-3);
+                margin-top: var(--space-0-5);
             }
             
             .radio-sub {
-                font-size: 14px;
+                font-size: var(--text-sm);
                 color: #6b7280;
-                margin-top: 4px;
+                margin-top: var(--space-1);
             }
             
             /* Summary Box */
             .summary-box {
                 background-color: #f8fafc;
-                padding: 24px;
-                border-radius: 12px;
+                padding: var(--space-6);
+                border-radius: var(--radius-lg);
                 margin-bottom: 32px;
                 border: 2px solid #e2e8f0;
             }
