@@ -1557,18 +1557,18 @@ export default function MultistepForm() {
             },
             shippingCity: {
                 required: true,
-                validate: (value) => {
+                validate: (value, allData) => {
                     if (!value || value.trim().length < 2) return false
 
                     // If military shipping category, only allow military cities
-                    if (formData.shippingCategory === "military") {
+                    if (allData?.shippingCategory === "military") {
                         return isValidMilitaryCity(value)
                     }
 
                     return true
                 },
-                message: (value) => {
-                    if (formData.shippingCategory === "military") {
+                message: (value, allData) => {
+                    if (allData?.shippingCategory === "military") {
                         return "Military addresses must use APO, FPO, or DPO as the city"
                     }
                     return "Please enter a valid city"
@@ -1576,18 +1576,18 @@ export default function MultistepForm() {
             },
             shippingState: {
                 required: true,
-                validate: (value) => {
+                validate: (value, allData) => {
                     if (!value || value.trim().length < 2) return false
 
                     // If military shipping category, only allow military states
-                    if (formData.shippingCategory === "military") {
+                    if (allData?.shippingCategory === "military") {
                         return isValidMilitaryState(value)
                     }
 
                     return true
                 },
-                message: (value) => {
-                    if (formData.shippingCategory === "military") {
+                message: (value, allData) => {
+                    if (allData?.shippingCategory === "military") {
                         return "Military addresses must use AA, AE, or AP as the state"
                     }
                     return "Please enter a valid state/province"
@@ -1633,16 +1633,16 @@ export default function MultistepForm() {
             // Custom validation - pass the original value for booleans
             if (rule.validate) {
                 if (typeof value === "boolean") {
-                    if (!rule.validate(value)) {
+                    if (!rule.validate(value, allData)) {
                         return typeof rule.message === "function"
-                            ? rule.message(value)
+                            ? rule.message(value, allData)
                             : rule.message
                     }
                 } else {
                     const trimmedValue = value.toString().trim()
-                    if (!rule.validate(trimmedValue)) {
+                    if (!rule.validate(trimmedValue, allData)) {
                         return typeof rule.message === "function"
-                            ? rule.message(value)
+                            ? rule.message(value, allData)
                             : rule.message
                     }
                 }
