@@ -4404,9 +4404,9 @@ export default function MultistepForm() {
                                                 )
                                             }
                                             onBlur={handleBlur}
-                                            className={getFieldClass(
+                                            className={`form-input ${getFieldClass(
                                                 "internationalLocalAddress"
-                                            )}
+                                            )}`}
                                             rows="3"
                                         />
                                         {fieldErrors.internationalLocalAddress &&
@@ -4521,9 +4521,9 @@ export default function MultistepForm() {
                                                         )
                                                     }}
                                                     onBlur={handleBlur}
-                                                    className={getFieldClass(
+                                                    className={`form-input ${getFieldClass(
                                                         "shippingStreetAddress"
-                                                    )}
+                                                    )}`}
                                                     required
                                                 />
                                                 {fieldErrors.shippingStreetAddress &&
@@ -4555,9 +4555,9 @@ export default function MultistepForm() {
                                                         )
                                                     }
                                                     onBlur={handleBlur}
-                                                    className={getFieldClass(
+                                                    className={`form-input ${getFieldClass(
                                                         "shippingStreetAddress2"
-                                                    )}
+                                                    )}`}
                                                 />
                                             </div>
 
@@ -4589,9 +4589,9 @@ export default function MultistepForm() {
                                                             )
                                                         }}
                                                         onBlur={handleBlur}
-                                                        className={getFieldClass(
+                                                        className={`form-input ${getFieldClass(
                                                             "shippingCity"
-                                                        )}
+                                                        )}`}
                                                         required
                                                     />
                                                     {fieldErrors.shippingCity &&
@@ -4637,9 +4637,9 @@ export default function MultistepForm() {
                                                             )
                                                         }
                                                         onBlur={handleBlur}
-                                                        className={getFieldClass(
+                                                        className={`form-input ${getFieldClass(
                                                             "shippingState"
-                                                        )}
+                                                        )}`}
                                                         required
                                                     />
                                                     {fieldErrors.shippingState &&
@@ -4682,9 +4682,9 @@ export default function MultistepForm() {
                                                             )
                                                         }
                                                         onBlur={handleBlur}
-                                                        className={getFieldClass(
+                                                        className={`form-input ${getFieldClass(
                                                             "shippingPostalCode"
-                                                        )}
+                                                        )}`}
                                                         required
                                                     />
                                                     {fieldErrors.shippingPostalCode &&
