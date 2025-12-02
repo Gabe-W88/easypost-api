@@ -5078,9 +5078,13 @@ export default function MultistepForm() {
             :root {
                 /* Spacing Scale (4px base, 8px grid) */
                 --space-0: 0;
+                --space-0-5: 2px;
                 --space-1: 4px;
+                --space-1-5: 6px;
                 --space-2: 8px;
+                --space-2-5: 10px;
                 --space-3: 12px;
+                --space-3-5: 14px;
                 --space-4: 16px;
                 --space-5: 20px;
                 --space-6: 24px;
@@ -5232,7 +5236,7 @@ export default function MultistepForm() {
             .section-title {
                 font-size: var(--text-2xl);
                 font-weight: var(--font-bold);
-                margin-bottom: var(--space-8);
+                margin-bottom: var(--space-10);
                 color: #111827;
                 border-bottom: 2px solid #f3f4f6;
                 padding-bottom: var(--space-4);
@@ -5241,7 +5245,7 @@ export default function MultistepForm() {
             .form-subtitle {
                 font-size: var(--text-lg);
                 font-weight: var(--font-semibold);
-                margin-bottom: var(--space-4);
+                margin-bottom: var(--space-2);
                 color: #374151;
             }
             
@@ -5253,6 +5257,7 @@ export default function MultistepForm() {
                 font-size: var(--text-sm);
                 color: #6b7280;
                 margin-bottom: var(--space-5);
+                margin-top: 0;
                 font-style: italic;
             }
             
@@ -5260,8 +5265,12 @@ export default function MultistepForm() {
             .form-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: var(--space-4);
-                margin-bottom: var(--space-8);
+                column-gap: var(--space-4);
+                row-gap: var(--space-5);
+            }
+            
+            .form-grid > * {
+                margin-bottom: 0;
             }
             
             .form-group {
@@ -5273,6 +5282,10 @@ export default function MultistepForm() {
             }
             
             .form-group.full-width {
+                grid-column: span 2;
+            }
+            
+            .form-field.full-width {
                 grid-column: span 2;
             }
             
@@ -5352,6 +5365,7 @@ export default function MultistepForm() {
                 grid-template-columns: 1fr 1fr 1fr;
                 gap: var(--space-4);
                 grid-column: span 2;
+                margin-bottom: 0;
             }
             
             .state-zip-row {
@@ -5359,6 +5373,7 @@ export default function MultistepForm() {
                 grid-template-columns: 1fr 1fr;
                 gap: var(--space-4);
                 grid-column: span 2;
+                margin-bottom: 0;
             }
             
             .city-state-zip-row {
@@ -5366,6 +5381,7 @@ export default function MultistepForm() {
                 grid-template-columns: 2fr 1fr 1fr;
                 gap: var(--space-4);
                 grid-column: span 2;
+                margin-bottom: 0;
             }
             
             .form-subtitle {
@@ -5386,7 +5402,9 @@ export default function MultistepForm() {
                 font-size: var(--text-sm);
                 font-weight: var(--font-medium);
                 margin-bottom: var(--space-2);
+                margin-top: 0;
                 color: #374151;
+                display: block;
             }
             
             /* Tooltip Styles */
