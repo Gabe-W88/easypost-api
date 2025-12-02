@@ -52,6 +52,11 @@ export default async function handler(req, res) {
       amount: amountInCents,
       currency: 'usd',
       payment_method_types: ['card'],
+      payment_method_options: {
+        card: {
+          request_three_d_secure: 'automatic'
+        }
+      },
       metadata: {
         applicationId: applicationId,
         customer_email: formData.email,

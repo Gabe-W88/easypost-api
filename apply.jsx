@@ -614,60 +614,41 @@ const PaymentForm = ({
                     <h3 className="form-subtitle">Order Summary</h3>
 
                     {/* Permits */}
-                    <div className="summary-row">
-                        <span>
-                            {totals.permitCount > 0
-                                ? `${totals.permitCount} Permit${totals.permitCount > 1 ? "s" : ""} ($20 each)`
-                                : "No permits selected"}
-                        </span>
-                        <span className="summary-amount">
-                            ${totals.permitTotal}.00
-                        </span>
+                    <div className="summary-item">
+                        {totals.permitCount > 0
+                            ? `${totals.permitCount} Permit${totals.permitCount > 1 ? "s" : ""} ($20 each)`
+                            : "No permits selected"}: <span className="summary-price">${totals.permitTotal}.00</span>
                     </div>
 
                     {/* Processing & Shipping (Combined) */}
-                    <div className="summary-row">
-                        <span>
-                            {formData.processingOption === "standard"
-                                ? "Standard"
-                                : formData.processingOption === "fast"
-                                  ? "Fast"
-                                  : formData.processingOption === "fastest"
-                                    ? "Fastest"
-                                    : "Standard"}{" "}
-                            {formData.shippingCategory === "international"
-                                ? "International"
-                                : formData.shippingCategory === "military"
-                                  ? "Military"
-                                  : "Domestic"}{" "}
-                            Processing & Shipping
-                        </span>
-                        <span className="summary-amount">
-                            ${totals.processingPrice}.00
-                        </span>
+                    <div className="summary-item">
+                        {formData.processingOption === "standard"
+                            ? "Standard"
+                            : formData.processingOption === "fast"
+                              ? "Fast"
+                              : formData.processingOption === "fastest"
+                                ? "Fastest"
+                                : "Standard"}{" "}
+                        {formData.shippingCategory === "international"
+                            ? "International"
+                            : formData.shippingCategory === "military"
+                              ? "Military"
+                              : "Domestic"}{" "}
+                        Processing & Shipping: <span className="summary-price">${totals.processingPrice}.00</span>
                     </div>
 
                     {/* Subtotal */}
-                    <div className="summary-row subtotal">
-                        <span>Subtotal:</span>
-                        <span className="summary-amount">
-                            ${totals.subtotal.toFixed(2)}
-                        </span>
+                    <div className="summary-item subtotal">
+                        Subtotal: <span className="summary-price">${totals.subtotal.toFixed(2)}</span>
                     </div>
 
                     {/* Tax */}
-                    <div className="summary-row">
-                        <span>Tax (7.75%):</span>
-                        <span className="summary-amount">
-                            ${totals.taxAmount.toFixed(2)}
-                        </span>
+                    <div className="summary-item">
+                        Tax (7.75%): <span className="summary-price">${totals.taxAmount.toFixed(2)}</span>
                     </div>
 
-                    <div className="summary-row total">
-                        <span>Total:</span>
-                        <span className="summary-amount">
-                            ${totals.total.toFixed(2)}
-                        </span>
+                    <div className="summary-item total">
+                        Total: <span className="summary-price">${totals.total.toFixed(2)}</span>
                     </div>
                 </div>
 
@@ -745,16 +726,6 @@ const PaymentForm = ({
                                 marginBottom: "20px",
                             }}
                         >
-                            <div
-                                style={{
-                                    fontWeight: "500",
-                                    marginBottom: "8px",
-                                    color: "#495057",
-                                    fontSize: "14px",
-                                }}
-                            >
-                                Using shipping address for billing:
-                            </div>
                             <div
                                 style={{
                                     fontSize: "14px",
@@ -887,14 +858,19 @@ const PaymentForm = ({
 
                 <div className="form-section">
                     <h3 className="form-subtitle">Payment Information</h3>
-                    <div className="form-subtext">
-                        Secure payment powered by Stripe
-                    </div>
 
                     {/* Payment Element with billing details pre-filled from Step 3 (ROLLBACK: Remove defaultValues object if needed) */}
                     <div className="form-group">
                         <PaymentElement
                             options={{
+                                wallets: {
+                                    applePay: 'never',
+                                    googlePay: 'never',
+                                },
+                                paymentMethodOrder: ['card'],
+                                business: {
+                                    name: 'never'
+                                },
                                 defaultValues: {
                                     billingDetails: (() => {
                                         // Pre-fill billing details from Step 3 data to reduce redundancy
@@ -966,20 +942,22 @@ const PaymentForm = ({
                                 },
                                 fields: {
                                     billingDetails: {
-                                        name: "auto",
-                                        email: "auto",
-                                        phone: "auto",
+                                        name: "never",
+                                        email: "never",
+                                        phone: "never",
                                         address: {
-                                            country: "auto",
-                                            line1: "auto",
-                                            line2: "auto",
-                                            city: "auto",
-                                            state: "auto",
-                                            postalCode: "auto",
+                                            country: "never",
+                                            line1: "never",
+                                            line2: "never",
+                                            city: "never",
+                                            state: "never",
+                                            postalCode: "never",
                                         },
                                     },
                                 },
-                                layout: "tabs",
+                                terms: {
+                                    card: "never",
+                                },
                             }}
                             onReady={() => {
                                 setElementReady(true)
@@ -1018,7 +996,7 @@ const PaymentForm = ({
                     type="submit"
                     disabled={!stripe || !elements || isProcessing}
                     className="btn primary"
-                    style={{ marginTop: "20px" }}
+                    style={{ marginTop: "20px", width: "100%" }}
                 >
                     {isProcessing ? "Processing..." : "Complete Payment"}
                 </button>
@@ -2914,7 +2892,7 @@ export default function MultistepForm() {
         "Personal Information",
         "Document Upload",
         "Processing & Shipping",
-        "Payment",
+        "Complete Payment",
     ]
 
     const renderStep = () => {
@@ -3540,6 +3518,25 @@ export default function MultistepForm() {
                                 />
                             </div>
 
+                            <div className="form-field full-width">
+                            <FormField
+                                label="Permit Effective Date"
+                                name="permitEffectiveDate"
+                                type="date"
+                                placeholder="MM/DD/YYYY"
+                                required
+                                tooltip="In other words, when do you want your permit to start being valid? We recommend setting this date for when you expect to rent a vehicle or otherwise start driving abroad. IDPs are valid for one year from the permit effective date and may be future-dated up to 6 months from the date you’re applying (today)."
+                                value={formData.permitEffectiveDate}
+                                onChange={handleFieldChange}
+                                onBlur={handleBlur}
+                                fieldClass={getFieldClass(
+                                    "permitEffectiveDate"
+                                )}
+                                error={fieldErrors.permitEffectiveDate}
+                                touched={touched.permitEffectiveDate}
+                            />
+                            </div>
+
                             {/* Permit Selection */}
                             <div className="form-field full-width">
                                 <label className="field-label">
@@ -3594,25 +3591,6 @@ export default function MultistepForm() {
                                         {fieldErrors.selectedPermits}
                                     </span>
                                 )}
-                            </div>
-
-                            <div className="form-field full-width">
-                            <FormField
-                                label="Permit Effective Date"
-                                name="permitEffectiveDate"
-                                type="date"
-                                placeholder="MM/DD/YYYY"
-                                required
-                                tooltip="In other words, when do you want your permit to start being valid? We recommend setting this date for when you expect to rent a vehicle or otherwise start driving abroad. IDPs are valid for one year from the permit effective date and may be future-dated up to 6 months from the date you’re applying (today)."
-                                value={formData.permitEffectiveDate}
-                                onChange={handleFieldChange}
-                                onBlur={handleBlur}
-                                fieldClass={getFieldClass(
-                                    "permitEffectiveDate"
-                                )}
-                                error={fieldErrors.permitEffectiveDate}
-                                touched={touched.permitEffectiveDate}
-                            />
                             </div>
 
                             <SignatureField
@@ -3964,21 +3942,9 @@ export default function MultistepForm() {
                 )
             case 3:
                 return (
-                    <div className="processing-shipping-classic">
+                    <div>
                         <h2 className="section-title">
                             Processing & Shipping
-                            <p
-                                style={{
-                                    marginBottom: "0",
-                                    color: "#666",
-                                    fontSize: "14px",
-                                    fontWeight: "normal",
-                                    marginTop: "8px",
-                                }}
-                            >
-                                The total cost includes the fee shown below,
-                                plus tax and a $20 IDP booklet fee paid to AAA.
-                            </p>
                         </h2>
 
                         {/* 1. SHIPPING CATEGORY - Always visible first */}
@@ -5044,17 +5010,20 @@ export default function MultistepForm() {
                 <div className="button-row">
                     {step > 1 && !paymentState.isComplete && (
                         <button onClick={handleBack} className="btn">
-                            ← Previous
+                            <span className="btn-arrow-left">◄</span>
+                            <span className="btn-text">Previous</span>
                         </button>
                     )}
                     {step < 3 && (
                         <button onClick={handleNext} className="btn primary">
-                            Next ➞
+                            <span className="btn-text">Next</span>
+                            <span className="btn-arrow-right">►</span>
                         </button>
                     )}
                     {step === 3 && (
                         <button onClick={handleNext} className="btn primary">
-                            Continue to Payment ➞
+                            <span className="btn-text">Next</span>
+                            <span className="btn-arrow-right">►</span>
                         </button>
                     )}
                     {step === 4 && paymentState.isComplete && (
@@ -5126,6 +5095,8 @@ export default function MultistepForm() {
                 --radius-lg: 16px;
                 --radius-xl: 24px;
                 --radius-full: 9999px;
+                /* Base font family for the app — use token for consistency */
+                --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
             }
             
             /* ================================
@@ -5151,68 +5122,88 @@ export default function MultistepForm() {
             .container {
                 max-width: 1200px;
                 margin: 0 auto;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                font-family: var(--font-family-base);
                 line-height: 1.6;
                 padding: 0 16px 60px 16px;
                 overflow-x: hidden;
                 width: 100%;
             }
             
-            /* Stepper Styles */
+            /* Stepper Styles - Desktop Premium Design */
             .stepper {
                 display: flex;
-                justify-content: space-between;
-                margin-bottom: var(--space-8);
-                padding: var(--space-5) var(--space-5) 0 var(--space-5);
+                justify-content: center;
+                align-items: center;
+                margin-bottom: var(--space-5);
+                padding: var(--space-4) 0;
+                gap: var(--space-8);
+                max-width: 900px;
+                margin-left: auto;
+                margin-right: auto;
             }
             
             .step {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                flex: 1;
                 position: relative;
+                flex: 1;
+                max-width: 180px;
             }
             
             .step:not(:last-child)::after {
                 content: '';
                 position: absolute;
-                top: 15px;
-                left: 60%;
-                right: -40%;
-                height: var(--space-0-5);
-                background-color: #e5e7eb;
+                top: 32px;
+                left: calc(50% + 40px);
+                width: calc(100% - 20px);
+                height: 3px;
+                background: linear-gradient(to right, #e5e7eb 0%, #f3f4f6 100%);
                 z-index: 0;
+                border-radius: 2px;
             }
             
             .circle {
-                width: var(--space-8);
-                height: var(--space-8);
+                width: 64px;
+                height: 64px;
                 border-radius: var(--radius-full);
-                background-color: #e5e7eb;
+                background: #e5e7eb;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                font-weight: var(--font-semibold);
-                font-size: var(--text-sm);
-                color: #6b7280;
+                font-weight: var(--font-bold);
+                font-size: 28px;
+                color: #9ca3af;
                 position: relative;
                 z-index: 1;
                 transition: all 0.3s ease;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             }
             
             .circle.active {
-                background-color: #02569D;
+                background: linear-gradient(135deg, #0369a1 0%, #02569D 100%);
                 color: white;
-                box-shadow: 0 0 0 var(--space-1) rgba(59, 130, 246, 0.1);
+                box-shadow: 0 4px 16px rgba(2, 86, 157, 0.35), 0 0 0 4px rgba(2, 86, 157, 0.1);
+                transform: scale(1.05);
             }
             
             .label {
-                margin-top: var(--space-2);
-                font-size: var(--text-xs);
-                font-weight: var(--font-medium);
+                margin-top: var(--space-3);
+                font-size: 15px;
+                font-weight: var(--font-semibold);
                 color: #6b7280;
                 text-align: center;
+                white-space: nowrap;
+                letter-spacing: 0.01em;
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .step:has(.circle.active) .label {
+                color: #02569D;
+                font-weight: var(--font-bold);
             }
             
             /* Form Container */
@@ -5226,26 +5217,57 @@ export default function MultistepForm() {
             
             /* Form Sections */
             .form-section {
-                margin-bottom: var(--space-8);
+                margin-bottom: var(--space-5);
+            }
+            
+            .form-section + .form-section {
+                margin-top: var(--space-5);
             }
             
             .form-section:last-child {
                 margin-bottom: 0;
             }
             
+            /* Spacing for fields outside form-grid */
+            .form-section > .form-field,
+            .form-section > .form-group {
+                margin-top: var(--space-5);
+            }
+            
+            .form-section > .form-grid:first-child,
+            .form-section > .form-field:first-of-type,
+            .form-section > .form-group:first-of-type {
+                margin-top: 0;
+            }
+            
+            /* Section Title Styles - Updated */
             .section-title {
                 font-size: var(--text-2xl);
                 font-weight: var(--font-bold);
-                margin-bottom: var(--space-10);
+                margin-bottom: var(--space-4);
                 color: #111827;
                 border-bottom: 2px solid #f3f4f6;
-                padding-bottom: var(--space-4);
+                padding-bottom: var(--space-2);
+                text-align: left;
+                line-height: 1;
+            }
+            
+            h2.section-title .section-subtitle {
+                display: block;
+                margin-top: var(--space-0-5);
+                margin-bottom: 0;
+                padding: 0;
+                color: #6b7280;
+                font-size: 14px;
+                font-weight: normal;
+                line-height: 1.5;
+                text-align: left;
             }
             
             .form-subtitle {
                 font-size: var(--text-lg);
                 font-weight: var(--font-semibold);
-                margin-bottom: var(--space-2);
+                margin-bottom: var(--space-0-5);
                 color: #374151;
             }
             
@@ -5256,9 +5278,10 @@ export default function MultistepForm() {
             .form-subtext {
                 font-size: var(--text-sm);
                 color: #6b7280;
+                font-weight: normal;
                 margin-bottom: var(--space-5);
-                margin-top: 0;
-                font-style: italic;
+                margin-top: var(--space-0-5);
+                font-style: normal;
             }
             
             /* Form Layout */
@@ -5269,7 +5292,10 @@ export default function MultistepForm() {
                 row-gap: var(--space-5);
             }
             
-            .form-grid > * {
+            /* Reset all margins on grid children for uniform spacing */
+            .form-grid > *,
+            .form-grid > * > .form-group {
+                margin-top: 0;
                 margin-bottom: 0;
             }
             
@@ -5391,12 +5417,6 @@ export default function MultistepForm() {
                 margin-bottom: var(--space-2);
             }
             
-            .form-subtext {
-                color: #666;
-                font-size: 0.875rem;
-                margin-bottom: var(--space-6);
-            }
-            
             /* Form Fields */
             .form-label {
                 font-size: var(--text-sm);
@@ -5434,7 +5454,7 @@ export default function MultistepForm() {
                 margin-left: var(--space-2);
                 font-size: var(--text-xs);
                 font-weight: var(--font-bold);
-                font-family: Arial, sans-serif;
+                font-family: var(--font-family-base);
                 vertical-align: middle;
             }
             
@@ -5452,7 +5472,7 @@ export default function MultistepForm() {
                 margin-left: var(--space-3);
                 font-size: var(--text-xs);
                 font-weight: var(--font-bold);
-                font-family: Arial, sans-serif;
+                font-family: var(--font-family-base);
                 vertical-align: middle;
             }
             
@@ -5490,11 +5510,26 @@ export default function MultistepForm() {
                 border: 2px solid #e5e7eb;
                 border-radius: var(--radius-base);
                 font-size: var(--text-sm);
+                font-family: var(--font-family-base);
                 transition: all 0.2s ease;
                 background-color: #ffffff;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
+            }
+            
+            .form-input::placeholder {
+                font-size: var(--text-sm);
+                color: #9ca3af;
+                opacity: 1;
+            }
+            
+            textarea.form-input::placeholder {
+                font-size: var(--text-sm);
+                color: #9ca3af;
+                opacity: 1;
+                font-family: var(--font-family-base);
+                font-weight: inherit;
             }
             
             .form-input:focus {
@@ -5690,6 +5725,7 @@ export default function MultistepForm() {
                 outline: none !important;
                 padding: 0 var(--space-4);
                 font-size: var(--text-base);
+                font-family: var(--font-family-base);
                 height: 100%;
                 box-sizing: border-box;
             }
@@ -5723,6 +5759,7 @@ export default function MultistepForm() {
                 /* Remove background and border styling */
                 padding: 0;
                 margin: 0;
+                margin-top: var(--space-5);
             }
             
             /* Alert Components */
@@ -5845,21 +5882,26 @@ export default function MultistepForm() {
             
             /* Upload Styles */
             .file-upload-section {
-                margin-bottom: var(--space-8);
+                margin-bottom: var(--space-5);
             }
             
             /* Driver's License Side-by-Side Layout */
             .driver-license-uploads {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: var(--space-6);
-                margin-bottom: var(--space-8);
+                gap: var(--space-5);
+                margin-top: 0;
+                margin-bottom: var(--space-5);
+            }
+            
+            .driver-license-uploads .file-upload-section {
+                margin-top: 0;
             }
             
             @media (max-width: 768px) {
                 .driver-license-uploads {
                     grid-template-columns: 1fr;
-                    gap: var(--space-6);
+                    gap: var(--space-5);
                 }
             }
             
@@ -5877,7 +5919,7 @@ export default function MultistepForm() {
                 background-color: #fafafa;
                 cursor: pointer;
                 position: relative;
-                margin-bottom: var(--space-5);
+                margin-bottom: 0;
                 min-height: auto;
             }
             
@@ -5999,7 +6041,8 @@ export default function MultistepForm() {
                 font-weight: 600;
                 color: #374151;
                 font-size: 18px;
-                margin-bottom: 12px;
+                margin-top: 0;
+                margin-bottom: var(--space-2);
             }
             
             .upload-container {
@@ -6295,26 +6338,26 @@ export default function MultistepForm() {
             
             /* Guidelines Section */
             .guidelines-section {
-                padding: var(--space-6) 0;
-                margin-top: var(--space-8);
+                padding: 0;
+                margin-top: var(--space-5);
             }
             
             .guidelines-title {
                 color: #374151;
                 font-size: var(--text-lg);
                 font-weight: var(--font-semibold);
-                margin: 0 0 var(--space-4) 0;
+                margin: 0 0 var(--space-3) 0;
             }
             
             .guidelines-list {
-                margin: 0 0 var(--space-6) 0;
+                margin: 0 0 var(--space-4) 0;
                 padding: 0 0 0 var(--space-5);
                 color: #4b5563;
                 line-height: 1.6;
             }
             
             .guidelines-list li {
-                margin-bottom: var(--space-3);
+                margin-bottom: var(--space-2);
                 font-size: var(--text-sm);
             }
             
@@ -6422,6 +6465,10 @@ export default function MultistepForm() {
                 border-top: 2px solid #f3f4f6;
             }
             
+            .button-row:has(.btn.primary:only-of-type) {
+                justify-content: flex-end;
+            }
+            
             .btn {
                 padding: var(--space-3) var(--space-6);
                 border: 2px solid transparent;
@@ -6467,34 +6514,32 @@ export default function MultistepForm() {
             /* Checkbox Groups */
             .checkbox-group {
                 display: flex;
-                flex-direction: row;
-                flex-wrap: wrap;
-                gap: var(--space-6);
-                margin-top: var(--space-2);
+                flex-direction: column;
+                gap: var(--space-1-5);
             }
             
-            .checkbox-label {
+            .checkbox-group .checkbox-label {
                 display: flex;
                 align-items: center;
-                gap: var(--space-3);
+                gap: var(--space-2-5);
                 cursor: pointer;
-                padding: var(--space-2);
-                border-radius: var(--radius-sm);
-                transition: background-color 0.2s ease;
+                padding: 0;
+                background-color: transparent;
+                max-width: 100%;
+                margin-bottom: 0;
             }
             
-            .checkbox-label:hover {
-                background-color: #f8fafc;
-            }
-            
-            .checkbox-label input[type="checkbox"] {
+            .checkbox-group .checkbox-label input[type="checkbox"] {
                 width: 18px;
                 height: 18px;
                 accent-color: #02569D;
                 cursor: pointer;
+                flex-shrink: 0;
+                margin-right: 0;
+                transform: none;
             }
             
-            .checkbox-text {
+            .checkbox-group .checkbox-text {
                 font-size: var(--text-sm);
                 color: #374151;
                 font-weight: var(--font-medium);
@@ -6503,7 +6548,6 @@ export default function MultistepForm() {
             .form-field {
                 display: flex;
                 flex-direction: column;
-                margin-bottom: var(--space-4);
             }
             
             .form-field.full-width {
@@ -6523,6 +6567,7 @@ export default function MultistepForm() {
                 color: #ef4444;
                 font-weight: var(--font-medium);
                 line-height: var(--space-4);
+                margin-bottom: 0;
             }
             
             .checkout-error {
@@ -6609,9 +6654,9 @@ export default function MultistepForm() {
                 [class*="grid"]:not(.checkbox-grid):not(.license-grid),
                 [class*="row"]:not(.button-row) {
                     grid-template-columns: 1fr !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: var(--space-4) !important;
+                    display: grid !important;
+                    column-gap: 0 !important;
+                    row-gap: var(--space-5) !important;
                 }
                 
                 .container {
@@ -6624,41 +6669,48 @@ export default function MultistepForm() {
                     margin: var(--space-4) 0;
                 }
                 
-                .form-grid {
-                    grid-template-columns: 1fr;
-                    gap: var(--space-4);
-                }
-                
-                .name-row {
-                    grid-template-columns: 1fr;
-                    gap: var(--space-4);
-                }
+                /* Grid spacing handled by global rule above */
                 
                 .form-group.full-width {
                     grid-column: span 1;
                 }
                 
+                /* Mobile tablet stepper - simplified */
                 .stepper {
-                    padding: 0 var(--space-2);
-                    margin-bottom: var(--space-6);
-                    flex-wrap: wrap;
+                    padding: var(--space-3) var(--space-2);
+                    margin-bottom: var(--space-4);
+                    gap: var(--space-1-5);
+                    background: transparent;
+                    border-radius: 0;
+                }
+                
+                .step:not(:last-child)::after {
+                    display: none;
                 }
                 
                 .step {
-                    margin-bottom: var(--space-2);
+                    margin-bottom: 0;
+                    max-width: none;
                 }
                 
                 .step .label {
-                    font-size: 10px;
-                    max-width: 80px;
+                    font-size: 11px;
                     text-align: center;
-                    line-height: 1.2;
+                    line-height: 1.3;
+                    white-space: normal;
+                    max-width: 70px;
                 }
                 
                 .circle {
-                    width: 28px;
-                    height: 28px;
-                    font-size: var(--text-xs);
+                    width: 40px;
+                    height: 40px;
+                    font-size: 16px;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+                }
+                
+                .circle.active {
+                    transform: scale(1);
+                    box-shadow: 0 2px 8px rgba(2, 86, 157, 0.3);
                 }
                 
                 .button-row {
@@ -6674,6 +6726,18 @@ export default function MultistepForm() {
                     max-width: calc(50% - 6px);
                     padding: var(--space-3-5) var(--space-5);
                     font-size: var(--text-base);
+                    justify-content: space-between;
+                    position: relative;
+                }
+                
+                .btn-text {
+                    flex: 1;
+                    text-align: center;
+                }
+                
+                .btn-arrow-left,
+                .btn-arrow-right {
+                    flex-shrink: 0;
                 }
                 
                 .form-input, .form-select {
@@ -6682,40 +6746,12 @@ export default function MultistepForm() {
                 }
                 
                 .form-group {
-                    margin-bottom: var(--space-5);
+                    margin-top: 0;
+                    margin-bottom: 0;
                     width: 100%;
                 }
                 
-                .form-grid {
-                    grid-template-columns: 1fr !important;
-                    gap: var(--space-4);
-                    width: 100%;
-                }
-                
-                .name-row {
-                    grid-template-columns: 1fr !important;
-                    gap: var(--space-4);
-                    width: 100%;
-                }
-                
-                .state-zip-row {
-                    grid-template-columns: 1fr !important;
-                    gap: var(--space-4);
-                    width: 100%;
-                }
-                
-                .city-state-zip-row {
-                    grid-template-columns: 1fr !important;
-                    gap: var(--space-4);
-                    width: 100%;
-                }
-                
-                /* Force all grid layouts to single column */
-                .form-section [class*="grid"],
-                .form-section [class*="row"] {
-                    grid-template-columns: 1fr !important;
-                    gap: var(--space-4) !important;
-                }
+                /* All row/grid spacing handled by global rule - no overrides */
                 
                 /* Ensure proper field width on mobile */
                 .form-input, .form-select, input, select, textarea {
@@ -6785,17 +6821,19 @@ export default function MultistepForm() {
                 
                 .section-title {
                     font-size: var(--text-lg);
-                    margin-bottom: var(--space-5);
-                    padding-bottom: var(--space-3);
+                    margin-bottom: var(--space-4);
+                    padding-bottom: var(--space-2);
                 }
                 
                 .form-subtitle {
-                    font-size: 15px;
+                    font-size: 18px;
+                    font-weight: var(--font-semibold);
+                    color: #374151 !important;
                     margin-bottom: var(--space-4);
                 }
                 
                 .form-input, .form-select {
-                    font-size: var(--text-base); /* Prevents zoom on iOS */
+                    font-size: var(--text-sm);
                     padding: var(--space-4) var(--space-3-5);
                     border-radius: var(--radius-md);
                     width: 100% !important;
@@ -6815,42 +6853,53 @@ export default function MultistepForm() {
                 .form-section [class*="grid"],
                 .form-section [class*="row"] {
                     grid-template-columns: 1fr !important;
-                    gap: var(--space-4) !important;
-                    display: block !important;
+                    row-gap: var(--space-5) !important;
+                    column-gap: 0 !important;
+                    display: grid !important;
                 }
                 
                 .form-section [class*="grid"] > *,
                 .form-section [class*="row"] > * {
-                    margin-bottom: var(--space-4) !important;
+                    margin-top: 0 !important;
+                    margin-bottom: 0 !important;
                     width: 100% !important;
                     max-width: 100% !important;
                 }
                 
+                /* Mobile stepper - minimal dots */
                 .stepper {
-                    margin-bottom: var(--space-5);
-                    padding: 0 var(--space-1);
+                    margin-bottom: var(--space-3);
+                    padding: var(--space-2) 0;
+                    gap: var(--space-1);
                 }
                 
                 .step {
-                    flex: 1;
                     min-width: 0;
+                    max-width: none;
                 }
                 
                 .step:not(:last-child)::after {
-                    display: none; /* Hide connecting lines on mobile */
+                    display: none;
                 }
                 
                 .step .label {
                     font-size: 9px;
                     margin-top: var(--space-1);
-                    overflow-wrap: break-word;
-                    hyphens: auto;
+                    white-space: normal;
+                    max-width: 60px;
+                    line-height: 1.2;
                 }
                 
                 .circle {
-                    width: var(--space-6);
-                    height: var(--space-6);
-                    font-size: 11px;
+                    width: 36px;
+                    height: 36px;
+                    font-size: 14px;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                }
+                
+                .circle.active {
+                    transform: scale(1);
+                    box-shadow: 0 2px 6px rgba(2, 86, 157, 0.25);
                 }
                 
                 .btn {
@@ -6858,18 +6907,30 @@ export default function MultistepForm() {
                     font-size: var(--text-base);
                     border-radius: var(--radius-md);
                     min-height: 48px;
+                    justify-content: space-between;
+                }
+                
+                .btn-text {
+                    flex: 1;
+                    text-align: center;
+                }
+                
+                .btn-arrow-left,
+                .btn-arrow-right {
+                    flex-shrink: 0;
                 }
                 
                 .field-error-message, .error-message {
                     font-size: 11px;
                 }
                 
-                .checkbox-label {
-                    padding: var(--space-3) var(--space-2);
+                .checkbox-group .checkbox-label {
+                    padding: 0;
                     gap: var(--space-2);
+                    margin-bottom: 0;
                 }
                 
-                .checkbox-text {
+                .checkbox-group .checkbox-text {
                     font-size: var(--text-sm);
                     line-height: 1.4;
                 }
@@ -6936,9 +6997,42 @@ export default function MultistepForm() {
                 
                 .form-input, .form-select {
                     padding: var(--space-3-5) var(--space-3);
-                    font-size: var(--text-base);
+                    font-size: var(--text-sm);
                     width: 100% !important;
                     max-width: 100% !important;
+                }
+                
+                /* Mobile stepper - dots only */
+                .stepper {
+                    gap: var(--space-2);
+                    margin-bottom: var(--space-3);
+                    padding: var(--space-2) 0;
+                    justify-content: center;
+                }
+                
+                .step {
+                    max-width: none;
+                    flex: 0 0 auto;
+                }
+                
+                .step:not(:last-child)::after {
+                    display: none;
+                }
+                
+                .circle {
+                    width: 32px;
+                    height: 32px;
+                    font-size: 13px;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                }
+                
+                .circle.active {
+                    transform: scale(1);
+                    box-shadow: 0 2px 6px rgba(2, 86, 157, 0.25);
+                }
+                
+                .label {
+                    display: none;
                 }
                 
                 /* Ensure absolute single column layout on extra small screens */
@@ -6951,18 +7045,19 @@ export default function MultistepForm() {
                 [class*="grid"],
                 [class*="row"] {
                     grid-template-columns: 1fr !important;
-                    gap: var(--space-3) !important;
-                    display: block !important;
+                    row-gap: var(--space-5) !important;
+                    column-gap: 0 !important;
+                    display: grid !important;
                 }
                 
                 .form-section > *,
                 .form-group,
                 [class*="grid"] > *,
                 [class*="row"] > * {
-                    margin-bottom: var(--space-3) !important;
+                    margin-top: 0 !important;
+                    margin-bottom: 0 !important;
                     width: 100% !important;
                     max-width: 100% !important;
-                    display: block !important;
                 }
                 
                 .btn {
@@ -6970,19 +7065,36 @@ export default function MultistepForm() {
                     font-size: 15px;
                 }
                 
+                /* Stepper - ultra compact dots */
+                .stepper {
+                    margin-bottom: var(--space-2);
+                    padding: var(--space-2) 0;
+                    gap: var(--space-1-5);
+                }
+                
                 .circle {
-                    width: 22px;
-                    height: 22px;
-                    font-size: 10px;
+                    width: 28px;
+                    height: 28px;
+                    font-size: 12px;
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                }
+                
+                .circle.active {
+                    transform: scale(1);
+                    box-shadow: 0 2px 4px rgba(2, 86, 157, 0.2);
+                }
+                
+                .label {
+                    display: none;
                 }
                 
                 .step .label {
-                    font-size: 8px;
+                    display: none;
                 }
                 
                 .stepper {
-                    padding: 0 var(--space-0-5);
-                    margin-bottom: var(--space-4);
+                    padding: var(--space-2) 0;
+                    margin-bottom: var(--space-2);
                 }
                 
                 .info-icon, .tooltip-icon {
@@ -7008,29 +7120,32 @@ export default function MultistepForm() {
                 width: 100%;
             }
 
-            .summary-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 12px;
-                font-size: 15px;
+            .summary-item {
+                margin-bottom: var(--space-3);
+                font-size: var(--text-base);
                 color: #4b5563;
-                line-height: 1.4;
+                line-height: 1.5;
+            }
+            
+            .summary-price {
+                font-weight: var(--font-bold);
+                color: #111827;
+            }
+            
+            .summary-item.subtotal {
+                font-weight: var(--font-semibold);
+                padding-top: var(--space-3);
+                border-top: 1px solid #e5e7eb;
+                margin-top: var(--space-3);
             }
 
-            .summary-row.total {
-                font-weight: 700;
-                font-size: 16px;
-                margin-top: 16px;
-                padding-top: 16px;
+            .summary-item.total {
+                font-weight: var(--font-bold);
+                font-size: var(--text-lg);
+                margin-top: var(--space-4);
+                padding-top: var(--space-4);
                 border-top: 2px solid #e5e7eb;
                 color: #111827;
-            }
-
-            .summary-amount {
-                font-weight: 600;
-                color: #111827;
-                white-space: nowrap;
             }
 
             .loading-message {
@@ -7084,26 +7199,33 @@ export default function MultistepForm() {
                 font-weight: 500;
             }
             .classic-field {
-                margin-bottom: 18px;
+                margin-top: 0;
+                margin-bottom: var(--space-5);
             }
             
             .subtitle-note {
-                font-size: 13px;
+                font-size: var(--text-sm);
                 color: #6b7280;
-                margin-top: 4px;
-                margin-bottom: 12px;
+                font-weight: normal;
+                margin-top: 0;
+                margin-bottom: var(--space-5);
+            }
+            
+            /* Reduce spacing when label is followed by subtitle-note */
+            .classic-label + .subtitle-note {
+                margin-top: calc(var(--space-1) - var(--space-4));
             }
             
             /* International Address Fields Styling */
             .international-address-fields {
                 display: flex;
                 flex-direction: column;
-                gap: 16px;
-                margin-top: 8px;
-                padding: 20px;
-                background-color: #fafbfc;
-                border: 1px solid #e1e5e9;
-                border-radius: 8px;
+                gap: var(--space-5);
+                margin-top: 0;
+                padding: 0;
+                background-color: transparent;
+                border: none;
+                border-radius: 0;
             }
             
             .international-address-fields .form-group {
@@ -7124,7 +7246,7 @@ export default function MultistepForm() {
                 border: 2px solid #e5e7eb;
                 border-radius: 6px;
                 font-size: 14px;
-                font-family: inherit;
+                font-family: var(--font-family-base);
                 line-height: 1.4;
                 resize: vertical;
                 transition: border-color 0.2s ease;
@@ -7139,7 +7261,7 @@ export default function MultistepForm() {
             
             .international-address-fields textarea::placeholder {
                 color: #9ca3af;
-                font-size: 13px;
+                font-size: var(--text-sm);
             }
             
             /* Custom Address Fields Styling */
@@ -7168,7 +7290,7 @@ export default function MultistepForm() {
                 border: 2px solid #e5e7eb;
                 border-radius: 6px;
                 font-size: 14px;
-                font-family: inherit;
+                font-family: var(--font-family-base);
                 transition: border-color 0.2s ease;
                 background-color: #ffffff;
             }
@@ -7194,10 +7316,15 @@ export default function MultistepForm() {
             
             .classic-label {
                 display: block;
-                font-size: 15px;
-                font-weight: 600;
-                color: #222;
-                margin-bottom: 4px;
+                font-size: 18px;
+                font-weight: var(--font-semibold);
+                color: #374151;
+                margin-bottom: var(--space-4);
+            }
+            
+            /* Reduce spacing when label is followed by subtext */
+            .classic-label + .form-subtext {
+                margin-top: calc(var(--space-1) - var(--space-4));
             }
             .classic-radio-group {
                 display: flex;
@@ -7349,7 +7476,7 @@ export default function MultistepForm() {
             .selectable-box-group {
                 display: grid;
                 grid-template-columns: 1fr 1fr 1fr;
-                gap: 16px;
+                gap: var(--space-5);
             }
             
             .selectable-box {
@@ -7394,7 +7521,7 @@ export default function MultistepForm() {
             }
             
             .selectable-box-sub {
-                font-size: 13px;
+                font-size: 14px;
                 margin: 0;
                 color: #6b7280;
             }
@@ -7416,7 +7543,7 @@ export default function MultistepForm() {
             /* Vertical layout for processing speed and shipping speed */
             .selectable-box-group.vertical {
                 grid-template-columns: 1fr;
-                gap: 12px;
+                gap: var(--space-5);
             }
             
             .selectable-box-group.vertical .selectable-box {
@@ -7442,25 +7569,27 @@ export default function MultistepForm() {
             @media (max-width: 768px) {
                 .selectable-box-group {
                     grid-template-columns: 1fr;
-                    gap: 12px;
+                    gap: var(--space-5);
                 }
                 
                 .selectable-box {
-                    flex-direction: row;
-                    justify-content: space-between;
+                    flex-direction: column;
+                    justify-content: flex-start;
                     text-align: left;
                     min-height: auto;
                     padding: 16px;
+                    align-items: flex-start;
                 }
                 
                 .selectable-box-content {
                     flex-direction: column;
                     align-items: flex-start;
                     gap: 2px;
+                    width: 100%;
                 }
                 
                 .selectable-box-price {
-                    margin-top: 0;
+                    margin-top: var(--space-2);
                     font-size: 16px;
                 }
             }
@@ -7473,7 +7602,8 @@ export default function MultistepForm() {
                     padding: 0 8px;
                 }
                 .classic-label {
-                    font-size: 14px;
+                    font-size: 18px;
+                    font-weight: var(--font-semibold);
                 }
                 .classic-radio {
                     padding: 16px 20px;
@@ -7792,7 +7922,7 @@ export default function MultistepForm() {
                 text-align: center;
             }
 
-            .section-subtitle {
+            .section-header .section-subtitle {
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -7817,7 +7947,7 @@ export default function MultistepForm() {
             }
 
             .section-description {
-                color: #666;
+                color: #6b7280;
                 font-size: 16px;
                 margin: 0;
                 max-width: 500px;
@@ -7994,14 +8124,14 @@ export default function MultistepForm() {
 
             .category-subtitle {
                 font-size: 16px;
-                color: #02569D;
-                font-weight: 500;
+                color: #6b7280;
+                font-weight: normal;
                 margin: 0 0 4px 0;
             }
 
             .category-description {
                 font-size: 14px;
-                color: #666;
+                color: #6b7280;
                 margin: 0;
             }
 
@@ -8017,6 +8147,7 @@ export default function MultistepForm() {
                 }
                 to {
                     opacity: 1;
+                    font-family: var(--font-family-base);
                     transform: translateY(0);
                 }
             }
@@ -8157,7 +8288,7 @@ export default function MultistepForm() {
                     width: 100% !important;
                     max-width: 100% !important;
                     box-sizing: border-box !important;
-                    font-size: 16px !important; /* Prevent iOS zoom */
+                    font-size: var(--text-sm) !important;
                     padding: 14px 16px !important;
                     border-radius: 8px !important;
                 }
