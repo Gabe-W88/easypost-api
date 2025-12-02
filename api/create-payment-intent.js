@@ -51,9 +51,7 @@ export default async function handler(req, res) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: 'usd',
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
       metadata: {
         applicationId: applicationId,
         customer_email: formData.email,
