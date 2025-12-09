@@ -296,6 +296,21 @@ async function handleCheckoutExpired(session) {
   }
 }
 
+// Convert date from YYYY-MM-DD to MM/DD/YYYY format
+function convertToMMDDYYYY(dateString) {
+  if (!dateString) return dateString
+  
+  // Check if already in YYYY-MM-DD format
+  const isoDateMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (isoDateMatch) {
+    const [, year, month, day] = isoDateMatch
+    return `${month}/${day}/${year}`
+  }
+  
+  // Return as-is if not in expected format
+  return dateString
+}
+
 // Trigger Make.com automation with application data for business workflow
 async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null, fileData = null) {
   
@@ -406,7 +421,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         full_name: `${formData.firstName} ${formData.middleName || ''} ${formData.lastName}`.trim(),
         email: formData.email,
         phone: formData.phone,
-        date_of_birth: formData.dateOfBirth,
+        date_of_birth: convertToMMDDYYYY(formData.dateOfBirth),
         signature_url: parsedFileData?.signature?.publicUrl || null, // Signature URL from storage
         signature_email_url: parsedFileData?.signature?.publicUrl ? `${parsedFileData.signature.publicUrl}?width=400&height=200&resize=contain&format=png` : null // Optimized for email
       },
@@ -423,8 +438,8 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       // Travel information
       travel_info: {
         drive_abroad: formData.driveAbroad,
-        departure_date: formData.departureDate,
-        permit_effective_date: formData.permitEffectiveDate
+        departure_date: convertToMMDDYYYY(formData.departureDate),
+        permit_effective_date: convertToMMDDYYYY(formData.permitEffectiveDate)
       },
       
       // Form address (step 1)

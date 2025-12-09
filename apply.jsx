@@ -461,6 +461,7 @@ const PaymentForm = ({
     const [isProcessing, setIsProcessing] = useState(false)
     const [message, setMessage] = useState("")
     const [elementReady, setElementReady] = useState(false)
+    const [sameAsShipping, setSameAsShipping] = useState(true)
 
     // Calculate totals based on form selections
     const calculateTotals = useCallback(() => {
@@ -563,6 +564,13 @@ const PaymentForm = ({
         }
     }, [])
 
+    // Map country name to ISO code for Stripe
+    const getCountryCode = (countryName) => {
+        if (!countryName) return 'US' // Default to US if no country
+        const country = countries.find(c => c.name.toLowerCase() === countryName.toLowerCase())
+        return country ? country.code : 'US'
+    }
+
     const handleSubmit = async (event) => {
         event.preventDefault()
 
@@ -575,8 +583,24 @@ const PaymentForm = ({
         setMessage("")
 
         try {
+            const countryCode = getCountryCode(formData.shippingCountry)
+            
             const confirmParams = {
                 return_url: window.location.href,
+            }
+
+            // If using shipping address as billing, pass all address fields
+            if (sameAsShipping) {
+                confirmParams.payment_method_data = {
+                    billing_details: {
+                        address: {
+                            line1: formData.shippingStreetAddress,
+                            city: formData.shippingCity,
+                            state: formData.shippingState,
+                            country: countryCode,
+                        },
+                    },
+                }
             }
 
             const { error } = await stripe.confirmPayment({
@@ -607,7 +631,7 @@ const PaymentForm = ({
             <form onSubmit={handleSubmit} className="payment-form">
                 {/* Payment Summary - Clean layout without extra boxes */}
                 <div className="form-section">
-                    <h3 className="form-subtitle">Order Summary</h3>
+                    <h3 className="form-subtitle" style={{ fontSize: '20px', fontWeight: '700', color: '#111827', marginBottom: '20px' }}>Order Summary</h3>
 
                     {/* Permits */}
                     <div className="summary-item">
@@ -660,9 +684,22 @@ const PaymentForm = ({
                 
 
                 <div className="form-section">
-                    <h3 className="form-subtitle">Payment Information</h3>
+                    <h3 className="form-subtitle" style={{ fontSize: '20px', fontWeight: '700', color: '#111827', marginBottom: '20px' }}>Payment Information</h3>
 
-                    {/* Payment Element with billing details pre-filled from Step 3 (ROLLBACK: Remove defaultValues object if needed) */}
+                    {/* Checkbox for same as shipping address */}
+                    <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
+                        <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={sameAsShipping}
+                                onChange={(e) => setSameAsShipping(e.target.checked)}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#374151' }}>Billing address same as shipping address</span>
+                        </label>
+                    </div>
+
+                    {/* Payment Element */}
                     <div className="form-group">
                         <style>
                             {`
@@ -688,11 +725,11 @@ const PaymentForm = ({
                                     billingDetails: {
                                         address: {
                                             postalCode: 'auto',
-                                            country: 'never',
-                                            line1: 'never',
-                                            line2: 'never',
-                                            city: 'never',
-                                            state: 'never',
+                                            country: sameAsShipping ? 'never' : 'auto',
+                                            line1: sameAsShipping ? 'never' : 'auto',
+                                            line2: sameAsShipping ? 'never' : 'auto',
+                                            city: sameAsShipping ? 'never' : 'auto',
+                                            state: sameAsShipping ? 'never' : 'auto',
                                         }
                                     }
                                 },
@@ -2451,7 +2488,6 @@ export default function MultistepForm() {
         setPaymentState((prev) => ({ ...prev, isLoading: true, error: null }))
 
         try {
-            // ROLLBACK: Remove validation block if causing issues
             // Validate required Step 3 fields before proceeding with payment
             const requiredStep3Fields = {
                 processingOption: "Please select a processing speed in Step 3",
@@ -3431,7 +3467,6 @@ export default function MultistepForm() {
                                         />
                                         <span className="checkbox-text">
                                             By signing, I agree to the{" "}
-                                            {/* Previous URL (rollback): https://ambiguous-methodologies-053772.framer.app/terms */}
                                             <a
                                                 href="https://serious-flows-972417.framer.app/terms"
                                                 target="_blank"
@@ -4088,7 +4123,6 @@ export default function MultistepForm() {
                                                             key={country.code}
                                                             value={country.code}
                                                         >
-                                                            {country.flag}{" "}
                                                             {country.name}
                                                         </option>
                                                     ))}
@@ -4517,7 +4551,6 @@ export default function MultistepForm() {
                                                         <option value="">
                                                             Select Country
                                                         </option>
-                                                        {/* ROLLBACK: Replace with old hardcoded list if needed */}
                                                         {/* Featured countries at top */}
                                                         <optgroup label="━━━ Most Common ━━━">
                                                             <option value="IT">
@@ -6960,31 +6993,39 @@ export default function MultistepForm() {
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: var(--space-3);
-                font-size: var(--text-base);
-                color: #4b5563;
-                line-height: 1.5;
+                font-size: 15px;
+                color: #6b7280;
+                line-height: 1.6;
             }
             
             .summary-price {
                 font-weight: var(--font-bold);
                 color: #111827;
                 margin-left: var(--space-3);
+                font-size: 16px;
             }
             
             .summary-item.subtotal {
                 font-weight: var(--font-semibold);
-                padding-top: var(--space-3);
+                padding-top: var(--space-4);
                 border-top: 1px solid #e5e7eb;
-                margin-top: var(--space-3);
+                margin-top: var(--space-4);
+                color: #374151;
+                font-size: 16px;
             }
 
             .summary-item.total {
                 font-weight: var(--font-bold);
-                font-size: var(--text-lg);
-                margin-top: var(--space-4);
-                padding-top: var(--space-4);
-                border-top: 2px solid #e5e7eb;
+                font-size: 20px;
+                margin-top: var(--space-5);
+                padding-top: var(--space-5);
+                border-top: 2px solid #d1d5db;
                 color: #111827;
+            }
+            
+            .summary-item.total .summary-price {
+                font-size: 22px;
+                color: #02569D;
             }
 
             @media (max-width: 480px) {
