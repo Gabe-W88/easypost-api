@@ -4078,11 +4078,11 @@ export default function MultistepForm() {
                                         }}
                                     >
                                         <div
-                                            className="form-group"
+                                            className="form-group required"
                                             style={{
                                                 flex:
                                                     formData.shippingCountry ===
-                                                    "KR"
+                                                    "South Korea"
                                                         ? "1"
                                                         : "2",
                                             }}
@@ -4093,40 +4093,31 @@ export default function MultistepForm() {
                                                     *
                                                 </span>
                                             </label>
-                                            <select
+                                            <input
+                                                type="text"
                                                 name="shippingCountry"
                                                 value={
                                                     formData.shippingCountry ||
                                                     ""
                                                 }
-                                                onChange={(e) =>
+                                                onChange={(e) => {
+                                                    // Only allow letters, spaces, hyphens, apostrophes, and periods
+                                                    const textOnly =
+                                                        e.target.value.replace(
+                                                            /[^a-zA-Z\s\-'.]/g,
+                                                            ""
+                                                        )
                                                     handleFieldChange(
                                                         "shippingCountry",
-                                                        e.target.value
+                                                        textOnly
                                                     )
+                                                }}
+                                                onBlur={() =>
+                                                    handleBlur("shippingCountry")
                                                 }
-                                                onBlur={handleBlur}
                                                 className={`form-input ${getFieldClass("shippingCountry")}`}
-                                                required
-                                            >
-                                                <option value="">
-                                                    Please Select
-                                                </option>
-                                                {countries
-                                                    .filter(
-                                                        (country) =>
-                                                            country.code !==
-                                                            "US"
-                                                    ) // Exclude US since it's not international
-                                                    .map((country) => (
-                                                        <option
-                                                            key={country.code}
-                                                            value={country.code}
-                                                        >
-                                                            {country.name}
-                                                        </option>
-                                                    ))}
-                                            </select>
+                                                placeholder="Enter country name"
+                                            />
                                             {fieldErrors.shippingCountry &&
                                                 touched.shippingCountry && (
                                                     <div className="error-message">
@@ -4138,7 +4129,7 @@ export default function MultistepForm() {
                                         </div>
 
                                         {/* PCCC Field - Only show when South Korea is selected */}
-                                        {formData.shippingCountry === "KR" && (
+                                        {formData.shippingCountry === "South Korea" && (
                                             <div
                                                 className="form-group"
                                                 style={{ flex: "1" }}
@@ -4521,82 +4512,41 @@ export default function MultistepForm() {
                                                             *
                                                         </span>
                                                     </label>
-                                                    <select
+                                                    <input
+                                                        type="text"
                                                         name="shippingCountry"
                                                         value={
                                                             formData.shippingCountry ||
                                                             ""
                                                         }
                                                         onChange={(e) => {
+                                                            // Only allow letters, spaces, hyphens, apostrophes, and periods
+                                                            const textOnly =
+                                                                e.target.value.replace(
+                                                                    /[^a-zA-Z\s\-'.]/g,
+                                                                    ""
+                                                                )
                                                             handleFieldChange(
                                                                 "shippingCountry",
-                                                                e.target.value
+                                                                textOnly
                                                             )
                                                             // Update our shipping address state for fulfillment type detection
                                                             setShippingAddress(
                                                                 (prev) => ({
                                                                     ...prev,
                                                                     country:
-                                                                        e.target
-                                                                            .value,
+                                                                        textOnly,
                                                                 })
                                                             )
                                                         }}
-                                                        onBlur={handleBlur}
-                                                        className={`form-select ${getFieldClass(
+                                                        onBlur={() =>
+                                                            handleBlur("shippingCountry")
+                                                        }
+                                                        className={`form-input ${getFieldClass(
                                                             "shippingCountry"
                                                         )}`}
-                                                        required
-                                                    >
-                                                        <option value="">
-                                                            Select Country
-                                                        </option>
-                                                        {/* Featured countries at top */}
-                                                        <optgroup label="━━━ Most Common ━━━">
-                                                            <option value="IT">
-                                                                Italy
-                                                            </option>
-                                                            <option value="JP">
-                                                                Japan
-                                                            </option>
-                                                        </optgroup>
-                                                        {/* All countries alphabetically */}
-                                                        <optgroup label="━━━ All Countries ━━━">
-                                                            {countries
-                                                                .filter(
-                                                                    (c) =>
-                                                                        c.code !==
-                                                                            "US" &&
-                                                                        c.code !==
-                                                                            "IT" &&
-                                                                        c.code !==
-                                                                            "JP"
-                                                                )
-                                                                .sort((a, b) =>
-                                                                    a.name.localeCompare(
-                                                                        b.name
-                                                                    )
-                                                                )
-                                                                .map(
-                                                                    (
-                                                                        country
-                                                                    ) => (
-                                                                        <option
-                                                                            key={
-                                                                                country.code
-                                                                            }
-                                                                            value={
-                                                                                country.code
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                country.name
-                                                                            }
-                                                                        </option>
-                                                                    )
-                                                                )}
-                                                        </optgroup>
-                                                    </select>
+                                                        placeholder="Enter country name"
+                                                    />
                                                     {fieldErrors.shippingCountry &&
                                                         touched.shippingCountry && (
                                                             <div className="error-message">

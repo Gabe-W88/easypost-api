@@ -576,6 +576,9 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         processing_time_message: getProcessingTime(formData.processingOption)
       },
       
+      // Date submitted (formatted for PandaDoc)
+      date_submit: convertToMMDDYYYY(new Date().toISOString().split('T')[0]),
+      
       // Timestamps
       timestamps: {
         created_at: new Date().toISOString(),
