@@ -1019,24 +1019,21 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           )
           
           // Build shipping_address object (for webhook payload, not EasyPost API)
+          // NOTE: shipping_address.state is always included (even if empty) for Make.com static mapping
+          // Make.com has a static mapping from shipping_address.state to EasyPost state field
           const shippingAddress = {
             name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
             phone: formData.recipientPhone || formData.phone,
             line1: formattedAddress.street1 || parsedAddress.line1,
             line2: formattedAddress.street2 || parsedAddress.line2,
             city: formattedAddress.city || parsedAddress.city,
+            state: formattedAddress.state !== undefined ? formattedAddress.state : '', // Always include for Make.com mapping
             postal_code: formattedAddress.zip || parsedAddress.postal_code,
             country: formattedAddress.country || parsedAddress.country,
             full_address: formData.internationalFullAddress, // Include full address for reference
             local_address: formData.internationalLocalAddress || null,
             delivery_instructions: formData.internationalDeliveryInstructions || null
           }
-          
-          // Only include state if country requires it (CA, AU, MX, US)
-          if (formattedAddress.state !== undefined) {
-            shippingAddress.state = formattedAddress.state
-          }
-          // For countries without states (GB, EU, etc.), omit state field entirely
           
           return shippingAddress
         }
