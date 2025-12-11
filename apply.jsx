@@ -349,14 +349,28 @@ const SignatureField = ({
         ctx.lineJoin = "round"
     }, [])
 
+    const getCoordinates = (e) => {
+        const canvas = canvasRef.current
+        if (!canvas) return { x: 0, y: 0 }
+
+        const rect = canvas.getBoundingClientRect()
+        // Handle both mouse and touch events
+        const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0)
+        const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0)
+        
+        const x = (clientX - rect.left) * (canvas.width / rect.width)
+        const y = (clientY - rect.top) * (canvas.height / rect.height)
+        
+        return { x, y }
+    }
+
     const startDrawing = (e) => {
+        e.preventDefault() // Prevent scrolling on mobile
         const canvas = canvasRef.current
         if (!canvas) return
 
         setIsDrawing(true)
-        const rect = canvas.getBoundingClientRect()
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+        const { x, y } = getCoordinates(e)
 
         const ctx = canvas.getContext("2d")
         ctx.beginPath()
@@ -365,20 +379,20 @@ const SignatureField = ({
 
     const draw = (e) => {
         if (!isDrawing) return
+        e.preventDefault() // Prevent scrolling on mobile
 
         const canvas = canvasRef.current
         if (!canvas) return
 
-        const rect = canvas.getBoundingClientRect()
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+        const { x, y } = getCoordinates(e)
 
         const ctx = canvas.getContext("2d")
         ctx.lineTo(x, y)
         ctx.stroke()
     }
 
-    const stopDrawing = () => {
+    const stopDrawing = (e) => {
+        if (e) e.preventDefault() // Prevent scrolling on mobile
         if (isDrawing) {
             setIsDrawing(false)
             const canvas = canvasRef.current
@@ -418,6 +432,10 @@ const SignatureField = ({
                     onMouseMove={draw}
                     onMouseUp={stopDrawing}
                     onMouseLeave={stopDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={stopDrawing}
+                    onTouchCancel={stopDrawing}
                     style={{
                         border: "2px solid #ddd",
                         borderRadius: "8px",
@@ -428,6 +446,8 @@ const SignatureField = ({
                         height: "150px",
                         touchAction: "none",
                         userSelect: "none",
+                        WebkitUserSelect: "none",
+                        WebkitTouchCallout: "none",
                     }}
                 />
                 <button
@@ -1341,6 +1361,15 @@ export default function MultistepForm() {
             },
             signature: {
                 required: true,
+                validate: (value) => {
+                    // Check if signature is a valid data URL with content
+                    if (!value || value.trim() === "") return false
+                    // A valid signature should be a data URL starting with "data:image"
+                    if (!value.startsWith("data:image")) return false
+                    // Check if it's not just an empty canvas (empty canvas data URLs are very short)
+                    // A real signature will have substantial base64 content
+                    return value.length > 100
+                },
                 message: "Digital signature is required",
             },
             termsAgreement: {
@@ -5063,7 +5092,7 @@ export default function MultistepForm() {
                 font-size: var(--text-lg);
                 font-weight: var(--font-semibold);
                 margin-bottom: var(--space-0-5);
-                color: #6b7280;
+                color: #111827;
             }
             
             .form-subtitle.no-subtext {
@@ -6461,6 +6490,32 @@ export default function MultistepForm() {
                     max-width: 18px !important;
                 }
                 
+                /* Fix standalone checkbox labels (like in payment section) */
+                .form-group .checkbox-label {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: var(--space-2) !important;
+                    width: 100% !important;
+                    margin-bottom: 0 !important;
+                    padding: 0 !important;
+                }
+                
+                .form-group .checkbox-label input[type="checkbox"] {
+                    width: 18px !important;
+                    height: 18px !important;
+                    min-width: 18px !important;
+                    max-width: 18px !important;
+                    flex-shrink: 0 !important;
+                    margin: 0 !important;
+                }
+                
+                .form-group .checkbox-label span {
+                    flex: 1 !important;
+                    font-size: 14px !important;
+                    line-height: 1.4 !important;
+                    word-wrap: break-word !important;
+                }
+                
                 /* Global mobile layout override - force everything to single column */
                 .form-grid,
                 .name-row,
@@ -6575,6 +6630,46 @@ export default function MultistepForm() {
                     box-sizing: border-box !important;
                 }
                 
+                /* Fix date input styling to match other inputs */
+                input[type="date"],
+                input[type="date"].form-input {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding: var(--space-3-5) var(--space-4) !important;
+                    font-size: var(--text-base) !important;
+                    height: auto !important;
+                    min-height: 44px !important;
+                    appearance: none !important;
+                    -webkit-appearance: none !important;
+                    -moz-appearance: none !important;
+                    border: 1px solid #d1d5db !important;
+                    border-radius: 8px !important;
+                    background-color: #fff !important;
+                    color: #111827 !important;
+                    text-align: left !important;
+                }
+                
+                /* Date input focus state */
+                input[type="date"]:focus {
+                    outline: none !important;
+                    border-color: #02569d !important;
+                    box-shadow: 0 0 0 3px rgba(2, 86, 157, 0.1) !important;
+                }
+                
+                /* Increase spacing between form sections on mobile */
+                .form-section {
+                    margin-bottom: var(--space-8) !important;
+                }
+                
+                .form-section + .form-section {
+                    margin-top: var(--space-8) !important;
+                }
+                
+                .section-title {
+                    margin-bottom: var(--space-6) !important;
+                    padding-bottom: var(--space-3) !important;
+                }
+                
                 /* Fix inline field layout issues */
                 .label-row {
                     display: block;
@@ -6643,7 +6738,7 @@ export default function MultistepForm() {
                 .form-subtitle {
                     font-size: 18px;
                     font-weight: var(--font-semibold);
-                    color: #6b7280 !important;
+                    color: #111827 !important;
                     margin-bottom: var(--space-4);
                 }
                 
@@ -6815,6 +6910,46 @@ export default function MultistepForm() {
                     font-size: var(--text-sm);
                     width: 100% !important;
                     max-width: 100% !important;
+                }
+                
+                /* Fix date input styling to match other inputs */
+                input[type="date"],
+                input[type="date"].form-input {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding: var(--space-3-5) var(--space-3) !important;
+                    font-size: var(--text-sm) !important;
+                    height: auto !important;
+                    min-height: 44px !important;
+                    appearance: none !important;
+                    -webkit-appearance: none !important;
+                    -moz-appearance: none !important;
+                    border: 1px solid #d1d5db !important;
+                    border-radius: 8px !important;
+                    background-color: #fff !important;
+                    color: #111827 !important;
+                    text-align: left !important;
+                }
+                
+                /* Date input focus state */
+                input[type="date"]:focus {
+                    outline: none !important;
+                    border-color: #02569d !important;
+                    box-shadow: 0 0 0 3px rgba(2, 86, 157, 0.1) !important;
+                }
+                
+                /* Increase spacing between form sections on small mobile */
+                .form-section {
+                    margin-bottom: 24px !important;
+                }
+                
+                .form-section + .form-section {
+                    margin-top: 24px !important;
+                }
+                
+                .section-title {
+                    margin-bottom: 20px !important;
+                    padding-bottom: 10px !important;
                 }
                 
                 /* Mobile stepper - dots only */
@@ -8146,9 +8281,75 @@ export default function MultistepForm() {
                     border-radius: 8px !important;
                 }
                 
+                /* Fix standalone checkbox labels (like in payment section) */
+                .form-group .checkbox-label {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                    width: 100% !important;
+                    margin-bottom: 0 !important;
+                    padding: 0 !important;
+                }
+                
+                .form-group .checkbox-label input[type="checkbox"] {
+                    width: 18px !important;
+                    height: 18px !important;
+                    min-width: 18px !important;
+                    max-width: 18px !important;
+                    flex-shrink: 0 !important;
+                    margin: 0 !important;
+                }
+                
+                .form-group .checkbox-label span {
+                    flex: 1 !important;
+                    font-size: 14px !important;
+                    line-height: 1.4 !important;
+                    word-wrap: break-word !important;
+                }
+                
+                /* Fix date input styling to match other inputs */
+                input[type="date"],
+                input[type="date"].form-input {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding: 14px 16px !important;
+                    font-size: var(--text-sm) !important;
+                    height: auto !important;
+                    min-height: 44px !important;
+                    appearance: none !important;
+                    -webkit-appearance: none !important;
+                    -moz-appearance: none !important;
+                    border: 1px solid #d1d5db !important;
+                    border-radius: 8px !important;
+                    background-color: #fff !important;
+                    color: #111827 !important;
+                    text-align: left !important;
+                }
+                
+                /* Date input focus state */
+                input[type="date"]:focus {
+                    outline: none !important;
+                    border-color: #02569d !important;
+                    box-shadow: 0 0 0 3px rgba(2, 86, 157, 0.1) !important;
+                }
+                
+                /* Increase spacing between form sections on mobile */
+                .form-section {
+                    margin-bottom: 32px !important;
+                }
+                
+                .form-section + .form-section {
+                    margin-top: 32px !important;
+                }
+                
+                .section-title {
+                    margin-bottom: 24px !important;
+                    padding-bottom: 12px !important;
+                }
+                
                 .section-card {
                     padding: 24px 20px;
-                    margin-bottom: 24px;
+                    margin-bottom: 32px !important;
                 }
 
                 .modern-options-grid {

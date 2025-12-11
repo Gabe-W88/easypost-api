@@ -219,6 +219,57 @@ function extractCountryFromAddress(internationalFullAddress) {
   return null
 }
 
+// Helper function to normalize country to 2-character code
+function normalizeCountryCode(country) {
+  if (!country || typeof country !== 'string') {
+    return null
+  }
+  
+  const countryLower = country.toLowerCase().trim()
+  
+  // If already a 2-character code, return uppercase
+  if (countryLower.length === 2 && /^[a-z]{2}$/.test(countryLower)) {
+    return countryLower.toUpperCase()
+  }
+  
+  // Check if it's a known country name (exact match)
+  if (COUNTRY_NAME_TO_CODE[countryLower]) {
+    return COUNTRY_NAME_TO_CODE[countryLower]
+  }
+  
+  // Try to find partial match (handles variations like "United Kingdom" → "united kingdom")
+  for (const [countryName, countryCode] of Object.entries(COUNTRY_NAME_TO_CODE)) {
+    // Check if input contains the country name or vice versa
+    if (countryLower.includes(countryName) || countryName.includes(countryLower)) {
+      console.log(`Normalized country: "${country}" → "${countryCode}" (matched: "${countryName}")`)
+      return countryCode
+    }
+  }
+  
+  // Additional common country name variations not in the main mapping
+  const additionalMappings = {
+    'britain': 'GB',
+    'british': 'GB',
+    'u.k.': 'GB',
+    'u.k': 'GB',
+    'united states': 'US',
+    'u.s.': 'US',
+    'u.s': 'US',
+    'u.s.a.': 'US',
+    'u.s.a': 'US',
+    'usa': 'US',
+  }
+  
+  if (additionalMappings[countryLower]) {
+    console.log(`Normalized country: "${country}" → "${additionalMappings[countryLower]}"`)
+    return additionalMappings[countryLower]
+  }
+  
+  // If we can't match, log and return null (will be stored as null in DB)
+  console.warn('Could not normalize country code:', country, '- storing as null')
+  return null
+}
+
 // Helper function to determine fulfillment type based on shipping country
 function determineFulfillmentType(shippingCategory, shippingCountry, internationalFullAddress = null) {
   // Domestic and military shipments are always automated
@@ -415,12 +466,17 @@ export default async function handler(req, res) {
       fulfillmentType: fulfillmentType
     })
 
+    // Normalize shipping country to 2-character code
+    const normalizedShippingCountry = normalizeCountryCode(formData.shippingCountry)
+    
     // Save application to database with file URLs and international fields
     console.log('=== DATABASE INSERT DEBUG ===')
     console.log('About to insert international fields:', {
       international_full_address: formData.internationalFullAddress || null,
       international_local_address: formData.internationalLocalAddress || null,
-      international_delivery_instructions: formData.internationalDeliveryInstructions || null
+      international_delivery_instructions: formData.internationalDeliveryInstructions || null,
+      shipping_country_original: formData.shippingCountry,
+      shipping_country_normalized: normalizedShippingCountry
     })
     
     const { data, error } = await supabase
@@ -435,7 +491,7 @@ export default async function handler(req, res) {
         international_full_address: formData.internationalFullAddress || null,
         international_local_address: formData.internationalLocalAddress || null,
         international_delivery_instructions: formData.internationalDeliveryInstructions || null,
-        shipping_country: formData.shippingCountry || null,
+        shipping_country: normalizedShippingCountry, // Normalized to 2-character code
         pccc_code: formData.pcccCode || null
       })
       .select()
