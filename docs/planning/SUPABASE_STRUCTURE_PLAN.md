@@ -75,6 +75,27 @@ Based on the Google Sheets requirements, these fields are currently **only in `f
 - ❌ `birthplace_city` - Exists in schema but not being saved
 - ❌ `birthplace_state` - Exists in schema but not being saved
 
+#### Shipping Address Fields (Individual Columns - Per CSV Requirement):
+The CSV requires **individual columns for each shipping field** (not just JSONB). These need to be added:
+
+**For All Shipping Types:**
+- ❌ `shipping_recipient_name` - Recipient name
+- ❌ `shipping_recipient_phone` - Recipient phone
+- ❌ `shipping_delivery_instructions` - Delivery instructions
+
+**For Domestic/Military:**
+- ❌ `shipping_street_address` - Street address
+- ❌ `shipping_street_address_2` - Street address line 2
+- ❌ `shipping_city` - City
+- ❌ `shipping_state` - State
+- ❌ `shipping_postal_code` - Postal code
+- ❌ `shipping_country` - Country (already exists, but needs to be populated correctly)
+
+**For International:**
+- ❌ `shipping_international_full_address` - Full international address (already exists as `international_full_address`)
+- ❌ `shipping_international_local_address` - Local address format (already exists as `international_local_address`)
+- ❌ `pccc_code` - Already exists, but needs verification
+
 ---
 
 ## Required Supabase Schema Changes
@@ -102,6 +123,16 @@ ship_by_date DATE,  -- Calculated ship-by date
 
 -- Additional denormalized fields
 middle_name TEXT,  -- Middle name (optional)
+
+-- Shipping address fields (individual columns per CSV requirement)
+shipping_recipient_name TEXT,  -- Recipient name
+shipping_recipient_phone TEXT,  -- Recipient phone
+shipping_street_address TEXT,  -- Street address (domestic/military)
+shipping_street_address_2 TEXT,  -- Street address line 2 (domestic/military)
+shipping_city TEXT,  -- City (domestic/military)
+shipping_state TEXT,  -- State (domestic/military)
+shipping_postal_code TEXT,  -- Postal code (domestic/military)
+shipping_delivery_instructions TEXT,  -- Delivery instructions
 ```
 
 ### Columns That Exist But Aren't Being Populated
@@ -163,7 +194,16 @@ ALTER TABLE applications
   ADD COLUMN IF NOT EXISTS processing_option TEXT,
   ADD COLUMN IF NOT EXISTS shipping_label_generated BOOLEAN DEFAULT FALSE,
   ADD COLUMN IF NOT EXISTS tracking_number TEXT,
-  ADD COLUMN IF NOT EXISTS ship_by_date DATE;
+  ADD COLUMN IF NOT EXISTS ship_by_date DATE,
+  -- Shipping address fields (individual columns per CSV requirement)
+  ADD COLUMN IF NOT EXISTS shipping_recipient_name TEXT,
+  ADD COLUMN IF NOT EXISTS shipping_recipient_phone TEXT,
+  ADD COLUMN IF NOT EXISTS shipping_street_address TEXT,
+  ADD COLUMN IF NOT EXISTS shipping_street_address_2 TEXT,
+  ADD COLUMN IF NOT EXISTS shipping_city TEXT,
+  ADD COLUMN IF NOT EXISTS shipping_state TEXT,
+  ADD COLUMN IF NOT EXISTS shipping_postal_code TEXT,
+  ADD COLUMN IF NOT EXISTS shipping_delivery_instructions TEXT;
 ```
 
 **Step 1.2: Verify Existing Columns**
@@ -231,6 +271,17 @@ const { data, error } = await supabase
     shipping_category: formData.shippingCategory, // 'domestic', 'international', 'military'
     processing_option: formData.processingOption, // 'standard', 'fast', 'fastest'
     shipping_label_generated: fulfillmentType === 'automated', // true if automated
+    
+    // NEW: Shipping address fields (individual columns per CSV requirement)
+    shipping_recipient_name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+    shipping_recipient_phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
+    // For domestic/military: use shipping address fields
+    shipping_street_address: (formData.shippingCategory !== 'international' && formData.shippingStreetAddress) ? formData.shippingStreetAddress : null,
+    shipping_street_address_2: (formData.shippingCategory !== 'international' && formData.shippingStreetAddress2) ? formData.shippingStreetAddress2 : null,
+    shipping_city: (formData.shippingCategory !== 'international' && formData.shippingCity) ? formData.shippingCity : null,
+    shipping_state: (formData.shippingCategory !== 'international' && formData.shippingState) ? formData.shippingState : null,
+    shipping_postal_code: (formData.shippingCategory !== 'international' && formData.shippingPostalCode) ? formData.shippingPostalCode : null,
+    shipping_delivery_instructions: formData.shippingDeliveryInstructions || formData.internationalDeliveryInstructions || null,
   })
   .select()
 ```
@@ -348,9 +399,73 @@ SET
   selected_permits = form_data->'selectedPermits',
   shipping_category = form_data->>'shippingCategory',
   processing_option = form_data->>'processingOption',
-  shipping_label_generated = (fulfillment_type = 'automated')
+  shipping_label_generated = (fulfillment_type = 'automated'),
+  -- Shipping address fields
+  shipping_recipient_name = COALESCE(form_data->>'recipientName', form_data->>'firstName' || ' ' || form_data->>'lastName'),
+  shipping_recipient_phone = COALESCE(form_data->>'recipientPhone', form_data->>'shippingPhone', form_data->>'phone'),
+  shipping_street_address = CASE WHEN form_data->>'shippingCategory' != 'international' THEN form_data->>'shippingStreetAddress' ELSE NULL END,
+  shipping_street_address_2 = CASE WHEN form_data->>'shippingCategory' != 'international' THEN form_data->>'shippingStreetAddress2' ELSE NULL END,
+  shipping_city = CASE WHEN form_data->>'shippingCategory' != 'international' THEN form_data->>'shippingCity' ELSE NULL END,
+  shipping_state = CASE WHEN form_data->>'shippingCategory' != 'international' THEN form_data->>'shippingState' ELSE NULL END,
+  shipping_postal_code = CASE WHEN form_data->>'shippingCategory' != 'international' THEN form_data->>'shippingPostalCode' ELSE NULL END,
+  shipping_delivery_instructions = COALESCE(form_data->>'shippingDeliveryInstructions', form_data->>'internationalDeliveryInstructions')
 WHERE form_data IS NOT NULL;
 ```
+
+---
+
+## Data Formatting Requirements (Matching CSV)
+
+### Date Formats
+- **Date of Birth:** Stored as `DATE` type (YYYY-MM-DD), can be formatted for display
+- **License Expiration:** Stored as `DATE` type (YYYY-MM-DD)
+- **Departure Date:** Stored as `DATE` type (YYYY-MM-DD)
+- **Permit Effective Date:** Stored as `DATE` type (YYYY-MM-DD)
+- **Date and time submitted:** Stored as `TIMESTAMP` (created_at), can be formatted for display
+- **Ship by date:** Stored as `DATE` type (YYYY-MM-DD), calculated based on processing_option
+
+### Y/N Fields (Boolean/Text Conversion)
+These fields need to be queryable as Y/N for CSV export:
+
+- **Passenger Car Endorsement? (Y/N):** Query `license_types` JSONB array - check if contains 'passenger'
+- **Motorcycle Endorsement? (Y/N):** Query `license_types` JSONB array - check if contains 'motorcycle'
+- **Commercial/Other Endorsement? (Y/N):** Query `license_types` JSONB array - check if contains 'commercial' or 'other'
+- **Getting an IDP (Y/N):** Query `selected_permits` JSONB array - check if contains 'idp'
+- **Getting an IADP (Y/N):** Query `selected_permits` JSONB array - check if contains 'iadp'
+- **Shipping label autogenerated (y/n):** Use `shipping_label_generated` BOOLEAN - convert to 'y'/'n'
+
+**SQL Query Example for Y/N Fields:**
+```sql
+-- Example: Check if passenger car endorsement
+CASE WHEN license_types @> '["passenger"]'::jsonb THEN 'Y' ELSE 'N' END as passenger_endorsement
+
+-- Example: Check if getting IDP
+CASE WHEN selected_permits @> '["idp"]'::jsonb THEN 'Y' ELSE 'N' END as getting_idp
+
+-- Example: Shipping label generated
+CASE WHEN shipping_label_generated = true THEN 'y' ELSE 'n' END as shipping_label_autogenerated
+```
+
+### Shipping Category Format
+- **Delivery location type:** Stored as `shipping_category` TEXT
+  - Values: 'domestic', 'international', 'military'
+  - Display format: Capitalize first letter ('Domestic', 'International', 'Military')
+
+### Processing Option Format
+- **Delivery speed:** Stored as `processing_option` TEXT
+  - Values: 'standard', 'fast', 'fastest'
+  - Display format: Capitalize first letter ('Standard', 'Fast', 'Fastest')
+
+### Transaction Value Format
+- **Transaction value ($):** Stored as `amount_paid` DECIMAL
+  - Format: 2 decimal places (e.g., 49.99)
+  - Set in webhook.js when payment completes
+
+### Shipping Address Fields
+- **Individual columns** for each shipping field (per CSV requirement)
+- For **domestic/military:** Use `shipping_street_address`, `shipping_city`, `shipping_state`, etc.
+- For **international:** Use `international_full_address` and `international_local_address`
+- **Recipient name/phone:** Always populated in `shipping_recipient_name` and `shipping_recipient_phone`
 
 ---
 
@@ -384,7 +499,18 @@ WHERE form_data IS NOT NULL;
 | Permit Effective Date | `permit_effective_date` | ⚠️ Need to add column + save |
 | Getting an IDP (Y/N) | `selected_permits` (JSONB) | Check if contains 'idp' |
 | Getting an IADP (Y/N) | `selected_permits` (JSONB) | Check if contains 'iadp' |
-| Shipping info fields | `shipping_address` (JSONB) + `shipping_name`, `shipping_phone` | ✅ Saved in webhook.js |
+| Shipping Recipient Name | `shipping_recipient_name` | ⚠️ Need to add column + save |
+| Shipping Recipient Phone | `shipping_recipient_phone` | ⚠️ Need to add column + save |
+| Shipping Street Address | `shipping_street_address` | ⚠️ Need to add column + save (domestic/military) |
+| Shipping Street Address 2 | `shipping_street_address_2` | ⚠️ Need to add column + save (domestic/military) |
+| Shipping City | `shipping_city` | ⚠️ Need to add column + save (domestic/military) |
+| Shipping State | `shipping_state` | ⚠️ Need to add column + save (domestic/military) |
+| Shipping Postal Code | `shipping_postal_code` | ⚠️ Need to add column + save (domestic/military) |
+| Shipping Country | `shipping_country` | ✅ Already exists, needs proper population |
+| International Full Address | `international_full_address` | ✅ Already saved |
+| International Local Address | `international_local_address` | ✅ Already saved |
+| Delivery Instructions | `shipping_delivery_instructions` | ⚠️ Need to add column + save |
+| PCCC Code | `pccc_code` | ✅ Already saved |
 | Delivery location type | `shipping_category` | ⚠️ Need to add column + save |
 | Delivery speed | `processing_option` | ⚠️ Need to add column + save |
 | Transaction value ($) | `amount_paid` | ⚠️ Need to add to webhook.js |
