@@ -496,13 +496,19 @@ function formatAddressForEasyPost(parsedAddress, countryCode, fullAddressText = 
   
   // Add actual state/province code for countries that require it
   if (COUNTRIES_WITH_STATE.includes(country)) {
-    const state = extractStateProvince(fullAddressText, country) || ''
+    const state = extractStateProvince(fullAddressText, country)
     if (state) {
       address.state = state
     }
+    // If no state found, keep empty string (already set above)
   }
-  // For other countries (GB, EU, etc.), state remains empty string ''
+  // For other countries (GB, EU, etc.), state is empty string ''
   // EasyPost requires the field to be present but accepts empty string for countries without states
+  
+  // Ensure state is always explicitly set (never undefined)
+  if (address.state === undefined) {
+    address.state = ''
+  }
   
   return address
 }
@@ -1014,24 +1020,22 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           )
           
           // Build shipping_address object (for webhook payload, not EasyPost API)
+          // Always include state field (empty string for countries without states)
+          const stateValue = formattedAddress.state !== undefined ? formattedAddress.state : ''
+          
           const shippingAddress = {
             name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
             phone: formData.recipientPhone || formData.phone,
             line1: formattedAddress.street1 || parsedAddress.line1,
             line2: formattedAddress.street2 || parsedAddress.line2,
             city: formattedAddress.city || parsedAddress.city,
+            state: stateValue, // Always explicitly set (empty string for countries without states)
             postal_code: formattedAddress.zip || parsedAddress.postal_code,
             country: formattedAddress.country || parsedAddress.country,
             full_address: formData.internationalFullAddress, // Include full address for reference
             local_address: formData.internationalLocalAddress || null,
             delivery_instructions: formData.internationalDeliveryInstructions || null
           }
-          
-          // Only include state if country requires it (CA, AU, MX)
-          if (formattedAddress.state) {
-            shippingAddress.state = formattedAddress.state
-          }
-          // For other countries, omit state field entirely
           
           return shippingAddress
         }
@@ -1292,12 +1296,15 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
                 formattedAddress.zip = formattedAddress.zip || ''
               }
               
+              // Explicitly set state - no fallback, always present
+              const stateValue = formattedAddress.state !== undefined ? formattedAddress.state : ''
+              
               return {
                 name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
                 street1: formattedAddress.street1,
                 street2: formattedAddress.street2,
                 city: formattedAddress.city,
-                state: formattedAddress.state, // Always include state (empty string for countries without states)
+                state: stateValue, // Always explicitly set (empty string for countries without states)
                 zip: formattedAddress.zip,
                 country: formattedAddress.country,
                 phone: formData.recipientPhone || formData.phone,
