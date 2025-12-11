@@ -451,27 +451,68 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         zip_code: formData.zipCode
       },
       
-      // Shipping address from Stripe (step 4)
-      shipping_address: addressData?.shipping_address ? {
-        name: addressData.shipping_name || `${formData.firstName} ${formData.lastName}`,
-        phone: addressData.shipping_phone || formData.phone,
-        line1: addressData.shipping_address.line1,
-        line2: addressData.shipping_address.line2 || '',
-        city: addressData.shipping_address.city,
-        state: addressData.shipping_address.state,
-        postal_code: addressData.shipping_address.postal_code,
-        country: addressData.shipping_address.country || 'US'
-      } : {
-        // Fallback to form data if no Stripe shipping address
-        name: `${formData.firstName} ${formData.lastName}`,
-        phone: formData.phone,
-        line1: formData.streetAddress,
-        line2: formData.streetAddress2 || '',
-        city: formData.city,
-        state: formData.state,
-        postal_code: formData.zipCode,
-        country: 'US'
-      },
+      // Shipping address from Stripe (step 4) or form shipping fields (step 3)
+      shipping_address: (() => {
+        // Priority 1: Use Stripe shipping address if available
+        if (addressData?.shipping_address) {
+          return {
+            name: addressData.shipping_name || `${formData.firstName} ${formData.lastName}`,
+            phone: addressData.shipping_phone || formData.phone,
+            line1: addressData.shipping_address.line1,
+            line2: addressData.shipping_address.line2 || '',
+            city: addressData.shipping_address.city,
+            state: addressData.shipping_address.state,
+            postal_code: addressData.shipping_address.postal_code,
+            country: addressData.shipping_address.country || 'US'
+          }
+        }
+        
+        // Priority 2: For international, use international full address
+        if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
+          // Parse international address - first line is usually street
+          const addressLines = formData.internationalFullAddress.split('\n').filter(line => line.trim())
+          return {
+            name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+            phone: formData.recipientPhone || formData.phone,
+            line1: addressLines[0] || '',
+            line2: addressLines[1] || '',
+            city: addressLines[addressLines.length - 2] || '', // Second to last is usually city
+            state: '', // International addresses may not have state
+            postal_code: '', // May be in the address string
+            country: formData.shippingCountry || '',
+            full_address: formData.internationalFullAddress, // Include full address for reference
+            local_address: formData.internationalLocalAddress || null,
+            delivery_instructions: formData.internationalDeliveryInstructions || null
+          }
+        }
+        
+        // Priority 3: Use step 3 shipping address fields (for domestic/military)
+        if (formData.shippingStreetAddress) {
+          return {
+            name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+            phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
+            line1: formData.shippingStreetAddress,
+            line2: formData.shippingStreetAddress2 || '',
+            city: formData.shippingCity,
+            state: formData.shippingState,
+            postal_code: formData.shippingPostalCode,
+            country: formData.shippingCountry || 'US',
+            delivery_instructions: formData.shippingDeliveryInstructions || null
+          }
+        }
+        
+        // Priority 4: Fallback to form address (step 1)
+        return {
+          name: `${formData.firstName} ${formData.lastName}`,
+          phone: formData.phone,
+          line1: formData.streetAddress,
+          line2: formData.streetAddress2 || '',
+          city: formData.city,
+          state: formData.state,
+          postal_code: formData.zipCode,
+          country: 'US'
+        }
+      })(),
       
       // Application selections
       selections: {
@@ -486,6 +527,19 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       
       // Fulfillment type (automated vs manual)
       fulfillment_type: fulfillmentType || 'manual',
+      
+      // Step 3 shipping address fields (for domestic/military - separate from Stripe address)
+      shipping_address_form_fields: (formData.shippingCategory !== 'international' && formData.shippingStreetAddress) ? {
+        recipient_name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+        recipient_phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
+        street_address: formData.shippingStreetAddress,
+        street_address_2: formData.shippingStreetAddress2 || '',
+        city: formData.shippingCity,
+        state: formData.shippingState,
+        postal_code: formData.shippingPostalCode,
+        country: formData.shippingCountry || 'US',
+        delivery_instructions: formData.shippingDeliveryInstructions || null
+      } : null,
       
       // International shipping details (when applicable)
       international_shipping: formData.shippingCategory === 'international' ? {
@@ -544,17 +598,67 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       
       // EasyPost shipping data (for fastest rate selection)
       easypost_shipment: {
-        to_address: {
-          name: addressData?.shipping_name || `${formData.firstName} ${formData.lastName}`,
-          street1: addressData?.shipping_address?.line1 || formData.streetAddress,
-          street2: addressData?.shipping_address?.line2 || formData.streetAddress2 || '',
-          city: addressData?.shipping_address?.city || formData.city,
-          state: addressData?.shipping_address?.state || formData.state,
-          zip: addressData?.shipping_address?.postal_code || formData.zipCode,
-          country: addressData?.shipping_address?.country || 'US',
-          phone: addressData?.shipping_phone || formData.phone,
-          email: formData.email
-        },
+        to_address: (() => {
+          // Priority 1: Use Stripe shipping address if available
+          if (addressData?.shipping_address) {
+            return {
+              name: addressData.shipping_name || `${formData.firstName} ${formData.lastName}`,
+              street1: addressData.shipping_address.line1,
+              street2: addressData.shipping_address.line2 || '',
+              city: addressData.shipping_address.city,
+              state: addressData.shipping_address.state,
+              zip: addressData.shipping_address.postal_code,
+              country: addressData.shipping_address.country || 'US',
+              phone: addressData.shipping_phone || formData.phone,
+              email: formData.email
+            }
+          }
+          
+          // Priority 2: Use step 3 shipping address fields (for domestic/military)
+          if (formData.shippingStreetAddress) {
+            return {
+              name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+              street1: formData.shippingStreetAddress,
+              street2: formData.shippingStreetAddress2 || '',
+              city: formData.shippingCity,
+              state: formData.shippingState,
+              zip: formData.shippingPostalCode,
+              country: formData.shippingCountry || 'US',
+              phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
+              email: formData.email
+            }
+          }
+          
+          // Priority 3: Use international full address (for international)
+          if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
+            // For international, we'll need to parse the address or use a placeholder
+            // EasyPost will need structured address, so we'll use what we have
+            return {
+              name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+              street1: formData.internationalFullAddress.split('\n')[0] || '',
+              street2: '',
+              city: '',
+              state: '',
+              zip: '',
+              country: formData.shippingCountry || 'US',
+              phone: formData.recipientPhone || formData.phone,
+              email: formData.email
+            }
+          }
+          
+          // Priority 4: Fallback to form address (step 1)
+          return {
+            name: `${formData.firstName} ${formData.lastName}`,
+            street1: formData.streetAddress,
+            street2: formData.streetAddress2 || '',
+            city: formData.city,
+            state: formData.state,
+            zip: formData.zipCode,
+            country: 'US',
+            phone: formData.phone,
+            email: formData.email
+          }
+        })(),
         parcel: {
           length: 4,    // IDP document size
           width: 6,
