@@ -480,26 +480,29 @@ function validatePostalCode(postalCode, countryCode) {
 }
 
 // Format address for EasyPost based on country requirements
+// NOTE: EasyPost requires the state field to be present (even if empty) for all addresses
 function formatAddressForEasyPost(parsedAddress, countryCode, fullAddressText = '') {
   const country = normalizeCountryCode(countryCode) || ''
   
-  // Base address object
+  // Base address object - always include state field (required by EasyPost)
   const address = {
     street1: parsedAddress.line1 || '',
     street2: parsedAddress.line2 || '',
     city: parsedAddress.city || '',
     zip: validatePostalCode(parsedAddress.postal_code, country),
-    country: country
+    country: country,
+    state: '' // Default to empty string - EasyPost requires this field to be present
   }
   
-  // Add state/province only for countries that require it
+  // Add actual state/province code for countries that require it
   if (COUNTRIES_WITH_STATE.includes(country)) {
     const state = extractStateProvince(fullAddressText, country) || ''
     if (state) {
       address.state = state
     }
   }
-  // For other countries, omit state field entirely (don't include it)
+  // For other countries (GB, EU, etc.), state remains empty string ''
+  // EasyPost requires the field to be present but accepts empty string for countries without states
   
   return address
 }
@@ -1180,8 +1183,12 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       //   - Street 2: easypost_shipment.to_address.street2
       //   - City: easypost_shipment.to_address.city
       //   - State: easypost_shipment.to_address.state
-      //   - ZIP: easypost_shipment.to_address.zip
-      //   - Country: easypost_shipment.to_address.country (already normalized to 2-char code)
+      //     * IMPORTANT: State field is ALWAYS included (required by EasyPost)
+      //     * For CA, AU, MX, US: Contains actual state/province code (e.g., "ON", "NSW", "BC", "OH")
+      //     * For all other countries (GB, EU, etc.): Empty string "" (EasyPost requires field but accepts empty)
+      //     * In Make.com EasyPost module: Use easypost_shipment.to_address.state (not shipping_address.state)
+      //   - ZIP: easypost_shipment.to_address.zip (validated and normalized per country)
+      //   - Country: easypost_shipment.to_address.country (already normalized 2-char code)
       //   - Phone: easypost_shipment.to_address.phone
       //   - Email: easypost_shipment.to_address.email
       //
