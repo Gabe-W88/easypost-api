@@ -1201,6 +1201,26 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       //   - Height: easypost_shipment.parcel.height (inches)
       //   - Weight: easypost_shipment.parcel.weight (ounces)
       //
+      // CUSTOMS INFO (REQUIRED for international shipments):
+      //   - Only included when shippingCategory === 'international'
+      //   - Two approaches supported:
+      //   
+      //   APPROACH 1: Nested in shipment (if Make.com "Create a Shipment" supports it):
+      //     - customs_info: easypost_shipment.customs_info (complete object with all fields)
+      //     - This includes: contents_type, contents_explanation, customs_certify, customs_signer,
+      //       restriction_type, restriction_comments, non_delivery_option, eel_pfc, customs_items
+      //   
+      //   APPROACH 2: Separate modules (recommended per Make.com workflow):
+      //     - customs_items: Top-level array for "Create CustomsItem" loop module
+      //       * Loop through: automationData.customs_items
+      //       * Each item has: description, quantity, value, weight, hs_tariff_number, origin_country
+      //     - customs_info_metadata: Top-level object for "Create CustomsInfo" module
+      //       * Map fields: contents_type, contents_explanation, customs_certify, customs_signer,
+      //         restriction_type, restriction_comments, non_delivery_option, eel_pfc
+      //     - Then reference the created CustomsInfo ID when creating the shipment
+      //   
+      //   - For domestic/military: customs_info, customs_items, and customs_info_metadata are all null
+      //
       // OPTIONAL FIELDS:
       //   - Carrier: easypost_shipment.carrier (if specified, e.g., "USPS" for military)
       //   - Options: easypost_shipment.options (label format, size, etc.)
@@ -1350,6 +1370,28 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           height: 0.1,
           weight: 8     // 0.5 lb = 8 oz for IDP document
         },
+        // Customs information (REQUIRED for international shipments)
+        // Only include for international shipping category
+        customs_info: formData.shippingCategory === 'international' ? {
+          contents_type: 'documents', // IDP is a document
+          contents_explanation: 'International Driving Permit (IDP) document',
+          customs_certify: true,
+          customs_signer: 'FastIDP',
+          restriction_type: 'none',
+          restriction_comments: '',
+          non_delivery_option: 'return',
+          eel_pfc: 'NOEEI 30.37(a)', // Low-value shipment exemption for documents
+          customs_items: [
+            {
+              description: 'International Driving Permit',
+              quantity: 1,
+              value: 0.01, // Minimal value for customs (documents have low/no commercial value)
+              weight: 8, // Weight in ounces
+              hs_tariff_number: '49019900', // HS code for printed documents
+              origin_country: 'US'
+            }
+          ]
+        } : null,
         // Speed requirement for EasyPost to filter rates
         max_delivery_days: getShippingSpeedDays(formData.processingOption, formData.shippingCategory),
         // Carrier specification (USPS required for military)
@@ -1359,6 +1401,35 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           label_size: '4x6'
         }
       },
+      
+      // Customs items array (for Make.com "Create CustomsItem" loop workflow)
+      // This is provided separately to support Make.com's workflow where customs items
+      // are created in a loop before attaching to the shipment
+      // Only included for international shipping category
+      customs_items: formData.shippingCategory === 'international' ? [
+        {
+          description: 'International Driving Permit',
+          quantity: 1,
+          value: 0.01, // Minimal value for customs (documents have low/no commercial value)
+          weight: 8, // Weight in ounces
+          hs_tariff_number: '49019900', // HS code for printed documents
+          origin_country: 'US'
+        }
+      ] : null,
+      
+      // Customs info metadata (for Make.com "Create CustomsInfo" step)
+      // These fields are used when creating the CustomsInfo object in Make.com
+      // Only included for international shipping category
+      customs_info_metadata: formData.shippingCategory === 'international' ? {
+        contents_type: 'documents', // IDP is a document
+        contents_explanation: 'International Driving Permit (IDP) document',
+        customs_certify: true,
+        customs_signer: 'FastIDP',
+        restriction_type: 'none',
+        restriction_comments: '',
+        non_delivery_option: 'return',
+        eel_pfc: 'NOEEI 30.37(a)' // Low-value shipment exemption for documents
+      } : null,
       
       // Business workflow settings
       business_settings: {
