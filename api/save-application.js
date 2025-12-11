@@ -508,7 +508,12 @@ export default async function handler(req, res) {
     })
 
     // Normalize shipping country to 2-character code
-    const normalizedShippingCountry = normalizeCountryCode(formData.shippingCountry)
+    // For domestic/military, default to 'US' if not provided
+    let shippingCountryToNormalize = formData.shippingCountry
+    if ((formData.shippingCategory === 'domestic' || formData.shippingCategory === 'military') && !shippingCountryToNormalize) {
+      shippingCountryToNormalize = 'US'
+    }
+    const normalizedShippingCountry = normalizeCountryCode(shippingCountryToNormalize) || (formData.shippingCategory === 'domestic' || formData.shippingCategory === 'military' ? 'US' : null)
     
     // Save application to database with file URLs and international fields
     console.log('=== DATABASE INSERT DEBUG ===')
