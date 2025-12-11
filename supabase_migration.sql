@@ -184,7 +184,7 @@ SET
   -- Shipping address fields
   shipping_recipient_name = COALESCE(
     form_data->>'recipientName',
-    form_data->>'firstName' || ' ' || form_data->>'lastName'
+    CONCAT(form_data->>'firstName', ' ', form_data->>'lastName')
   ),
   shipping_recipient_phone = COALESCE(
     form_data->>'recipientPhone',
