@@ -584,10 +584,17 @@ function convertToMMDDYYYY(dateString) {
 async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null, fileData = null, fulfillmentType = null) {
   
   try {
+    console.log('=== triggerMakeAutomation called ===')
+    console.log('applicationId:', applicationId)
+    console.log('paymentIntent:', paymentIntent?.id)
+    
     // Parse form data
     const formData = typeof formDataString === 'string' 
       ? JSON.parse(formDataString) 
       : formDataString
+    
+    console.log('formData parsed successfully')
+    console.log('shippingCategory:', formData?.shippingCategory)
 
     // Parse file URLs (new structure)
     const parsedFileData = fileData ? (typeof fileData === 'string' ? JSON.parse(fileData) : fileData) : null
@@ -666,7 +673,10 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     }
 
     // Prepare comprehensive data for Make.com business workflow
-    const automationData = {
+    console.log('Building automationData object...')
+    let automationData
+    try {
+      automationData = {
       // Application identification
       application_id: applicationId,
       payment_status: 'completed',
@@ -722,68 +732,96 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       
       // Shipping address from Stripe (step 4) or form shipping fields (step 3)
       shipping_address: (() => {
-        // Priority 1: Use Stripe shipping address if available
-        if (addressData?.shipping_address) {
-          return {
-            name: addressData.shipping_name || `${formData.firstName} ${formData.lastName}`,
-            phone: addressData.shipping_phone || formData.phone,
-            line1: addressData.shipping_address.line1,
-            line2: addressData.shipping_address.line2 || '',
-            city: addressData.shipping_address.city,
-            state: addressData.shipping_address.state,
-            postal_code: addressData.shipping_address.postal_code,
-            country: addressData.shipping_address.country || 'US'
+        try {
+          // Priority 1: Use Stripe shipping address if available
+          if (addressData?.shipping_address) {
+            return {
+              name: addressData.shipping_name || `${formData.firstName} ${formData.lastName}`,
+              phone: addressData.shipping_phone || formData.phone,
+              line1: addressData.shipping_address.line1,
+              line2: addressData.shipping_address.line2 || '',
+              city: addressData.shipping_address.city,
+              state: addressData.shipping_address.state,
+              postal_code: addressData.shipping_address.postal_code,
+              country: normalizeCountryCode(addressData.shipping_address.country) || 'US'
+            }
           }
-        }
-        
-        // Priority 2: For international, use international full address
-        if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
-          // Use the robust international address parser that handles all countries
-          const parsedAddress = parseInternationalAddress(
-            formData.internationalFullAddress,
-            formData.shippingCountry
-          )
           
-          return {
-            name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
-            phone: formData.recipientPhone || formData.phone,
-            line1: parsedAddress.line1,
-            line2: parsedAddress.line2,
-            city: parsedAddress.city,
-            state: '', // International addresses may not have state
-            postal_code: parsedAddress.postal_code,
-            country: parsedAddress.country, // Already normalized 2-character code
-            full_address: formData.internationalFullAddress, // Include full address for reference
-            local_address: formData.internationalLocalAddress || null,
-            delivery_instructions: formData.internationalDeliveryInstructions || null
+          // Priority 2: For international, use international full address
+          if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
+            // Use the robust international address parser that handles all countries
+            let parsedAddress
+            try {
+              parsedAddress = parseInternationalAddress(
+                formData.internationalFullAddress,
+                formData.shippingCountry
+              )
+            } catch (parseError) {
+              console.error('Error parsing international address:', parseError)
+              // Fallback to basic parsing
+              parsedAddress = {
+                line1: formData.internationalFullAddress.split('\n')[0] || '',
+                line2: '',
+                city: '',
+                postal_code: '',
+                country: normalizeCountryCode(formData.shippingCountry) || ''
+              }
+            }
+            
+            return {
+              name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+              phone: formData.recipientPhone || formData.phone,
+              line1: parsedAddress.line1,
+              line2: parsedAddress.line2,
+              city: parsedAddress.city,
+              state: '', // International addresses may not have state
+              postal_code: parsedAddress.postal_code,
+              country: parsedAddress.country, // Already normalized 2-character code
+              full_address: formData.internationalFullAddress, // Include full address for reference
+              local_address: formData.internationalLocalAddress || null,
+              delivery_instructions: formData.internationalDeliveryInstructions || null
+            }
           }
-        }
-        
-        // Priority 3: Use step 3 shipping address fields (for domestic/military)
-        if (formData.shippingStreetAddress) {
-          return {
-            name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
-            phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
-            line1: formData.shippingStreetAddress,
-            line2: formData.shippingStreetAddress2 || '',
-            city: formData.shippingCity,
-            state: formData.shippingState,
-            postal_code: formData.shippingPostalCode,
-            country: normalizeCountryCode(formData.shippingCountry) || 'US',
-            delivery_instructions: formData.shippingDeliveryInstructions || null
+          
+          // Priority 3: Use step 3 shipping address fields (for domestic/military)
+          if (formData.shippingStreetAddress) {
+            return {
+              name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+              phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
+              line1: formData.shippingStreetAddress,
+              line2: formData.shippingStreetAddress2 || '',
+              city: formData.shippingCity,
+              state: formData.shippingState,
+              postal_code: formData.shippingPostalCode,
+              country: normalizeCountryCode(formData.shippingCountry) || 'US',
+              delivery_instructions: formData.shippingDeliveryInstructions || null
+            }
           }
-        }
-        
-        // Priority 4: Fallback to form address (step 1)
-        return {
-          name: `${formData.firstName} ${formData.lastName}`,
-          phone: formData.phone,
-          line1: formData.streetAddress,
-          line2: formData.streetAddress2 || '',
-          city: formData.city,
-          state: formData.state,
-          postal_code: formData.zipCode,
-          country: 'US'
+          
+          // Priority 4: Fallback to form address (step 1)
+          return {
+            name: `${formData.firstName} ${formData.lastName}`,
+            phone: formData.phone,
+            line1: formData.streetAddress,
+            line2: formData.streetAddress2 || '',
+            city: formData.city,
+            state: formData.state,
+            postal_code: formData.zipCode,
+            country: 'US'
+          }
+        } catch (error) {
+          console.error('Error constructing shipping_address:', error)
+          // Return a safe fallback
+          return {
+            name: `${formData.firstName} ${formData.lastName}`,
+            phone: formData.phone || '',
+            line1: formData.streetAddress || '',
+            line2: formData.streetAddress2 || '',
+            city: formData.city || '',
+            state: formData.state || '',
+            postal_code: formData.zipCode || '',
+            country: 'US'
+          }
         }
       })(),
       
@@ -924,68 +962,97 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         },
         // To address (customer/recipient)
         to_address: (() => {
-          // Priority 1: Use Stripe shipping address if available
-          if (addressData?.shipping_address) {
-            return {
-              name: addressData.shipping_name || `${formData.firstName} ${formData.lastName}`,
-              street1: addressData.shipping_address.line1,
-              street2: addressData.shipping_address.line2 || '',
-              city: addressData.shipping_address.city,
-              state: addressData.shipping_address.state,
-              zip: addressData.shipping_address.postal_code,
-              country: normalizeCountryCode(addressData.shipping_address.country) || 'US',
-              phone: addressData.shipping_phone || formData.phone,
-              email: formData.email
+          try {
+            // Priority 1: Use Stripe shipping address if available
+            if (addressData?.shipping_address) {
+              return {
+                name: addressData.shipping_name || `${formData.firstName} ${formData.lastName}`,
+                street1: addressData.shipping_address.line1,
+                street2: addressData.shipping_address.line2 || '',
+                city: addressData.shipping_address.city,
+                state: addressData.shipping_address.state,
+                zip: addressData.shipping_address.postal_code,
+                country: normalizeCountryCode(addressData.shipping_address.country) || 'US',
+                phone: addressData.shipping_phone || formData.phone,
+                email: formData.email
+              }
             }
-          }
-          
-          // Priority 2: Use step 3 shipping address fields (for domestic/military)
-          if (formData.shippingStreetAddress) {
-            return {
-              name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
-              street1: formData.shippingStreetAddress,
-              street2: formData.shippingStreetAddress2 || '',
-              city: formData.shippingCity,
-              state: formData.shippingState,
-              zip: formData.shippingPostalCode,
-              country: normalizeCountryCode(formData.shippingCountry) || 'US',
-              phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
-              email: formData.email
-            }
-          }
-          
-          // Priority 3: Use international full address (for international)
-          if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
-            // Use the robust international address parser that handles all countries
-            const parsedAddress = parseInternationalAddress(
-              formData.internationalFullAddress,
-              formData.shippingCountry
-            )
             
+            // Priority 2: Use step 3 shipping address fields (for domestic/military)
+            if (formData.shippingStreetAddress) {
+              return {
+                name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+                street1: formData.shippingStreetAddress,
+                street2: formData.shippingStreetAddress2 || '',
+                city: formData.shippingCity,
+                state: formData.shippingState,
+                zip: formData.shippingPostalCode,
+                country: normalizeCountryCode(formData.shippingCountry) || 'US',
+                phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
+                email: formData.email
+              }
+            }
+            
+            // Priority 3: Use international full address (for international)
+            if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
+              // Use the robust international address parser that handles all countries
+              let parsedAddress
+              try {
+                parsedAddress = parseInternationalAddress(
+                  formData.internationalFullAddress,
+                  formData.shippingCountry
+                )
+              } catch (parseError) {
+                console.error('Error parsing international address for EasyPost:', parseError)
+                // Fallback to basic parsing
+                parsedAddress = {
+                  line1: formData.internationalFullAddress.split('\n')[0] || '',
+                  line2: '',
+                  city: '',
+                  postal_code: '',
+                  country: normalizeCountryCode(formData.shippingCountry) || ''
+                }
+              }
+              
+              return {
+                name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+                street1: parsedAddress.line1,
+                street2: parsedAddress.line2,
+                city: parsedAddress.city,
+                state: '',
+                zip: parsedAddress.postal_code,
+                country: parsedAddress.country, // Already normalized 2-character code
+                phone: formData.recipientPhone || formData.phone,
+                email: formData.email
+              }
+            }
+            
+            // Priority 4: Fallback to form address (step 1)
             return {
-              name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
-              street1: parsedAddress.line1,
-              street2: parsedAddress.line2,
-              city: parsedAddress.city,
-              state: '',
-              zip: parsedAddress.postal_code,
-              country: parsedAddress.country, // Already normalized 2-character code
-              phone: formData.recipientPhone || formData.phone,
+              name: `${formData.firstName} ${formData.lastName}`,
+              street1: formData.streetAddress,
+              street2: formData.streetAddress2 || '',
+              city: formData.city,
+              state: formData.state,
+              zip: formData.zipCode,
+              country: 'US',
+              phone: formData.phone,
               email: formData.email
             }
-          }
-          
-          // Priority 4: Fallback to form address (step 1)
-          return {
-            name: `${formData.firstName} ${formData.lastName}`,
-            street1: formData.streetAddress,
-            street2: formData.streetAddress2 || '',
-            city: formData.city,
-            state: formData.state,
-            zip: formData.zipCode,
-            country: 'US',
-            phone: formData.phone,
-            email: formData.email
+          } catch (error) {
+            console.error('Error constructing easypost_shipment.to_address:', error)
+            // Return a safe fallback
+            return {
+              name: `${formData.firstName} ${formData.lastName}`,
+              street1: formData.streetAddress || '',
+              street2: formData.streetAddress2 || '',
+              city: formData.city || '',
+              state: formData.state || '',
+              zip: formData.zipCode || '',
+              country: 'US',
+              phone: formData.phone || '',
+              email: formData.email || ''
+            }
           }
         })(),
         parcel: {
@@ -1021,19 +1088,43 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         payment_completed_at: new Date().toISOString()
       }
     }
+    } catch (buildError) {
+      console.error('=== ERROR BUILDING automationData OBJECT ===')
+      console.error('Error:', buildError)
+      console.error('Stack:', buildError.stack)
+      // Create a minimal fallback object to prevent complete failure
+      automationData = {
+        application_id: applicationId,
+        payment_status: 'completed',
+        stripe_payment_intent_id: paymentIntent?.id || 'unknown',
+        amount_total: paymentIntent?.amount ? paymentIntent.amount / 100 : 0,
+        currency: paymentIntent?.currency || 'usd',
+        error: 'Failed to build full automation data',
+        error_message: buildError.message
+      }
+    }
 
     // Send to Make.com webhook (permanent URL)
     const makeWebhookUrl = 'https://hook.us2.make.com/ug16tj9ocleg8u1vz2qdltztx779wf4b'
     
+    console.log('automationData object built successfully')
+    console.log('automationData keys:', Object.keys(automationData))
+    console.log('Sending to Make.com webhook...')
+    
     if (makeWebhookUrl) {
+      const payload = JSON.stringify(automationData)
+      console.log('Payload size:', payload.length, 'bytes')
+      console.log('Payload preview (first 500 chars):', payload.substring(0, 500))
       
       const response = await fetch(makeWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(automationData)
+        body: payload
       })
+      
+      console.log('Make.com webhook response status:', response.status)
       
       
       if (!response.ok) {
@@ -1058,7 +1149,11 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     }
 
   } catch (error) {
-    console.error('Failed to trigger Make.com business workflow:', error)
+    console.error('=== FAILED TO TRIGGER MAKE.COM BUSINESS WORKFLOW ===')
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
+    console.error('applicationId:', applicationId)
+    console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)))
     
     // Update database with error status
     try {
@@ -1076,5 +1171,8 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
     } catch (dbUpdateError) {
       console.error('Failed to update automation status:', dbUpdateError)
     }
+    
+    // Re-throw the error so it can be handled upstream
+    throw error
   }
 }
