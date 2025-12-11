@@ -1,6 +1,275 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
+// Country name to code mapping for normalizing country codes
+const COUNTRY_NAME_TO_CODE = {
+  'australia': 'AU',
+  'austria': 'AT', 
+  'belgium': 'BE',
+  'canada': 'CA',
+  'denmark': 'DK',
+  'finland': 'FI',
+  'france': 'FR',
+  'germany': 'DE',
+  'ireland': 'IE',
+  'italy': 'IT',
+  'luxembourg': 'LU',
+  'mexico': 'MX',
+  'netherlands': 'NL',
+  'new zealand': 'NZ',
+  'norway': 'NO',
+  'portugal': 'PT',
+  'spain': 'ES',
+  'sweden': 'SE',
+  'switzerland': 'CH',
+  'united kingdom': 'GB',
+  'uk': 'GB',
+  'great britain': 'GB',
+  'england': 'GB',
+  'scotland': 'GB',
+  'wales': 'GB',
+  'northern ireland': 'GB',
+  'usa': 'US',
+  'united states': 'US',
+  'united states of america': 'US',
+  'america': 'US',
+}
+
+// Helper function to normalize country to 2-character code
+function normalizeCountryCode(country) {
+  if (!country || typeof country !== 'string') {
+    return null
+  }
+  
+  const countryLower = country.toLowerCase().trim()
+  
+  // If already a 2-character code, return uppercase
+  if (countryLower.length === 2 && /^[a-z]{2}$/.test(countryLower)) {
+    return countryLower.toUpperCase()
+  }
+  
+  // Check if it's a known country name (exact match)
+  if (COUNTRY_NAME_TO_CODE[countryLower]) {
+    return COUNTRY_NAME_TO_CODE[countryLower]
+  }
+  
+  // Try to find partial match
+  for (const [countryName, countryCode] of Object.entries(COUNTRY_NAME_TO_CODE)) {
+    if (countryLower.includes(countryName) || countryName.includes(countryLower)) {
+      return countryCode
+    }
+  }
+  
+  // Additional common variations
+  const additionalMappings = {
+    'britain': 'GB',
+    'british': 'GB',
+    'u.k.': 'GB',
+    'u.k': 'GB',
+  }
+  
+  if (additionalMappings[countryLower]) {
+    return additionalMappings[countryLower]
+  }
+  
+  // If we can't match, return null
+  return null
+}
+
+// Helper function to extract country from address string
+function extractCountryFromAddress(addressString) {
+  if (!addressString || typeof addressString !== 'string') {
+    return null
+  }
+  
+  const lines = addressString.trim().split('\n').map(line => line.trim()).filter(line => line.length > 0)
+  if (lines.length === 0) {
+    return null
+  }
+  
+  // Check last line first (most common format)
+  const lastLine = lines[lines.length - 1].toLowerCase().trim()
+  
+  // Check if it's already a country code
+  if (lastLine.length === 2 && /^[a-z]{2}$/.test(lastLine)) {
+    return lastLine.toUpperCase()
+  }
+  
+  // Check if last line matches a known country name
+  if (COUNTRY_NAME_TO_CODE[lastLine]) {
+    return COUNTRY_NAME_TO_CODE[lastLine]
+  }
+  
+  // Search through all lines for country mentions (reverse order)
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const lineLower = lines[i].toLowerCase().trim()
+    
+    // Check for exact country name matches
+    for (const [countryName, countryCode] of Object.entries(COUNTRY_NAME_TO_CODE)) {
+      if (lineLower === countryName || lineLower.includes(countryName)) {
+        return countryCode
+      }
+    }
+    
+    // Check for country code
+    const possibleCode = lines[i].trim().toUpperCase()
+    if (possibleCode.length === 2 && /^[A-Z]{2}$/.test(possibleCode)) {
+      return possibleCode
+    }
+  }
+  
+  return null
+}
+
+// Helper function to parse international address into components
+// Handles various formats: single-line, multi-line, comma-separated, etc.
+// Works for all countries, not just UK
+function parseInternationalAddress(fullAddress, countryCode = null) {
+  if (!fullAddress || typeof fullAddress !== 'string') {
+    return {
+      line1: '',
+      line2: '',
+      city: '',
+      postal_code: '',
+      country: countryCode ? normalizeCountryCode(countryCode) || '' : ''
+    }
+  }
+  
+  // Extract country from address if not provided
+  let normalizedCountry = countryCode ? normalizeCountryCode(countryCode) : null
+  if (!normalizedCountry) {
+    const extractedCountry = extractCountryFromAddress(fullAddress)
+    normalizedCountry = extractedCountry ? normalizeCountryCode(extractedCountry) : null
+  }
+  
+  // Split into lines
+  const addressLines = fullAddress.split('\n').map(line => line.trim()).filter(line => line.length > 0)
+  
+  let line1 = ''
+  let line2 = ''
+  let city = ''
+  let postal_code = ''
+  
+  if (addressLines.length === 1) {
+    // Single-line address - try to parse comma-separated format
+    const singleLine = addressLines[0]
+    const parts = singleLine.split(',').map(p => p.trim()).filter(p => p.length > 0)
+    
+    if (parts.length >= 2) {
+      // First part is usually street address
+      line1 = parts[0]
+      
+      // Last part might be country - remove it if it matches a country name
+      let lastPart = parts[parts.length - 1]
+      const lastPartLower = lastPart.toLowerCase()
+      if (COUNTRY_NAME_TO_CODE[lastPartLower] || (lastPart.length === 2 && /^[A-Z]{2}$/i.test(lastPart))) {
+        // Last part is country, remove it from parsing
+        parts.pop()
+        lastPart = parts.length > 0 ? parts[parts.length - 1] : ''
+      }
+      
+      // Try to extract postal code and city from remaining parts
+      if (parts.length >= 2) {
+        // Second-to-last part might be city + postal code
+        const cityPostalPart = parts[parts.length - 1]
+        
+        // Try various postal code patterns for different countries
+        const postalPatterns = [
+          // UK: W1J 9BR, SW1A 1AA, M1 1AA
+          /\b([A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2})\b/i,
+          // Canadian: K1A 0B1, M5H 2N2
+          /\b([A-Z]\d[A-Z]\s?\d[A-Z]\d)\b/i,
+          // Australian: 2000, 3000 (4 digits)
+          /\b(\d{4})\b/,
+          // European (Germany, France, etc.): 10115, 75001 (5 digits)
+          /\b(\d{5})\b/,
+          // Netherlands: 1012 AB, 1234 AB
+          /\b(\d{4}\s?[A-Z]{2})\b/i,
+          // Swedish: 123 45
+          /\b(\d{3}\s?\d{2})\b/,
+          // Norwegian: 0001, 1234 (4 digits)
+          /\b(\d{4})\b/,
+          // Irish: D02 AF30, Dublin 2
+          /\b([A-Z]\d{2}\s?[A-Z]{2}\d{2})\b/i,
+          // Generic: any sequence that looks like a postal code
+          /\b([A-Z0-9]{3,10})\b/i
+        ]
+        
+        let postalMatch = null
+        for (const pattern of postalPatterns) {
+          postalMatch = cityPostalPart.match(pattern)
+          if (postalMatch) {
+            postal_code = postalMatch[1]
+            city = cityPostalPart.replace(postalMatch[0], '').trim()
+            break
+          }
+        }
+        
+        // If no postal code found, assume entire part is city
+        if (!postalMatch) {
+          city = cityPostalPart
+        }
+        
+        // If there's a third part, it might be line2
+        if (parts.length >= 3) {
+          line2 = parts[parts.length - 2]
+        }
+      } else if (parts.length === 1) {
+        // Only one part after removing country - might be city
+        city = parts[0]
+      }
+    } else {
+      // Can't parse comma-separated, use entire line as line1
+      line1 = singleLine
+    }
+  } else {
+    // Multi-line address
+    line1 = addressLines[0] || ''
+    line2 = addressLines.length > 1 ? addressLines[1] : ''
+    
+    // City is usually second-to-last line (before country)
+    // Postal code might be on same line as city or separate
+    if (addressLines.length >= 2) {
+      const cityLineIndex = addressLines.length - 2
+      const cityLine = addressLines[cityLineIndex]
+      
+      // Try to extract postal code from city line
+      const postalPatterns = [
+        /\b([A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2})\b/i, // UK
+        /\b([A-Z]\d[A-Z]\s?\d[A-Z]\d)\b/i, // Canadian
+        /\b(\d{4,5})\b/, // Australian/European
+        /\b(\d{4}\s?[A-Z]{2})\b/i, // Netherlands
+        /\b(\d{3}\s?\d{2})\b/, // Swedish
+        /\b([A-Z]\d{2}\s?[A-Z]{2}\d{2})\b/i, // Irish
+        /\b([A-Z0-9]{3,10})\b/i // Generic
+      ]
+      
+      let postalMatch = null
+      for (const pattern of postalPatterns) {
+        postalMatch = cityLine.match(pattern)
+        if (postalMatch) {
+          postal_code = postalMatch[1]
+          city = cityLine.replace(postalMatch[0], '').trim()
+          break
+        }
+      }
+      
+      // If no postal code found, entire line is city
+      if (!postalMatch) {
+        city = cityLine
+      }
+    }
+  }
+  
+  return {
+    line1: line1,
+    line2: line2,
+    city: city,
+    postal_code: postal_code,
+    country: normalizedCountry || ''
+  }
+}
+
 // Disable Vercel's default body parsing to get raw body for Stripe webhooks
 export const config = {
   api: {
@@ -469,17 +738,21 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         
         // Priority 2: For international, use international full address
         if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
-          // Parse international address - first line is usually street
-          const addressLines = formData.internationalFullAddress.split('\n').filter(line => line.trim())
+          // Use the robust international address parser that handles all countries
+          const parsedAddress = parseInternationalAddress(
+            formData.internationalFullAddress,
+            formData.shippingCountry
+          )
+          
           return {
             name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
             phone: formData.recipientPhone || formData.phone,
-            line1: addressLines[0] || '',
-            line2: addressLines[1] || '',
-            city: addressLines[addressLines.length - 2] || '', // Second to last is usually city
+            line1: parsedAddress.line1,
+            line2: parsedAddress.line2,
+            city: parsedAddress.city,
             state: '', // International addresses may not have state
-            postal_code: '', // May be in the address string
-            country: formData.shippingCountry || '',
+            postal_code: parsedAddress.postal_code,
+            country: parsedAddress.country, // Already normalized 2-character code
             full_address: formData.internationalFullAddress, // Include full address for reference
             local_address: formData.internationalLocalAddress || null,
             delivery_instructions: formData.internationalDeliveryInstructions || null
@@ -496,7 +769,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
             city: formData.shippingCity,
             state: formData.shippingState,
             postal_code: formData.shippingPostalCode,
-            country: formData.shippingCountry || 'US',
+            country: normalizeCountryCode(formData.shippingCountry) || 'US',
             delivery_instructions: formData.shippingDeliveryInstructions || null
           }
         }
@@ -537,13 +810,13 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         city: formData.shippingCity,
         state: formData.shippingState,
         postal_code: formData.shippingPostalCode,
-        country: formData.shippingCountry || 'US',
+        country: normalizeCountryCode(formData.shippingCountry) || 'US',
         delivery_instructions: formData.shippingDeliveryInstructions || null
       } : null,
       
       // International shipping details (when applicable)
       international_shipping: formData.shippingCategory === 'international' ? {
-        country: formData.shippingCountry,
+        country: normalizeCountryCode(formData.shippingCountry) || null,
         pccc_code: formData.pcccCode || null,
         recipient_name: formData.recipientName,
         recipient_phone: formData.recipientPhone,
@@ -596,8 +869,60 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         signature_filename: `${formData.firstName}${formData.lastName}_Signature.png`
       },
       
-      // EasyPost shipping data (for fastest rate selection)
+      // EasyPost shipping data (for Create a Shipment step in Make.com)
+      // 
+      // MAPPING INSTRUCTIONS FOR MAKE.COM:
+      // In Make.com's EasyPost "Create a Shipment" module, map these fields:
+      // 
+      // FROM ADDRESS:
+      //   - Name: easypost_shipment.from_address.name
+      //   - Company: easypost_shipment.from_address.company
+      //   - Street 1: easypost_shipment.from_address.street1
+      //   - Street 2: easypost_shipment.from_address.street2
+      //   - City: easypost_shipment.from_address.city
+      //   - State: easypost_shipment.from_address.state
+      //   - ZIP: easypost_shipment.from_address.zip
+      //   - Country: easypost_shipment.from_address.country
+      //   - Phone: easypost_shipment.from_address.phone
+      //   - Email: easypost_shipment.from_address.email
+      //
+      // TO ADDRESS:
+      //   - Name: easypost_shipment.to_address.name
+      //   - Street 1: easypost_shipment.to_address.street1
+      //   - Street 2: easypost_shipment.to_address.street2
+      //   - City: easypost_shipment.to_address.city
+      //   - State: easypost_shipment.to_address.state
+      //   - ZIP: easypost_shipment.to_address.zip
+      //   - Country: easypost_shipment.to_address.country (already normalized to 2-char code)
+      //   - Phone: easypost_shipment.to_address.phone
+      //   - Email: easypost_shipment.to_address.email
+      //
+      // PARCEL:
+      //   - Length: easypost_shipment.parcel.length (inches)
+      //   - Width: easypost_shipment.parcel.width (inches)
+      //   - Height: easypost_shipment.parcel.height (inches)
+      //   - Weight: easypost_shipment.parcel.weight (ounces)
+      //
+      // OPTIONAL FIELDS:
+      //   - Carrier: easypost_shipment.carrier (if specified, e.g., "USPS" for military)
+      //   - Options: easypost_shipment.options (label format, size, etc.)
+      //
       easypost_shipment: {
+        // From address (business/shipping origin)
+        // TODO: Update with actual business address
+        from_address: {
+          name: 'FastIDP',
+          company: 'FastIDP',
+          street1: process.env.BUSINESS_STREET_ADDRESS || '123 Main Street',
+          street2: process.env.BUSINESS_STREET_ADDRESS_2 || '',
+          city: process.env.BUSINESS_CITY || 'Bellefontaine',
+          state: process.env.BUSINESS_STATE || 'OH',
+          zip: process.env.BUSINESS_ZIP || '43311',
+          country: 'US',
+          phone: process.env.BUSINESS_PHONE || '',
+          email: process.env.BUSINESS_EMAIL || 'support@fastidp.com'
+        },
+        // To address (customer/recipient)
         to_address: (() => {
           // Priority 1: Use Stripe shipping address if available
           if (addressData?.shipping_address) {
@@ -608,7 +933,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
               city: addressData.shipping_address.city,
               state: addressData.shipping_address.state,
               zip: addressData.shipping_address.postal_code,
-              country: addressData.shipping_address.country || 'US',
+              country: normalizeCountryCode(addressData.shipping_address.country) || 'US',
               phone: addressData.shipping_phone || formData.phone,
               email: formData.email
             }
@@ -623,7 +948,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
               city: formData.shippingCity,
               state: formData.shippingState,
               zip: formData.shippingPostalCode,
-              country: formData.shippingCountry || 'US',
+              country: normalizeCountryCode(formData.shippingCountry) || 'US',
               phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
               email: formData.email
             }
@@ -631,16 +956,20 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           
           // Priority 3: Use international full address (for international)
           if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
-            // For international, we'll need to parse the address or use a placeholder
-            // EasyPost will need structured address, so we'll use what we have
+            // Use the robust international address parser that handles all countries
+            const parsedAddress = parseInternationalAddress(
+              formData.internationalFullAddress,
+              formData.shippingCountry
+            )
+            
             return {
               name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
-              street1: formData.internationalFullAddress.split('\n')[0] || '',
-              street2: '',
-              city: '',
+              street1: parsedAddress.line1,
+              street2: parsedAddress.line2,
+              city: parsedAddress.city,
               state: '',
-              zip: '',
-              country: formData.shippingCountry || 'US',
+              zip: parsedAddress.postal_code,
+              country: parsedAddress.country, // Already normalized 2-character code
               phone: formData.recipientPhone || formData.phone,
               email: formData.email
             }
