@@ -480,35 +480,34 @@ function validatePostalCode(postalCode, countryCode) {
 }
 
 // Format address for EasyPost based on country requirements
-// NOTE: EasyPost requires the state field to be present (even if empty) for all addresses
+// NOTE: EasyPost allows omitting state field for countries that don't use it
+// Only include state for countries that require it (CA, AU, MX, US)
 function formatAddressForEasyPost(parsedAddress, countryCode, fullAddressText = '') {
   const country = normalizeCountryCode(countryCode) || ''
   
-  // Base address object - always include state field (required by EasyPost)
+  // Base address object - do NOT include state by default
   const address = {
     street1: parsedAddress.line1 || '',
     street2: parsedAddress.line2 || '',
     city: parsedAddress.city || '',
     zip: validatePostalCode(parsedAddress.postal_code, country),
-    country: country,
-    state: '' // Default to empty string - EasyPost requires this field to be present
+    country: country
   }
   
-  // Add actual state/province code for countries that require it
+  // Only add state/province for countries that require it
   if (COUNTRIES_WITH_STATE.includes(country)) {
     const state = extractStateProvince(fullAddressText, country)
     if (state) {
       address.state = state
     }
-    // If no state found, keep empty string (already set above)
+    // If country requires state but we can't extract it, use empty string as fallback
+    // This handles edge cases where state is required but not found in address text
+    if (!address.state) {
+      address.state = ''
+    }
   }
-  // For other countries (GB, EU, etc.), state is empty string ''
-  // EasyPost requires the field to be present but accepts empty string for countries without states
-  
-  // Ensure state is always explicitly set (never undefined)
-  if (address.state === undefined) {
-    address.state = ''
-  }
+  // For other countries (GB, EU, etc.), do NOT include state field at all
+  // EasyPost allows omitting the field for countries that don't use states
   
   return address
 }
@@ -1020,22 +1019,24 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
           )
           
           // Build shipping_address object (for webhook payload, not EasyPost API)
-          // Always include state field (empty string for countries without states)
-          const stateValue = formattedAddress.state !== undefined ? formattedAddress.state : ''
-          
           const shippingAddress = {
             name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
             phone: formData.recipientPhone || formData.phone,
             line1: formattedAddress.street1 || parsedAddress.line1,
             line2: formattedAddress.street2 || parsedAddress.line2,
             city: formattedAddress.city || parsedAddress.city,
-            state: stateValue, // Always explicitly set (empty string for countries without states)
             postal_code: formattedAddress.zip || parsedAddress.postal_code,
             country: formattedAddress.country || parsedAddress.country,
             full_address: formData.internationalFullAddress, // Include full address for reference
             local_address: formData.internationalLocalAddress || null,
             delivery_instructions: formData.internationalDeliveryInstructions || null
           }
+          
+          // Only include state if country requires it (CA, AU, MX, US)
+          if (formattedAddress.state !== undefined) {
+            shippingAddress.state = formattedAddress.state
+          }
+          // For countries without states (GB, EU, etc.), omit state field entirely
           
           return shippingAddress
         }
@@ -1187,10 +1188,11 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
       //   - Street 2: easypost_shipment.to_address.street2
       //   - City: easypost_shipment.to_address.city
       //   - State: easypost_shipment.to_address.state
-      //     * IMPORTANT: State field is ALWAYS included (required by EasyPost)
+      //     * IMPORTANT: State field is ONLY included for countries that require it
       //     * For CA, AU, MX, US: Contains actual state/province code (e.g., "ON", "NSW", "BC", "OH")
-      //     * For all other countries (GB, EU, etc.): Empty string "" (EasyPost requires field but accepts empty)
+      //     * For all other countries (GB, EU, etc.): Field is OMITTED (EasyPost allows omitting for countries without states)
       //     * In Make.com EasyPost module: Use easypost_shipment.to_address.state (not shipping_address.state)
+      //     * For countries without states, this field will be undefined - EasyPost accepts this
       //   - ZIP: easypost_shipment.to_address.zip (validated and normalized per country)
       //   - Country: easypost_shipment.to_address.country (already normalized 2-char code)
       //   - Phone: easypost_shipment.to_address.phone
@@ -1296,20 +1298,25 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
                 formattedAddress.zip = formattedAddress.zip || ''
               }
               
-              // Explicitly set state - no fallback, always present
-              const stateValue = formattedAddress.state !== undefined ? formattedAddress.state : ''
-              
-              return {
+              // Build address object - only include state if it exists (for CA, AU, MX, US)
+              const addressObj = {
                 name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
                 street1: formattedAddress.street1,
                 street2: formattedAddress.street2,
                 city: formattedAddress.city,
-                state: stateValue, // Always explicitly set (empty string for countries without states)
                 zip: formattedAddress.zip,
                 country: formattedAddress.country,
                 phone: formData.recipientPhone || formData.phone,
                 email: formData.email
               }
+              
+              // Only include state if it exists (countries that require it)
+              if (formattedAddress.state !== undefined) {
+                addressObj.state = formattedAddress.state
+              }
+              // For countries without states (GB, EU, etc.), omit state field entirely
+              
+              return addressObj
             }
             
             // Priority 4: Fallback to form address (step 1)
