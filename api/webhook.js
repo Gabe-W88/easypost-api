@@ -1227,7 +1227,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
                 street1: addressData.shipping_address.line1,
                 street2: addressData.shipping_address.line2 || '',
                 city: addressData.shipping_address.city,
-                state: addressData.shipping_address.state,
+                state: addressData.shipping_address.state || '', // Ensure state is always present
                 zip: addressData.shipping_address.postal_code,
                 country: normalizeCountryCode(addressData.shipping_address.country) || 'US',
                 phone: addressData.shipping_phone || formData.phone,
@@ -1242,7 +1242,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
                 street1: formData.shippingStreetAddress,
                 street2: formData.shippingStreetAddress2 || '',
                 city: formData.shippingCity,
-                state: formData.shippingState,
+                state: formData.shippingState || '', // Ensure state is always present
                 zip: formData.shippingPostalCode,
                 country: normalizeCountryCode(formData.shippingCountry) || 'US',
                 phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
@@ -1294,7 +1294,12 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
               
               return {
                 name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
-                ...formattedAddress, // Spread formatted address (includes state only if country requires it)
+                street1: formattedAddress.street1,
+                street2: formattedAddress.street2,
+                city: formattedAddress.city,
+                state: formattedAddress.state, // Always include state (empty string for countries without states)
+                zip: formattedAddress.zip,
+                country: formattedAddress.country,
                 phone: formData.recipientPhone || formData.phone,
                 email: formData.email
               }
@@ -1306,7 +1311,7 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
               street1: formData.streetAddress,
               street2: formData.streetAddress2 || '',
               city: formData.city,
-              state: formData.state,
+              state: formData.state || '', // Ensure state is always present (empty string if missing)
               zip: formData.zipCode,
               country: 'US',
               phone: formData.phone,
@@ -1314,13 +1319,13 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
             }
           } catch (error) {
             console.error('Error constructing easypost_shipment.to_address:', error)
-            // Return a safe fallback
+            // Return a safe fallback - always include state field
             return {
               name: `${formData.firstName} ${formData.lastName}`,
               street1: formData.streetAddress || '',
               street2: formData.streetAddress2 || '',
               city: formData.city || '',
-              state: formData.state || '',
+              state: formData.state || '', // Always include state (empty string if missing)
               zip: formData.zipCode || '',
               country: 'US',
               phone: formData.phone || '',
