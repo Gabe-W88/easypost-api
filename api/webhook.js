@@ -146,7 +146,7 @@ async function handleCheckoutCompleted(session) {
       updated_at: new Date().toISOString()
     })
     .eq('stripe_session_id', session.id)
-    .select('application_id, form_data, file_urls')
+    .select('application_id, form_data, file_urls, fulfillment_type')
     .single()
 
   if (error) {
@@ -162,7 +162,7 @@ async function handleCheckoutCompleted(session) {
       payment_method: session.payment_method,
       amount: session.amount_total,
       currency: session.currency 
-    }, null, data.file_urls)
+    }, null, data.file_urls, data.fulfillment_type)
     
   } else {
     console.error('No application found for session:', session.id)
@@ -259,7 +259,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
       updated_at: new Date().toISOString()
     })
     .eq('application_id', applicationId)
-    .select('application_id, form_data, file_urls')
+    .select('application_id, form_data, file_urls, fulfillment_type')
     .single()
 
 
@@ -271,7 +271,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
 
   if (data) {
     // Trigger Make.com automation with payment intent and address data
-    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData, data.file_urls)
+    await triggerMakeAutomation(data.application_id, data.form_data, paymentIntent, addressData, data.file_urls, data.fulfillment_type)
     
   } else {
     console.error('No application found for payment intent:', paymentIntent.id)
@@ -312,7 +312,7 @@ function convertToMMDDYYYY(dateString) {
 }
 
 // Trigger Make.com automation with application data for business workflow
-async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null, fileData = null) {
+async function triggerMakeAutomation(applicationId, formDataString, paymentIntent, addressData = null, fileData = null, fulfillmentType = null) {
   
   try {
     // Parse form data
@@ -483,6 +483,9 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
         estimated_delivery: getDeliveryEstimate(formData.processingOption, formData.shippingCategory), // Customer delivery estimate
         processing_time_estimate: getProcessingTime(formData.processingOption) // Legacy field for compatibility
       },
+      
+      // Fulfillment type (automated vs manual)
+      fulfillment_type: fulfillmentType || 'manual',
       
       // International shipping details (when applicable)
       international_shipping: formData.shippingCategory === 'international' ? {
