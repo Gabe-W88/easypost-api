@@ -270,6 +270,240 @@ function parseInternationalAddress(fullAddress, countryCode = null) {
   }
 }
 
+// Countries that require state/province field for EasyPost
+// Based on EasyPost requirements: CA, AU, MX need state/province
+// US is included for domestic shipments
+const COUNTRIES_WITH_STATE = ['CA', 'AU', 'MX', 'US']
+
+// State/Province code mappings for extraction from address text
+const STATE_PROVINCE_CODES = {
+  // Canada provinces
+  'CA': {
+    'alberta': 'AB', 'british columbia': 'BC', 'manitoba': 'MB', 'new brunswick': 'NB',
+    'newfoundland': 'NL', 'northwest territories': 'NT', 'nova scotia': 'NS', 'nunavut': 'NU',
+    'ontario': 'ON', 'prince edward island': 'PE', 'quebec': 'QC', 'saskatchewan': 'SK',
+    'yukon': 'YT', 'ab': 'AB', 'bc': 'BC', 'mb': 'MB', 'nb': 'NB', 'nl': 'NL', 'nt': 'NT',
+    'ns': 'NS', 'nu': 'NU', 'on': 'ON', 'pe': 'PE', 'qc': 'QC', 'sk': 'SK', 'yt': 'YT'
+  },
+  // Australia states
+  'AU': {
+    'new south wales': 'NSW', 'victoria': 'VIC', 'queensland': 'QLD', 'western australia': 'WA',
+    'south australia': 'SA', 'tasmania': 'TAS', 'australian capital territory': 'ACT',
+    'northern territory': 'NT', 'nsw': 'NSW', 'vic': 'VIC', 'qld': 'QLD', 'wa': 'WA',
+    'sa': 'SA', 'tas': 'TAS', 'act': 'ACT', 'nt': 'NT'
+  },
+  // Mexico states (common ones - full list is extensive)
+  'MX': {
+    'aguascalientes': 'AG', 'baja california': 'BC', 'baja california sur': 'BS',
+    'campeche': 'CM', 'chihuahua': 'CH', 'coahuila': 'CO', 'colima': 'CL',
+    'distrito federal': 'DF', 'durango': 'DG', 'guanajuato': 'GJ', 'guerrero': 'GR',
+    'hidalgo': 'HI', 'jalisco': 'JA', 'mexico': 'MX', 'michoacan': 'MI',
+    'morelos': 'MO', 'nayarit': 'NA', 'nuevo leon': 'NL', 'oaxaca': 'OA',
+    'puebla': 'PU', 'queretaro': 'QE', 'quintana roo': 'QR', 'san luis potosi': 'SL',
+    'sinaloa': 'SI', 'sonora': 'SO', 'tabasco': 'TB', 'tamaulipas': 'TM',
+    'tlaxcala': 'TL', 'veracruz': 'VE', 'yucatan': 'YU', 'zacatecas': 'ZA'
+  }
+}
+
+// Extract state/province from address text for countries that require it
+function extractStateProvince(addressText, countryCode) {
+  if (!addressText || !countryCode || !COUNTRIES_WITH_STATE.includes(countryCode)) {
+    return null
+  }
+  
+  const mappings = STATE_PROVINCE_CODES[countryCode]
+  if (!mappings) return null
+  
+  const addressLower = addressText.toLowerCase()
+  
+  // Try to find state/province in address text
+  for (const [key, code] of Object.entries(mappings)) {
+    if (addressLower.includes(key)) {
+      return code
+    }
+  }
+  
+  return null
+}
+
+// Validate and normalize postal code format by country
+// Covers all 20 automated countries from the CSV
+function validatePostalCode(postalCode, countryCode) {
+  if (!postalCode || !countryCode) return postalCode || ''
+  
+  const code = postalCode.trim().toUpperCase()
+  
+  switch (countryCode) {
+    // UK: Format "W1J 9BR" (with space)
+    case 'GB':
+      if (/^[A-Z]{1,2}\d{1,2}[A-Z]?\d[A-Z]{2}$/.test(code)) {
+        return code.replace(/^([A-Z]{1,2}\d{1,2}[A-Z]?)(\d[A-Z]{2})$/, '$1 $2')
+      }
+      return code
+      
+    // Canada: Format "K1A 0B1" (with space)
+    case 'CA':
+      if (/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(code)) {
+        return code.replace(/^([A-Z]\d[A-Z])(\d[A-Z]\d)$/, '$1 $2')
+      }
+      return code
+      
+    // Netherlands: Format "1012 AB" (4 digits + 2 letters with space)
+    case 'NL':
+      if (/^\d{4}[A-Z]{2}$/.test(code)) {
+        return code.replace(/^(\d{4})([A-Z]{2})$/, '$1 $2')
+      }
+      return code
+      
+    // Ireland: Format "D02 AF30" (with space)
+    case 'IE':
+      if (/^[A-Z]\d{2}[A-Z]{2}\d{2}$/.test(code)) {
+        return code.replace(/^([A-Z]\d{2})([A-Z]{2}\d{2})$/, '$1 $2')
+      }
+      return code
+      
+    // Sweden: Format "123 45" (5 digits with space)
+    case 'SE':
+      if (/^\d{5}$/.test(code)) {
+        return code.replace(/^(\d{3})(\d{2})$/, '$1 $2')
+      }
+      return code
+      
+    // Portugal: Format "1234-567" (7 digits with dash)
+    case 'PT':
+      if (/^\d{7}$/.test(code)) {
+        return code.replace(/^(\d{4})(\d{3})$/, '$1-$2')
+      }
+      return code
+      
+    // Australia: 4 digits (no formatting needed, but validate)
+    case 'AU':
+      if (/^\d{4}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Austria: 4 digits
+    case 'AT':
+      if (/^\d{4}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Belgium: 4 digits
+    case 'BE':
+      if (/^\d{4}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Denmark: 4 digits
+    case 'DK':
+      if (/^\d{4}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Luxembourg: 4 digits
+    case 'LU':
+      if (/^\d{4}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // New Zealand: 4 digits
+    case 'NZ':
+      if (/^\d{4}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Norway: 4 digits
+    case 'NO':
+      if (/^\d{4}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Switzerland: 4 digits
+    case 'CH':
+      if (/^\d{4}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Finland: 5 digits
+    case 'FI':
+      if (/^\d{5}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // France: 5 digits
+    case 'FR':
+      if (/^\d{5}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Germany: 5 digits
+    case 'DE':
+      if (/^\d{5}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Italy: 5 digits
+    case 'IT':
+      if (/^\d{5}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Mexico: 5 digits
+    case 'MX':
+      if (/^\d{5}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    // Spain: 5 digits
+    case 'ES':
+      if (/^\d{5}$/.test(code)) {
+        return code
+      }
+      return code
+      
+    default:
+      return code
+  }
+}
+
+// Format address for EasyPost based on country requirements
+function formatAddressForEasyPost(parsedAddress, countryCode, fullAddressText = '') {
+  const country = normalizeCountryCode(countryCode) || ''
+  
+  // Base address object
+  const address = {
+    street1: parsedAddress.line1 || '',
+    street2: parsedAddress.line2 || '',
+    city: parsedAddress.city || '',
+    zip: validatePostalCode(parsedAddress.postal_code, country),
+    country: country
+  }
+  
+  // Add state/province only for countries that require it
+  if (COUNTRIES_WITH_STATE.includes(country)) {
+    const state = extractStateProvince(fullAddressText, country) || ''
+    if (state) {
+      address.state = state
+    }
+  }
+  // For other countries, omit state field entirely (don't include it)
+  
+  return address
+}
+
 // Disable Vercel's default body parsing to get raw body for Stripe webhooks
 export const config = {
   api: {
@@ -747,41 +981,57 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
             }
           }
           
-          // Priority 2: For international, use international full address
-          if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
-            // Use the robust international address parser that handles all countries
-            let parsedAddress
-            try {
-              parsedAddress = parseInternationalAddress(
-                formData.internationalFullAddress,
-                formData.shippingCountry
-              )
-            } catch (parseError) {
-              console.error('Error parsing international address:', parseError)
-              // Fallback to basic parsing
-              parsedAddress = {
-                line1: formData.internationalFullAddress.split('\n')[0] || '',
-                line2: '',
-                city: '',
-                postal_code: '',
-                country: normalizeCountryCode(formData.shippingCountry) || ''
-              }
-            }
-            
-            return {
-              name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
-              phone: formData.recipientPhone || formData.phone,
-              line1: parsedAddress.line1,
-              line2: parsedAddress.line2,
-              city: parsedAddress.city,
-              state: '', // International addresses may not have state
-              postal_code: parsedAddress.postal_code,
-              country: parsedAddress.country, // Already normalized 2-character code
-              full_address: formData.internationalFullAddress, // Include full address for reference
-              local_address: formData.internationalLocalAddress || null,
-              delivery_instructions: formData.internationalDeliveryInstructions || null
+        // Priority 2: For international, use international full address
+        if (formData.shippingCategory === 'international' && formData.internationalFullAddress) {
+          // Use the robust international address parser that handles all countries
+          let parsedAddress
+          try {
+            parsedAddress = parseInternationalAddress(
+              formData.internationalFullAddress,
+              formData.shippingCountry
+            )
+          } catch (parseError) {
+            console.error('Error parsing international address:', parseError)
+            // Fallback to basic parsing
+            parsedAddress = {
+              line1: formData.internationalFullAddress.split('\n')[0] || '',
+              line2: '',
+              city: '',
+              postal_code: '',
+              country: normalizeCountryCode(formData.shippingCountry) || ''
             }
           }
+          
+          // Format address with country-specific requirements
+          const countryCode = parsedAddress.country || normalizeCountryCode(formData.shippingCountry) || ''
+          const formattedAddress = formatAddressForEasyPost(
+            parsedAddress,
+            countryCode,
+            formData.internationalFullAddress
+          )
+          
+          // Build shipping_address object (for webhook payload, not EasyPost API)
+          const shippingAddress = {
+            name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+            phone: formData.recipientPhone || formData.phone,
+            line1: formattedAddress.street1 || parsedAddress.line1,
+            line2: formattedAddress.street2 || parsedAddress.line2,
+            city: formattedAddress.city || parsedAddress.city,
+            postal_code: formattedAddress.zip || parsedAddress.postal_code,
+            country: formattedAddress.country || parsedAddress.country,
+            full_address: formData.internationalFullAddress, // Include full address for reference
+            local_address: formData.internationalLocalAddress || null,
+            delivery_instructions: formData.internationalDeliveryInstructions || null
+          }
+          
+          // Only include state if country requires it (CA, AU, MX)
+          if (formattedAddress.state) {
+            shippingAddress.state = formattedAddress.state
+          }
+          // For other countries, omit state field entirely
+          
+          return shippingAddress
+        }
           
           // Priority 3: Use step 3 shipping address fields (for domestic/military)
           if (formData.shippingStreetAddress) {
@@ -1014,14 +1264,30 @@ async function triggerMakeAutomation(applicationId, formDataString, paymentInten
                 }
               }
               
+              // Format address for EasyPost with country-specific requirements
+              const countryCode = parsedAddress.country || normalizeCountryCode(formData.shippingCountry) || ''
+              const formattedAddress = formatAddressForEasyPost(
+                parsedAddress,
+                countryCode,
+                formData.internationalFullAddress
+              )
+              
+              // Validate required fields are not empty
+              if (!formattedAddress.street1 || !formattedAddress.city || !formattedAddress.zip) {
+                console.warn('Incomplete address parsed, using full address as street1:', {
+                  street1: formattedAddress.street1,
+                  city: formattedAddress.city,
+                  zip: formattedAddress.zip
+                })
+                // Fallback: use full address as street1 if parsing failed
+                formattedAddress.street1 = formattedAddress.street1 || formData.internationalFullAddress.split('\n')[0] || ''
+                formattedAddress.city = formattedAddress.city || 'Unknown'
+                formattedAddress.zip = formattedAddress.zip || ''
+              }
+              
               return {
                 name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
-                street1: parsedAddress.line1,
-                street2: parsedAddress.line2,
-                city: parsedAddress.city,
-                state: '',
-                zip: parsedAddress.postal_code,
-                country: parsedAddress.country, // Already normalized 2-character code
+                ...formattedAddress, // Spread formatted address (includes state only if country requires it)
                 phone: formData.recipientPhone || formData.phone,
                 email: formData.email
               }
