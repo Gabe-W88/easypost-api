@@ -44,6 +44,37 @@ async function uploadFileToStorage(fileBuffer, fileName, contentType, bucket = '
   }
 }
 
+// Helper function to calculate ship-by date based on processing option
+function calculateShipByDate(processingOption, submittedDate = new Date()) {
+  const date = new Date(submittedDate)
+  let daysToAdd = 5 // Default: standard processing
+  
+  switch (processingOption) {
+    case 'fastest':
+      daysToAdd = 1 // Same-day/next-day
+      break
+    case 'fast':
+      daysToAdd = 2 // 1-2 business days
+      break
+    case 'standard':
+    default:
+      daysToAdd = 5 // 3-5 business days
+      break
+  }
+  
+  // Add business days (skip weekends)
+  let addedDays = 0
+  while (addedDays < daysToAdd) {
+    date.setDate(date.getDate() + 1)
+    // Skip weekends (Saturday = 6, Sunday = 0)
+    if (date.getDay() !== 0 && date.getDay() !== 6) {
+      addedDays++
+    }
+  }
+  
+  return date.toISOString().split('T')[0] // Return YYYY-MM-DD
+}
+
 // Helper function to process and upload multiple files
 async function uploadFilesToStorage(files, applicationId, fileType) {
   const uploadedFiles = []
@@ -497,6 +528,55 @@ export default async function handler(req, res) {
         file_urls: fileMetadata, // Store URLs instead of base64
         payment_status: 'pending',
         fulfillment_type: fulfillmentType, // Add fulfillment type for Make automation
+        
+        // Personal information (denormalized)
+        first_name: formData.firstName,
+        middle_name: formData.middleName || null,
+        last_name: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        date_of_birth: formData.dateOfBirth || null, // YYYY-MM-DD format
+        
+        // License information (denormalized)
+        license_number: formData.licenseNumber,
+        license_state: formData.licenseState,
+        license_expiration: formData.licenseExpiration || null,
+        license_types: formData.licenseTypes || [], // Array: ['passenger', 'motorcycle', etc.]
+        
+        // Address information (denormalized)
+        street_address: formData.streetAddress,
+        street_address_2: formData.streetAddress2 || null,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zipCode,
+        
+        // Birthplace (denormalized)
+        birthplace_city: formData.birthplaceCity,
+        birthplace_state: formData.birthplaceState,
+        
+        // Travel information (denormalized)
+        drive_abroad: formData.driveAbroad,
+        departure_date: formData.departureDate || null, // YYYY-MM-DD format
+        permit_effective_date: formData.permitEffectiveDate || null, // YYYY-MM-DD format
+        selected_permits: formData.selectedPermits || [], // Array: ['idp', 'iadp']
+        
+        // Shipping and processing (denormalized)
+        shipping_category: formData.shippingCategory, // 'domestic', 'international', 'military'
+        processing_option: formData.processingOption, // 'standard', 'fast', 'fastest'
+        shipping_label_generated: fulfillmentType === 'automated', // true if automated
+        ship_by_date: calculateShipByDate(formData.processingOption),
+        
+        // Shipping address fields (individual columns per CSV requirement)
+        shipping_recipient_name: formData.recipientName || `${formData.firstName} ${formData.lastName}`,
+        shipping_recipient_phone: formData.recipientPhone || formData.shippingPhone || formData.phone,
+        // For domestic/military: use shipping address fields
+        shipping_street_address: (formData.shippingCategory !== 'international' && formData.shippingStreetAddress) ? formData.shippingStreetAddress : null,
+        shipping_street_address_2: (formData.shippingCategory !== 'international' && formData.shippingStreetAddress2) ? formData.shippingStreetAddress2 : null,
+        shipping_city: (formData.shippingCategory !== 'international' && formData.shippingCity) ? formData.shippingCity : null,
+        shipping_state: (formData.shippingCategory !== 'international' && formData.shippingState) ? formData.shippingState : null,
+        shipping_postal_code: (formData.shippingCategory !== 'international' && formData.shippingPostalCode) ? formData.shippingPostalCode : null,
+        shipping_delivery_instructions: formData.shippingDeliveryInstructions || formData.internationalDeliveryInstructions || null,
+        
         // Extract international shipping fields to individual columns
         international_full_address: formData.internationalFullAddress || null,
         international_local_address: formData.internationalLocalAddress || null,

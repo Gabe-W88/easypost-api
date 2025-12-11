@@ -760,6 +760,7 @@ async function handlePaymentSucceeded(paymentIntentData) {
       stripe_payment_intent_id: paymentIntent.id,
       stripe_payment_method_id: paymentIntent.payment_method,
       payment_completed_at: new Date().toISOString(),
+      amount_paid: paymentIntent.amount / 100, // Convert cents to dollars
       billing_address: JSON.stringify(addressData.billing_address),
       billing_name: addressData.billing_name,
       billing_email: addressData.billing_email,
