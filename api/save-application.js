@@ -296,10 +296,20 @@ function determineFulfillmentType(shippingCategory, shippingCountry, internation
       return 'manual'
     }
     
-    // Check if country code is in automated list
-    const isAutomated = AUTOMATED_COUNTRIES.includes(countryCode.toUpperCase())
+    // Normalize country code before checking automated list
+    // This handles cases where full country names are provided (e.g., "United Kingdom" → "GB")
+    const normalizedCountryCode = normalizeCountryCode(countryCode)
+    
+    if (!normalizedCountryCode) {
+      console.log('Could not normalize country code, defaulting to manual:', countryCode)
+      return 'manual'
+    }
+    
+    // Check if normalized country code is in automated list
+    const isAutomated = AUTOMATED_COUNTRIES.includes(normalizedCountryCode)
     console.log('Country automation check:', {
-      countryCode: countryCode.toUpperCase(),
+      originalCountry: countryCode,
+      normalizedCountryCode: normalizedCountryCode,
       isAutomated,
       automatedCountries: AUTOMATED_COUNTRIES
     })
