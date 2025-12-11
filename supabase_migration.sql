@@ -9,14 +9,30 @@
 -- Copy and paste this entire section into Supabase SQL Editor and run it
 
 ALTER TABLE applications
-  -- Personal information
+  -- Personal information (add if missing)
+  ADD COLUMN IF NOT EXISTS first_name TEXT,
   ADD COLUMN IF NOT EXISTS middle_name TEXT,
+  ADD COLUMN IF NOT EXISTS last_name TEXT,
+  ADD COLUMN IF NOT EXISTS email TEXT,
+  ADD COLUMN IF NOT EXISTS phone TEXT,
+  ADD COLUMN IF NOT EXISTS date_of_birth DATE,
   
   -- License information
   ADD COLUMN IF NOT EXISTS license_number TEXT,
   ADD COLUMN IF NOT EXISTS license_state TEXT,
   ADD COLUMN IF NOT EXISTS license_expiration DATE,
   ADD COLUMN IF NOT EXISTS license_types JSONB,
+  
+  -- Address information (add if missing)
+  ADD COLUMN IF NOT EXISTS street_address TEXT,
+  ADD COLUMN IF NOT EXISTS street_address_2 TEXT,
+  ADD COLUMN IF NOT EXISTS city TEXT,
+  ADD COLUMN IF NOT EXISTS state TEXT,
+  ADD COLUMN IF NOT EXISTS zip_code TEXT,
+  
+  -- Birthplace (add if missing)
+  ADD COLUMN IF NOT EXISTS birthplace_city TEXT,
+  ADD COLUMN IF NOT EXISTS birthplace_state TEXT,
   
   -- Travel and permit information
   ADD COLUMN IF NOT EXISTS selected_permits JSONB,
@@ -75,6 +91,33 @@ WHERE table_name = 'applications'
     'shipping_state',
     'shipping_postal_code',
     'shipping_delivery_instructions'
+  )
+ORDER BY column_name;
+
+-- ============================================
+-- STEP 2B: Verify Existing Columns (Optional)
+-- ============================================
+-- Check that these existing columns are present
+
+SELECT 
+  column_name,
+  data_type
+FROM information_schema.columns
+WHERE table_name = 'applications'
+  AND column_name IN (
+    'first_name',
+    'last_name',
+    'email',
+    'phone',
+    'date_of_birth',
+    'street_address',
+    'street_address_2',
+    'city',
+    'state',
+    'zip_code',
+    'birthplace_city',
+    'birthplace_state',
+    'amount_paid'
   )
 ORDER BY column_name;
 
@@ -177,6 +220,8 @@ SET
     form_data->>'shippingDeliveryInstructions',
     form_data->>'internationalDeliveryInstructions'
   )
-WHERE form_data IS NOT NULL
-  AND (first_name IS NULL OR shipping_category IS NULL); -- Only update records that haven't been backfilled yet
+WHERE form_data IS NOT NULL;
+-- Note: This will update all records. If you want to only update records that haven't been backfilled,
+-- you can add: AND (first_name IS NULL OR shipping_category IS NULL)
+-- But first make sure first_name column exists (run STEP 1 first)
 
