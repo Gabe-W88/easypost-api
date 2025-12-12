@@ -99,6 +99,10 @@ CREATE TABLE applications (
   shipping_postal_code TEXT,
   shipping_delivery_instructions TEXT,
   
+  -- Stripe shipping data (from payment)
+  shipping_name TEXT, -- From Stripe PaymentElement
+  shipping_phone TEXT, -- From Stripe PaymentElement
+  
   -- International shipping fields
   shipping_country VARCHAR(2),
   international_full_address TEXT,
