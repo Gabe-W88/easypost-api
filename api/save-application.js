@@ -595,10 +595,26 @@ export default async function handler(req, res) {
     console.log('=== END DATABASE DEBUG ===')
 
     if (error) {
-      console.error('Database error:', error)
+      console.error('=== DATABASE INSERT FAILED ===')
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Error details:', error.details)
+      console.error('Error hint:', error.hint)
+      console.error('Full error:', JSON.stringify(error, null, 2))
       return res.status(500).json({ 
         error: 'Failed to save to database',
-        details: error.message
+        details: error.message,
+        code: error.code,
+        hint: error.hint
+      })
+    }
+
+    if (!data || !data[0]) {
+      console.error('=== DATABASE INSERT RETURNED NO DATA ===')
+      console.error('Data:', data)
+      return res.status(500).json({ 
+        error: 'Database insert succeeded but returned no data',
+        details: 'Insert may have failed silently'
       })
     }
 
