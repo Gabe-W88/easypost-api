@@ -1760,7 +1760,7 @@ export default function MultistepForm() {
 
             try {
                 const response = await fetch(
-                    "https://easypost-api.vercel.app/api/validate-address",
+                    "https://fastidp-aujtzldcs-jamie-patricks-projects.vercel.app/api/validate-address",
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -1967,7 +1967,7 @@ export default function MultistepForm() {
 
         try {
             const response = await fetch(
-                "https://easypost-api.vercel.app/api/validate-address",
+                "https://fastidp-aujtzldcs-jamie-patricks-projects.vercel.app/api/validate-address",
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -2605,7 +2605,7 @@ export default function MultistepForm() {
             }
 
             const saveResponse = await fetch(
-                "https://easypost-api.vercel.app/api/save-application",
+                "https://fastidp-aujtzldcs-jamie-patricks-projects.vercel.app/api/save-application",
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -2629,7 +2629,7 @@ export default function MultistepForm() {
             // Create payment intent
             console.log("Creating payment intent...")
             const paymentResponse = await fetch(
-                "https://easypost-api.vercel.app/api/create-payment-intent",
+                "https://fastidp-aujtzldcs-jamie-patricks-projects.vercel.app/api/create-payment-intent",
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -2652,7 +2652,7 @@ export default function MultistepForm() {
                     )
 
                     const checkoutResponse = await fetch(
-                        "https://easypost-api.vercel.app/api/create-checkout",
+                        "https://fastidp-aujtzldcs-jamie-patricks-projects.vercel.app/api/create-checkout",
                         {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
