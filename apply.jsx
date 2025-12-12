@@ -11,7 +11,7 @@ import { createClient } from "@supabase/supabase-js"
 
 // Initialize Stripe
 const stripePromise = loadStripe(
-    "pk_live_51P8oMiRtjDxL2xZGkWFCL8C1rq0DoEVlt9b8kXwHWaPa3oDjoRenAvweDszsv2JyL3m8IrejE1MZ1pCZSjU2X7kW00e8wx2At9"
+    "pk_test_51P8oMiRtjDxL2xZGzUyexo8wZKuOFmaNW59bMQ526nFjL6JZyDFkrzQXkWRIEkw9cw4eafRRtFLAYqTFwipOBKsx00y7zDiTOv"
 )
 
 // Initialize Supabase client
