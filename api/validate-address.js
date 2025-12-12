@@ -36,9 +36,22 @@ function checkZipCodeMismatch(state, zip, city) {
 }
 
 export default async function handler(req, res) {
-  // Enable CORS for Framer domain
-  // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
-  res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
+  // Enhanced CORS configuration
+  const allowedOrigins = [
+    'https://fastidp.com',
+    'https://www.fastidp.com',
+    'http://localhost:3000',
+    'https://localhost:3000'
+  ]
+  
+  const origin = req.headers.origin
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+  } else {
+    // Default to live domain
+    res.setHeader('Access-Control-Allow-Origin', 'https://fastidp.com')
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.setHeader('Access-Control-Max-Age', '86400')
@@ -136,8 +149,18 @@ export default async function handler(req, res) {
     console.error('EasyPost validation error:', error)
     
     // Ensure CORS headers are set even in error responses
-    // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
-    res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
+    const allowedOrigins = [
+      'https://fastidp.com',
+      'https://www.fastidp.com',
+      'http://localhost:3000',
+      'https://localhost:3000'
+    ]
+    const origin = req.headers.origin
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin)
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', 'https://fastidp.com')
+    }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     res.setHeader('Access-Control-Max-Age', '86400')

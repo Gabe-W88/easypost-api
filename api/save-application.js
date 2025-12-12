@@ -355,9 +355,9 @@ function determineFulfillmentType(shippingCategory, shippingCountry, internation
 export default async function handler(req, res) {
   // More comprehensive CORS setup to handle various browser behaviors
   const origin = req.headers.origin
-  // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
   const allowedOrigins = [
-    'https://serious-flows-972417.framer.app',
+    'https://fastidp.com',
+    'https://www.fastidp.com',
     'https://framer.app',
     'https://preview.framer.app'
   ]
@@ -366,7 +366,7 @@ export default async function handler(req, res) {
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin)
   } else {
-    res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
+    res.setHeader('Access-Control-Allow-Origin', 'https://fastidp.com')
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -633,9 +633,9 @@ export default async function handler(req, res) {
     
     // Ensure CORS headers are set even in error responses
     const origin = req.headers.origin
-    // Previous URL (rollback): 'https://ambiguous-methodologies-053772.framer.app'
     const allowedOrigins = [
-      'https://serious-flows-972417.framer.app',
+      'https://fastidp.com',
+      'https://www.fastidp.com',
       'https://framer.app', 
       'https://preview.framer.app'
     ]
@@ -643,7 +643,8 @@ export default async function handler(req, res) {
     if (allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin)
     } else {
-      res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
+      // Default to live domain
+      res.setHeader('Access-Control-Allow-Origin', 'https://fastidp.com')
     }
     
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')

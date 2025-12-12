@@ -4,7 +4,7 @@ import { PERMIT_PRICES, getCombinedPriceCents, TAX } from '../config/pricing.js'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY)
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', 'https://serious-flows-972417.framer.app')
+  res.setHeader('Access-Control-Allow-Origin', 'https://fastidp.com')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 

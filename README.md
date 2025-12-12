@@ -52,7 +52,7 @@ All applications are stored in **Supabase** (your database).
 
 **6. Tracking Updates**
 - When shipping label is created, tracking number is saved to Supabase
-- Customer can be notified (if you set up email automation)
+- Customer notified vie email
 
 ### Different Scenarios
 
@@ -106,8 +106,3 @@ Every application includes:
 - **Automation:** Make.com
 - **Address Validation:** EasyPost
 
-## Support
-
----
-
-**Note:** This system is fully automated. Once set up, applications flow through automatically from form submission to shipping label creation.
