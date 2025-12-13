@@ -1,10 +1,24 @@
 import Stripe from 'stripe'
 import { PERMIT_PRICES, getCombinedPriceCents, TAX } from '../config/pricing.js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', 'https://fastidp.com')
+  // Enhanced CORS configuration
+  const allowedOrigins = [
+    'https://fastidp.com',
+    'https://www.fastidp.com',
+    'http://localhost:3000',
+    'https://localhost:3000'
+  ]
+  
+  const origin = req.headers.origin
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://fastidp.com')
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
@@ -77,6 +91,21 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Payment intent creation error:', error)
+    
+    // Ensure CORS headers are set even in error responses
+    const origin = req.headers.origin
+    const allowedOrigins = [
+      'https://fastidp.com',
+      'https://www.fastidp.com',
+      'http://localhost:3000',
+      'https://localhost:3000'
+    ]
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin)
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', 'https://fastidp.com')
+    }
+    
     return res.status(500).json({
       error: 'Failed to create payment intent',
       details: error.message

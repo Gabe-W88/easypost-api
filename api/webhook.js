@@ -533,7 +533,7 @@ function getRawBody(req) {
 }
 
 // Use the same Stripe key as other files
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY
 const stripe = new Stripe(stripeSecretKey)
 
 // Initialize Supabase client
